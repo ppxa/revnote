@@ -198,10 +198,12 @@ body {
 .answer-section.show { display: block; }
 .answer-section strong { font-size: 12px; color: var(--text2); }
 /* scratchpad */
-.scratchpad-wrap { margin-top: 10px; position: relative; }
+.scratchpad-wrap { margin-top: 10px; position: relative; -webkit-user-select:none; user-select:none; }
 .scratchpad-canvas {
   width: 100%; border-radius: 10px; background: #f5f5f5;
   border: 1px solid var(--border); touch-action: none;
+  -webkit-user-select:none; user-select:none;
+  -webkit-touch-callout:none;
 }
 .scratchpad-toolbar {
   display: flex; gap: 6px; margin-top: 6px; align-items: center;
@@ -441,37 +443,36 @@ body {
 .today-layout { display:block; }
 .today-left, .today-right { display:block; }
 @media(min-width:1024px) {
-  .nav-bottom{display:none!important}
+  /* Bottom nav hidden, sidebar shown */
+  nav.nav{display:none!important}
   .nav-side{display:flex!important}
   .timer-bar{left:72px}
-  .screen { max-width:none; padding:56px 24px 24px 24px; margin-left:72px; padding-bottom:0; }
+  .screen { max-width:none; padding:56px 20px 16px 20px; margin-left:72px; }
   /* Today: 2-column, fill viewport */
-  .today-layout{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start;height:calc(100vh - 72px)}
-  .today-left{overflow-y:auto;max-height:calc(100vh - 72px);padding-right:8px;scrollbar-width:thin}
-  .today-right{overflow-y:auto;max-height:calc(100vh - 72px);scrollbar-width:thin}
+  .today-layout{display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start;height:calc(100vh - 72px)}
+  .today-left{overflow-y:auto;max-height:calc(100vh - 72px);padding-right:8px;-webkit-overflow-scrolling:touch}
+  .today-right{overflow-y:auto;max-height:calc(100vh - 72px);-webkit-overflow-scrolling:touch}
   .today-right .card-wrap{display:block!important}
-  /* Maximize scratchpad canvas */
-  .today-right .scratchpad-canvas{width:100%!important;height:calc(100vh - 420px)!important;min-height:250px!important}
+  /* Maximize scratchpad */
+  .today-right .scratchpad-wrap{margin-top:8px}
+  .today-right .scratchpad-canvas{width:100%!important;min-height:300px!important}
   .today-right .btn-reveal{width:100%}
   .today-right .answer-btns{flex-wrap:nowrap}
-  /* Queue summary compact */
+  /* Compact left pane */
   .queue-summary{padding:12px}
-  .queue-count{font-size:24px}
-  /* No bottom nav needed */
-  .nav{display:none!important}
-  .problem-list-item { padding: 16px 20px; }
-  /* Header compact */
-  .today-left .header{margin-bottom:6px}
+  .queue-count{font-size:22px}
+  .problem-list-item{padding:14px 16px}
+  .today-left .header{margin-bottom:4px}
   .today-left .header h1{font-size:16px}
   .today-left .streak-bar{padding:8px 12px;margin-bottom:8px}
-  .today-left .streak-num{font-size:20px}
-  /* Remove bottom padding for all screens */
-  .screen{padding-bottom:12px!important}
+  .today-left .streak-num{font-size:18px}
+  .screen{padding-bottom:8px!important}
 }
 
 /* Image canvas overlay for drawing on problem image */
 .img-canvas-wrap {
   position: relative; width: 100%; background: #fff; border-radius: 8px; overflow: hidden;
+  -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
 }
 .img-canvas-wrap img { display: block; width: 100%; }
 .img-canvas-wrap canvas {
@@ -1242,26 +1243,29 @@ let spColor = '#333';
 
 function initScratchpad() {
   const canvas = document.getElementById('scratchpadCanvas');
-  // Responsive width
-  const w = canvas.parentElement.offsetWidth;
+  const wrap = canvas.parentElement;
+  const w = wrap.offsetWidth;
+  if (w < 10) return; // not visible yet
+  const isLandscape = window.innerWidth >= 1024;
+  const hRatio = isLandscape ? 0.6 : 0.5;
+  const h = Math.max(200, Math.round(w * hRatio));
   canvas.width = w * 2; // retina
-  canvas.height = Math.round(w * 0.5) * 2;
+  canvas.height = h * 2;
   canvas.style.width = w + 'px';
-  canvas.style.height = Math.round(w * 0.5) + 'px';
+  canvas.style.height = h + 'px';
   spCtx = canvas.getContext('2d');
   spCtx.lineCap = 'round';
   spCtx.lineJoin = 'round';
-  // Fill white bg
   spCtx.fillStyle = '#f5f5f5';
   spCtx.fillRect(0, 0, canvas.width, canvas.height);
   spDrawing = false;
   spErasing = false;
   document.getElementById('spEraser').classList.remove('active');
 
-  // Touch / mouse events
-  canvas.onpointerdown = (e) => { spDrawing = true; spCtx.beginPath(); const p = spPos(e); spCtx.moveTo(p.x, p.y); };
-  canvas.onpointermove = (e) => { if (!spDrawing) return; const p = spPos(e); const lw = parseInt(document.getElementById('spLineWidth').value); spCtx.lineWidth = lw * 2; if (spErasing) { spCtx.globalCompositeOperation = 'destination-out'; spCtx.strokeStyle = 'rgba(0,0,0,1)'; } else { spCtx.globalCompositeOperation = 'source-over'; spCtx.strokeStyle = spColor; } spCtx.lineTo(p.x, p.y); spCtx.stroke(); };
-  canvas.onpointerup = () => { spDrawing = false; };
+  // Touch / mouse events - preventDefault stops text selection highlight
+  canvas.onpointerdown = (e) => { e.preventDefault(); spDrawing = true; spCtx.beginPath(); const p = spPos(e); spCtx.moveTo(p.x, p.y); };
+  canvas.onpointermove = (e) => { e.preventDefault(); if (!spDrawing) return; const p = spPos(e); const lw = parseInt(document.getElementById('spLineWidth').value); spCtx.lineWidth = lw * 2; if (spErasing) { spCtx.globalCompositeOperation = 'destination-out'; spCtx.strokeStyle = 'rgba(0,0,0,1)'; } else { spCtx.globalCompositeOperation = 'source-over'; spCtx.strokeStyle = spColor; } spCtx.lineTo(p.x, p.y); spCtx.stroke(); };
+  canvas.onpointerup = (e) => { e.preventDefault(); spDrawing = false; };
   canvas.onpointerleave = () => { spDrawing = false; };
 }
 
