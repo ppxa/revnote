@@ -529,7 +529,7 @@ body {
 
 <!-- SIDEBAR NAV (landscape) -->
 <nav class="nav-side" id="navSide">
-  <div class="s-logo">rn</div>
+  <div class="s-logo">rn<div style="font-size:8px;color:var(--text2);font-weight:400">v2.5</div></div>
   <button class="s-item active" data-screen="Today" onclick="switchScreen('Today')"><span>⚔️</span>今日</button>
   <button class="s-item" data-screen="Add" onclick="switchScreen('Add')"><span>📸</span>登録</button>
   <button class="s-item" data-screen="List" onclick="switchScreen('List')"><span>📚</span>一覧</button>
@@ -888,9 +888,8 @@ body {
       <strong style="color:var(--danger)">連続不正解<span id="algoFreezeN">5</span>回</strong>で自動凍結候補に。
     </div>
   </div>
+  <div style="text-align:center;padding:16px 0 8px;font-size:11px;color:var(--text2)">revnote v2.5</div>
 </div>
-
-<!-- === NAV === -->
 <nav class="nav">
   <button class="nav-item active" onclick="switchScreen('Today')">
     <span style="font-size:20px">⚔️</span>
@@ -918,11 +917,11 @@ body {
 // ================================================================
 // DATA LAYER
 // ================================================================
-const STORAGE_KEY = 'revengeNote_v1';
-const today = () => new Date().toISOString().split('T')[0];
+var STORAGE_KEY = 'revengeNote_v1';
+var today = () => new Date().toISOString().split('T')[0];
 
 function loadData() {
-  const raw = localStorage.getItem(STORAGE_KEY);
+  var raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return defaultData();
   try { return JSON.parse(raw); } catch { return defaultData(); }
 }
@@ -936,17 +935,17 @@ function defaultData() {
     sessionLog: [] // {date, correct, wrong, hard, graduated}
   };
 }
-let DATA = loadData();
+var DATA = loadData();
 
 // ================================================================
 // SM-2 SPACED REPETITION ENGINE
 // ================================================================
 function calcNextReview(problem, quality) {
   // quality: 0=wrong, 3=hard, 5=correct
-  let ef = problem.easeFactor || 2.5;
-  let interval = problem.interval || 0;
-  let reps = problem.repetitions || 0;
-  let consFailures = problem.consecutiveFailures || 0;
+  var ef = problem.easeFactor || 2.5;
+  var interval = problem.interval || 0;
+  var reps = problem.repetitions || 0;
+  var consFailures = problem.consecutiveFailures || 0;
 
   if (quality >= 3) { // correct or hard
     if (reps === 0) interval = 1;
@@ -965,7 +964,7 @@ function calcNextReview(problem, quality) {
   // "hard" halves the interval
   if (quality === 3) interval = Math.max(1, Math.round(interval / 2));
 
-  const nextDate = new Date();
+  var nextDate = new Date();
   nextDate.setDate(nextDate.getDate() + interval);
 
   return {
@@ -992,8 +991,8 @@ function calcMastery(reps, failures) {
 function classifyZone(p) {
   if (p.frozen) return 'frozen';
   if (p.masteryLevel >= 4) return 'graduated';
-  const isHighFreq = p.frequency === 'high' || p.frequency === 'medium';
-  const isStruggling = (p.consecutiveFailures || 0) >= 3;
+  var isHighFreq = p.frequency === 'high' || p.frequency === 'medium';
+  var isStruggling = (p.consecutiveFailures || 0) >= 3;
   if (isStruggling && !isHighFreq) return 'discard'; // 捨て問候補
   if (p.masteryLevel < 3 && isHighFreq) return 'priority'; // 最優先
   return 'review'; // 後回し or 通常復習
@@ -1003,28 +1002,28 @@ function classifyZone(p) {
 // DAILY QUEUE GENERATION
 // ================================================================
 function generateQueue() {
-  const cap = DATA.settings.dailyCap || 15;
-  const t = today();
-  const eligible = DATA.problems.filter(p =>
+  var cap = DATA.settings.dailyCap || 15;
+  var t = today();
+  var eligible = DATA.problems.filter(p =>
     !p.frozen && p.masteryLevel < 4 && p.nextReviewDate <= t
   );
   // sort by priority
   eligible.sort((a, b) => {
-    const pa = calcPriority(a, t);
-    const pb = calcPriority(b, t);
+    var pa = calcPriority(a, t);
+    var pb = calcPriority(b, t);
     return pb - pa;
   });
   return eligible.slice(0, cap);
 }
 
 function calcPriority(p, t) {
-  const daysOverdue = Math.floor((new Date(t) - new Date(p.nextReviewDate)) / 86400000);
-  const urgency = Math.max(0, daysOverdue) + 1;
-  const freqMult = { high: 2, medium: 1, low: 0.5 }[p.frequency] || 1;
-  const failPenalty = (p.consecutiveFailures || 0) >= 3 ? 0.3 : 1.0;
+  var daysOverdue = Math.floor((new Date(t) - new Date(p.nextReviewDate)) / 86400000);
+  var urgency = Math.max(0, daysOverdue) + 1;
+  var freqMult = { high: 2, medium: 1, low: 0.5 }[p.frequency] || 1;
+  var failPenalty = (p.consecutiveFailures || 0) >= 3 ? 0.3 : 1.0;
   // 正答率ブースト: 正答率が高い問題ほど「落としちゃいけない」→優先度UP
   // 正答率70%以上=みんな取れる→×1.5, 40-69%=差がつく→×1.3, 20-39%=難問→×1.0, <20%=捨て問→×0.7
-  let rateMult = 1.0;
+  var rateMult = 1.0;
   if (p.correctRate != null) {
     if (p.correctRate >= 70) rateMult = 1.5;
     else if (p.correctRate >= 40) rateMult = 1.3;
@@ -1043,9 +1042,9 @@ function calcPriority(p, t) {
 // ================================================================
 // UI RENDERING
 // ================================================================
-let currentQueue = [];
-let currentIndex = 0;
-let sessionStats = { correct: 0, wrong: 0, hard: 0, graduated: 0 };
+var currentQueue = [];
+var currentIndex = 0;
+var sessionStats = { correct: 0, wrong: 0, hard: 0, graduated: 0 };
 
 function switchScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -1072,11 +1071,11 @@ function renderToday() {
   renderStreak();
   renderFreezeAlerts();
   currentQueue = generateQueue();
-  const total = DATA.problems.filter(p => !p.frozen && p.masteryLevel < 4 && p.nextReviewDate <= today()).length;
-  const count = currentQueue.length;
+  var total = DATA.problems.filter(p => !p.frozen && p.masteryLevel < 4 && p.nextReviewDate <= today()).length;
+  var count = currentQueue.length;
   document.getElementById('queueCount').textContent = count;
-  const overdue = total - count;
-  let breakdown = '';
+  var overdue = total - count;
+  var breakdown = '';
   if (overdue > 0) breakdown = `（他に ${overdue} 問が待機中・明日以降に繰り越し）`;
   document.getElementById('queueBreakdown').textContent = breakdown;
   // Stretch zone bar
@@ -1097,9 +1096,9 @@ function renderToday() {
       +'</div>';
   }else if(szBar){szBar.innerHTML=''}
   // subject breakdown
-  const bySubj = {};
+  var bySubj = {};
   currentQueue.forEach(p => { bySubj[p.subject] = (bySubj[p.subject]||0)+1; });
-  const parts = Object.entries(bySubj).map(([s,n]) => `${s}${n}問`);
+  var parts = Object.entries(bySubj).map(([s,n]) => `${s}${n}問`);
   if (parts.length) breakdown = parts.join(' / ') + (overdue > 0 ? ` ＋繰越${overdue}問` : '');
   document.getElementById('queueBreakdown').textContent = breakdown;
   // Stretch zone bar
@@ -1130,11 +1129,11 @@ function renderToday() {
 function renderStreak() {
   updateStreak();
   document.getElementById('streakCount').textContent = DATA.streak.count;
-  const dots = document.getElementById('streakDots');
+  var dots = document.getElementById('streakDots');
   dots.innerHTML = '';
-  const hist = DATA.streak.history.slice(-7);
-  for (let i = 0; i < 7; i++) {
-    const d = document.createElement('div');
+  var hist = DATA.streak.history.slice(-7);
+  for (var i = 0; i < 7; i++) {
+    var d = document.createElement('div');
     d.className = 'streak-dot';
     if (hist[i]) d.classList.add('done');
     if (i === hist.length - 1 && hist[i] === today()) d.classList.add('today');
@@ -1143,10 +1142,10 @@ function renderStreak() {
 }
 
 function updateStreak() {
-  const t = today();
-  const yesterday = new Date();
+  var t = today();
+  var yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  const y = yesterday.toISOString().split('T')[0];
+  var y = yesterday.toISOString().split('T')[0];
   if (DATA.streak.lastDate === t) return; // already recorded today
   if (DATA.streak.lastDate === y) {
     // streak continues — don't increment yet, wait for session
@@ -1160,7 +1159,7 @@ function updateStreak() {
 }
 
 function recordStreakToday() {
-  const t = today();
+  var t = today();
   if (DATA.streak.lastDate !== t) {
     DATA.streak.count++;
     DATA.streak.lastDate = t;
@@ -1171,14 +1170,14 @@ function recordStreakToday() {
 }
 
 function renderFreezeAlerts() {
-  const container = document.getElementById('freezeAlerts');
+  var container = document.getElementById('freezeAlerts');
   container.innerHTML = '';
-  const threshold = DATA.settings.freezeThreshold || 5;
-  const candidates = DATA.problems.filter(p =>
+  var threshold = DATA.settings.freezeThreshold || 5;
+  var candidates = DATA.problems.filter(p =>
     !p.frozen && (p.consecutiveFailures || 0) >= threshold
   );
   candidates.forEach(p => {
-    const div = document.createElement('div');
+    var div = document.createElement('div');
     div.className = 'freeze-alert';
     div.innerHTML = `
       <span>❄️ 「${p.topic}」が${p.consecutiveFailures}回連続不正解</span>
@@ -1205,21 +1204,21 @@ function showCard() {
     finishSession();
     return;
   }
-  const p = currentQueue[currentIndex];
-  const total = currentQueue.length;
+  var p = currentQueue[currentIndex];
+  var total = currentQueue.length;
   document.getElementById('cardProgress').textContent = `${currentIndex + 1} / ${total}`;
   document.getElementById('queueProgress').style.width = ((currentIndex) / total * 100) + '%';
 
-  const badgeClass = {
+  var badgeClass = {
     '算数': 'badge-math', '数学': 'badge-math', '国語': 'badge-japanese',
     '理科': 'badge-science', '社会': 'badge-social', '英語': 'badge-english'
   }[p.subject] || 'badge-math';
 
-  const freqLabel = { high: '高頻出', medium: '中頻出', low: '低頻出' }[p.frequency] || '';
-  const diffLabel = { basic: '基本', standard: '標準', hard: '応用' }[p.difficulty] || '';
+  var freqLabel = { high: '高頻出', medium: '中頻出', low: '低頻出' }[p.frequency] || '';
+  var diffLabel = { basic: '基本', standard: '標準', hard: '応用' }[p.difficulty] || '';
 
   // Show problem ONLY (no answer)
-  const hasImage = !!p.contentImage;
+  var hasImage = !!p.contentImage;
   document.getElementById('problemCard').innerHTML = `
     <span class="card-badge ${badgeClass}">${p.subject}</span>
     <div class="card-source">${p.source || ''}</div>
@@ -1238,7 +1237,7 @@ function showCard() {
   `;
 
   // Prepare answer section (hidden)
-  const answerHTML = p.answerImage
+  var answerHTML = p.answerImage
     ? `<strong>答え:</strong><br><img src="${p.answerImage}" alt="解説画像" style="max-width:100%;border-radius:6px;margin-top:6px">`
     : (p.answer ? `<strong>答え:</strong> ${p.answer}` : '<span style="color:var(--text2)">答え未登録</span>');
   document.getElementById('answerSection').innerHTML = answerHTML;
@@ -1263,19 +1262,19 @@ function revealAnswer() {
 // ================================================================
 // SCRATCHPAD (drawing canvas)
 // ================================================================
-let spCtx = null;
-let spDrawing = false;
-let spErasing = false;
-let spColor = '#333';
+var spCtx = null;
+var spDrawing = false;
+var spErasing = false;
+var spColor = '#333';
 
 function initScratchpad() {
-  const canvas = document.getElementById('scratchpadCanvas');
-  const wrap = canvas.parentElement;
-  const w = wrap.offsetWidth;
+  var canvas = document.getElementById('scratchpadCanvas');
+  var wrap = canvas.parentElement;
+  var w = wrap.offsetWidth;
   if (w < 10) return; // not visible yet
-  const isLandscape = window.innerWidth >= 1024;
-  const hRatio = isLandscape ? 0.6 : 0.5;
-  const h = Math.max(200, Math.round(w * hRatio));
+  var isLandscape = window.innerWidth >= 1024;
+  var hRatio = isLandscape ? 0.6 : 0.5;
+  var h = Math.max(200, Math.round(w * hRatio));
   canvas.width = w * 2; // retina
   canvas.height = h * 2;
   canvas.style.width = w + 'px';
@@ -1290,21 +1289,21 @@ function initScratchpad() {
   document.getElementById('spEraser').classList.remove('active');
 
   // Touch / mouse events - preventDefault stops text selection highlight
-  canvas.onpointerdown = (e) => { e.preventDefault(); spDrawing = true; spCtx.beginPath(); const p = spPos(e); spCtx.moveTo(p.x, p.y); };
-  canvas.onpointermove = (e) => { e.preventDefault(); if (!spDrawing) return; const p = spPos(e); const lw = parseInt(document.getElementById('spLineWidth').value); spCtx.lineWidth = lw * 2; if (spErasing) { spCtx.globalCompositeOperation = 'destination-out'; spCtx.strokeStyle = 'rgba(0,0,0,1)'; } else { spCtx.globalCompositeOperation = 'source-over'; spCtx.strokeStyle = spColor; } spCtx.lineTo(p.x, p.y); spCtx.stroke(); };
+  canvas.onpointerdown = (e) => { e.preventDefault(); spDrawing = true; spCtx.beginPath(); var p = spPos(e); spCtx.moveTo(p.x, p.y); };
+  canvas.onpointermove = (e) => { e.preventDefault(); if (!spDrawing) return; var p = spPos(e); var lw = parseInt(document.getElementById('spLineWidth').value); spCtx.lineWidth = lw * 2; if (spErasing) { spCtx.globalCompositeOperation = 'destination-out'; spCtx.strokeStyle = 'rgba(0,0,0,1)'; } else { spCtx.globalCompositeOperation = 'source-over'; spCtx.strokeStyle = spColor; } spCtx.lineTo(p.x, p.y); spCtx.stroke(); };
   canvas.onpointerup = (e) => { e.preventDefault(); spDrawing = false; };
   canvas.onpointerleave = () => { spDrawing = false; };
 }
 
 function spPos(e) {
-  const c = document.getElementById('scratchpadCanvas');
-  const r = c.getBoundingClientRect();
+  var c = document.getElementById('scratchpadCanvas');
+  var r = c.getBoundingClientRect();
   return { x: (e.clientX - r.left) * (c.width / r.width), y: (e.clientY - r.top) * (c.height / r.height) };
 }
 
 function clearScratchpad() {
-  const c = document.getElementById('scratchpadCanvas');
-  if (c && c.getContext) { const ctx = c.getContext('2d'); ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim() || '#f5f5f5'; ctx.fillRect(0, 0, c.width, c.height); }
+  var c = document.getElementById('scratchpadCanvas');
+  if (c && c.getContext) { var ctx = c.getContext('2d'); ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim() || '#f5f5f5'; ctx.fillRect(0, 0, c.width, c.height); }
 }
 
 function toggleEraser() {
@@ -1323,26 +1322,26 @@ function setScratchColor(color, el) {
 // ================================================================
 // IMAGE OVERLAY CANVAS (draw on problem image with padding)
 // ================================================================
-let imgOvCtx = null;
-let imgOvDrawing = false;
+var imgOvCtx = null;
+var imgOvDrawing = false;
 
 function initImageCanvas() {
-  const img = document.getElementById('problemImg');
-  const canvas = document.getElementById('imgOverlayCanvas');
+  var img = document.getElementById('problemImg');
+  var canvas = document.getElementById('imgOverlayCanvas');
   if (!img || !canvas) return;
-  const wrap = document.getElementById('imgCanvasWrap');
+  var wrap = document.getElementById('imgCanvasWrap');
 
   // Wait for layout
   requestAnimationFrame(() => {
-    const displayW = wrap.offsetWidth;
-    const padPx = 80; // white padding for writing
-    const imgW = img.naturalWidth;
-    const imgH = img.naturalHeight;
+    var displayW = wrap.offsetWidth;
+    var padPx = 80; // white padding for writing
+    var imgW = img.naturalWidth;
+    var imgH = img.naturalHeight;
     // Scale: image + padding to fit display width
-    const totalW = imgW + padPx * 2;
-    const scale = displayW / totalW;
-    const totalH = imgH + padPx * 2;
-    const displayH = totalH * scale;
+    var totalW = imgW + padPx * 2;
+    var scale = displayW / totalW;
+    var totalH = imgH + padPx * 2;
+    var displayH = totalH * scale;
 
     // Set canvas size (2x for retina)
     canvas.width = totalW * 2;
@@ -1352,7 +1351,7 @@ function initImageCanvas() {
     wrap.style.height = displayH + 'px';
 
     // Draw white bg + image onto canvas
-    const ctx = canvas.getContext('2d');
+    var ctx = canvas.getContext('2d');
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, padPx * 2, padPx * 2, imgW * 2, imgH * 2);
@@ -1369,14 +1368,14 @@ function initImageCanvas() {
       e.preventDefault();
       imgOvDrawing = true;
       imgOvCtx.beginPath();
-      const p = imgOvPos(e);
+      var p = imgOvPos(e);
       imgOvCtx.moveTo(p.x, p.y);
     };
     canvas.onpointermove = (e) => {
       e.preventDefault();
       if (!imgOvDrawing) return;
-      const p = imgOvPos(e);
-      const lw = parseInt(document.getElementById('spLineWidth').value);
+      var p = imgOvPos(e);
+      var lw = parseInt(document.getElementById('spLineWidth').value);
       imgOvCtx.lineWidth = lw * 2;
       imgOvCtx.globalCompositeOperation = spErasing ? 'destination-out' : 'source-over';
       imgOvCtx.strokeStyle = spErasing ? 'rgba(0,0,0,1)' : (spColor === '#333' ? '#333' : spColor);
@@ -1389,20 +1388,20 @@ function initImageCanvas() {
 }
 
 function imgOvPos(e) {
-  const c = document.getElementById('imgOverlayCanvas');
-  const r = c.getBoundingClientRect();
+  var c = document.getElementById('imgOverlayCanvas');
+  var r = c.getBoundingClientRect();
   return { x: (e.clientX - r.left) * (c.width / r.width), y: (e.clientY - r.top) * (c.height / r.height) };
 }
 
 function recordAnswer(quality) {
-  const p = currentQueue[currentIndex];
-  const real = DATA.problems.find(x => x.id === p.id);
+  var p = currentQueue[currentIndex];
+  var real = DATA.problems.find(x => x.id === p.id);
   if (!real) { currentIndex++; showCard(); return; }
 
-  const result = calcNextReview(real, quality);
+  var result = calcNextReview(real, quality);
   Object.assign(real, result);
   real.history = real.history || [];
-  const memo = (document.getElementById('reviewMemoText').value || '').trim();
+  var memo = (document.getElementById('reviewMemoText').value || '').trim();
   real.history.push({
     date: today(),
     result: quality >= 4 ? 'correct' : quality >= 3 ? 'hard' : 'incorrect',
@@ -1427,7 +1426,7 @@ function recordAnswer(quality) {
 }
 
 function showGraduated(p) {
-  const flash = document.getElementById('graduatedFlash');
+  var flash = document.getElementById('graduatedFlash');
   document.getElementById('graduatedMsg').textContent = `「${p.topic}」が定着済みになりました！`;
   flash.classList.add('show');
   setTimeout(() => flash.classList.remove('show'), 2000);
@@ -1436,14 +1435,14 @@ function showGraduated(p) {
 function finishSession() {
   document.getElementById('cardWrap').classList.remove('active');
   document.getElementById('queueProgress').style.width = '100%';
-  const cv = document.getElementById('completionView');
+  var cv = document.getElementById('completionView');
   cv.style.display = '';
-  const total = sessionStats.correct + sessionStats.wrong + sessionStats.hard;
+  var total = sessionStats.correct + sessionStats.wrong + sessionStats.hard;
 
   if (isSingleProblemMode) {
-    const result = sessionStats.correct > 0 ? '✅ できた！' : sessionStats.hard > 0 ? '🤔 あやしい' : '❌ できなかった';
+    var result = sessionStats.correct > 0 ? '✅ できた！' : sessionStats.hard > 0 ? '🤔 あやしい' : '❌ できなかった';
     document.getElementById('completionMsg').textContent = result;
-    const pid = currentQueue[0]?.id || '';
+    var pid = currentQueue[0]?.id || '';
     document.getElementById('completionStats').innerHTML = `
       <div style="grid-column:1/-1;display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap">
         <button class="btn-start" onclick="isSingleProblemMode=false;openProblemDetail('${pid}')" style="max-width:180px;background:var(--accent)">🔄 もう一度</button>
@@ -1469,7 +1468,7 @@ function finishSession() {
 // ================================================================
 // TOPIC PRESETS (中学受験カリキュラム準拠)
 // ================================================================
-const TOPIC_PRESETS = {
+var TOPIC_PRESETS = {
   '算数': {
     '計算': ['計算の工夫','逆算','分数・小数'],
     '文章題': ['和差算・つるかめ算','過不足算・消去算','年齢算・平均算'],
@@ -1505,7 +1504,7 @@ const TOPIC_PRESETS = {
   }
 };
 
-const TOPIC_PRESETS_SECONDARY = {
+var TOPIC_PRESETS_SECONDARY = {
   '数学': {
     '数と式': ['正負の数','文字式','方程式','連立方程式','平方根','多項式'],
     '関数': ['比例・反比例','一次関数','二次関数','三角関数'],
@@ -1554,16 +1553,16 @@ function getSubjects() {
 }
 
 function onSchoolLevelChange() {
-  const level = document.getElementById('settingSchoolLevel').value;
+  var level = document.getElementById('settingSchoolLevel').value;
   DATA.settings.schoolLevel = level;
   saveData(DATA);
   updateSubjectDropdown();
 }
 
 function updateSubjectDropdown() {
-  const sel = document.getElementById('addSubject');
-  const subjects = getSubjects();
-  const current = sel.value;
+  var sel = document.getElementById('addSubject');
+  var subjects = getSubjects();
+  var current = sel.value;
   sel.innerHTML = subjects.map(s => `<option value="${s}">${s}</option>`).join('');
   // Keep selection if still valid
   if (subjects.includes(current)) sel.value = current;
@@ -1583,8 +1582,8 @@ function getBadgeClass(subject) {
 // ================================================================
 // IMAGE HANDLING
 // ================================================================
-let contentImageData = null;
-let answerImageData = null;
+var contentImageData = null;
+var answerImageData = null;
 
 function switchContentTab(type) {
   document.getElementById('contentTabText').classList.toggle('active', type === 'text');
@@ -1600,7 +1599,7 @@ function switchAnswerTab(type) {
 }
 
 function handleImgUpload(e, target) {
-  const file = e.target.files[0];
+  var file = e.target.files[0];
   if (!file) return;
   processImageFile(file, target);
 }
@@ -1608,17 +1607,17 @@ function handleImgUpload(e, target) {
 function processImageFile(file, target) {
   if (!file.type.startsWith('image/')) return;
   // compress to max 800px wide for storage efficiency
-  const reader = new FileReader();
+  var reader = new FileReader();
   reader.onload = (ev) => {
-    const img = new Image();
+    var img = new Image();
     img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const MAX = 800;
-      let w = img.width, h = img.height;
+      var canvas = document.createElement('canvas');
+      var MAX = 800;
+      var w = img.width, h = img.height;
       if (w > MAX) { h = h * MAX / w; w = MAX; }
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.8);
       if (target === 'content') {
         contentImageData = dataUrl;
         renderImgPreview('contentImgPreview', dataUrl, 'content');
@@ -1652,21 +1651,21 @@ function removeImg(target) {
 
 // Clipboard paste support
 document.addEventListener('paste', (e) => {
-  const addScreen = document.getElementById('screenAdd');
+  var addScreen = document.getElementById('screenAdd');
   if (!addScreen.classList.contains('active')) return;
-  const items = e.clipboardData?.items;
+  var items = e.clipboardData?.items;
   if (!items) return;
-  for (const item of items) {
+  for (var item of items) {
     if (item.type.startsWith('image/')) {
       e.preventDefault();
-      const file = item.getAsFile();
+      var file = item.getAsFile();
       if (addMode === 'quick') {
         // In quick mode, always paste to content
         processImageFile(file, 'content');
       } else {
         // In normal mode, determine target
-        const contentImgActive = document.getElementById('contentTabImage').classList.contains('active');
-        const answerImgActive = document.getElementById('answerTabImage').classList.contains('active');
+        var contentImgActive = document.getElementById('contentTabImage').classList.contains('active');
+        var answerImgActive = document.getElementById('answerTabImage').classList.contains('active');
         if (!contentImageData) {
           if (!contentImgActive) switchContentTab('image');
           processImageFile(file, 'content');
@@ -1684,14 +1683,14 @@ document.addEventListener('paste', (e) => {
 // CORRECT RATE HELPER
 // ================================================================
 function toggleRateSlider() {
-  const checked = document.getElementById('addRateCheck').checked;
+  var checked = document.getElementById('addRateCheck').checked;
   document.getElementById('rateSliderWrap').style.display = checked ? 'block' : 'none';
   if (checked) updateRateLabel();
 }
 function updateRateLabel() {
-  const v = parseInt(document.getElementById('addCorrectRate').value);
-  const label = document.getElementById('rateLabel');
-  const hint = document.getElementById('rateHint');
+  var v = parseInt(document.getElementById('addCorrectRate').value);
+  var label = document.getElementById('rateLabel');
+  var hint = document.getElementById('rateHint');
   label.textContent = v + '%';
   if (v >= 70) {
     hint.innerHTML = '<span style="color:var(--success)">🟢 基本問題 — 確実に取りたい</span>';
@@ -1708,25 +1707,25 @@ function updateRateLabel() {
 // SUBJECT → TOPIC 2-LEVEL DROPDOWN
 // ================================================================
 function onSubjectChange() {
-  const subject = document.getElementById('addSubject').value;
-  const catSelect = document.getElementById('addTopicCategory');
-  const categories = getTopicPresets()[subject] || {};
+  var subject = document.getElementById('addSubject').value;
+  var catSelect = document.getElementById('addTopicCategory');
+  var categories = getTopicPresets()[subject] || {};
   catSelect.innerHTML = '<option value="">-- カテゴリ --</option>' +
     Object.keys(categories).map(c => `<option value="${c}">${c}</option>`).join('');
   document.getElementById('addTopicDetail').innerHTML = '<option value="">-- 詳細（任意） --</option>';
 }
 function onCategoryChange() {
-  const subject = document.getElementById('addSubject').value;
-  const cat = document.getElementById('addTopicCategory').value;
-  const detailSelect = document.getElementById('addTopicDetail');
-  const details = (getTopicPresets()[subject] || {})[cat] || [];
+  var subject = document.getElementById('addSubject').value;
+  var cat = document.getElementById('addTopicCategory').value;
+  var detailSelect = document.getElementById('addTopicDetail');
+  var details = (getTopicPresets()[subject] || {})[cat] || [];
   detailSelect.innerHTML = '<option value="">-- 詳細（任意） --</option>' +
     details.map(d => `<option value="${d}">${d}</option>`).join('');
   document.getElementById('addTopic').value = cat;
 }
 function onDetailChange() {
-  const cat = document.getElementById('addTopicCategory').value;
-  const detail = document.getElementById('addTopicDetail').value;
+  var cat = document.getElementById('addTopicCategory').value;
+  var detail = document.getElementById('addTopicDetail').value;
   if (detail) {
     document.getElementById('addTopic').value = cat + ' - ' + detail;
   } else if (cat) {
@@ -1737,10 +1736,10 @@ function onDetailChange() {
 // ================================================================
 // ADD MODE (normal / quick)
 // ================================================================
-let addMode = 'normal';
+var addMode = 'normal';
 function setAddMode(mode) {
   addMode = mode;
-  const screen = document.getElementById('screenAdd');
+  var screen = document.getElementById('screenAdd');
   screen.classList.toggle('quick-mode', mode === 'quick');
   document.getElementById('modeNormal').classList.toggle('active', mode === 'normal');
   document.getElementById('modeQuick').classList.toggle('active', mode === 'quick');
@@ -1756,11 +1755,11 @@ function setAddMode(mode) {
 // ================================================================
 function renderAdd() {
   // Only populate categories if dropdown is empty (first load)
-  const catSelect = document.getElementById('addTopicCategory');
+  var catSelect = document.getElementById('addTopicCategory');
   if (catSelect.options.length <= 1) onSubjectChange();
   updateTagSuggestions();
-  const pending = DATA.problems.filter(p => !p.frozen && p.masteryLevel < 4 && p.nextReviewDate <= today()).length;
-  const warn = document.getElementById('addQueueWarning');
+  var pending = DATA.problems.filter(p => !p.frozen && p.masteryLevel < 4 && p.nextReviewDate <= today()).length;
+  var warn = document.getElementById('addQueueWarning');
   if (pending > 20) {
     warn.innerHTML = `<div class="queue-warning">⚠️ キューに${pending}問溜まっています。登録すると明日以降に追加されます。</div>`;
   } else {
@@ -1768,13 +1767,13 @@ function renderAdd() {
   }
 }
 
-let addCount = 0; // session registration counter
+var addCount = 0; // session registration counter
 
 function addProblem() {
   // Build topic: use hand-input, or category, or "未分類" in quick mode
-  let topic = document.getElementById('addTopic').value.trim();
+  var topic = document.getElementById('addTopic').value.trim();
   if (!topic && addMode === 'normal') {
-    const cat = document.getElementById('addTopicCategory').value;
+    var cat = document.getElementById('addTopicCategory').value;
     if (cat) {
       topic = cat;
       document.getElementById('addTopic').value = cat;
@@ -1791,25 +1790,25 @@ function addProblem() {
   }
 
   // Determine content type
-  const contentIsImage = (addMode === 'quick') || 
+  var contentIsImage = (addMode === 'quick') || 
     (document.getElementById('contentTabImage').classList.contains('active') && contentImageData);
-  const answerIsImage = document.getElementById('answerTabImage') && 
+  var answerIsImage = document.getElementById('answerTabImage') && 
     document.getElementById('answerTabImage').classList.contains('active') && answerImageData;
 
-  const rateChecked = document.getElementById('addRateCheck').checked;
-  const correctRate = rateChecked ? parseInt(document.getElementById('addCorrectRate').value) : null;
+  var rateChecked = document.getElementById('addRateCheck').checked;
+  var correctRate = rateChecked ? parseInt(document.getElementById('addCorrectRate').value) : null;
 
-  let freq = document.getElementById('addFreq').value;
+  var freq = document.getElementById('addFreq').value;
   if (correctRate !== null && freq === 'medium') {
     if (correctRate >= 40 && correctRate < 70) freq = 'high';
     else if (correctRate < 20) freq = 'low';
   }
 
   // Parse tags
-  const tagsRaw = (document.getElementById('addTags').value || '').trim();
-  const tags = tagsRaw ? tagsRaw.split(/[\s,]+/).filter(t => t) : [];
+  var tagsRaw = (document.getElementById('addTags').value || '').trim();
+  var tags = tagsRaw ? tagsRaw.split(/[\s,]+/).filter(t => t) : [];
 
-  const p = {
+  var p = {
     id: 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
     subject: document.getElementById('addSubject').value,
     topic,
@@ -1851,7 +1850,7 @@ function addProblem() {
   }
 
   // ② Toast near button
-  const toast = document.getElementById('addSuccessToast');
+  var toast = document.getElementById('addSuccessToast');
   toast.textContent = `✅「${topic}」を登録しました（${addCount}問目）`;
   toast.style.display = 'block';
   setTimeout(() => { toast.style.display = 'none'; }, 2500);
@@ -1863,11 +1862,11 @@ function addProblem() {
 // ================================================================
 async function pasteFromClipboard(target) {
   try {
-    const items = await navigator.clipboard.read();
-    for (const item of items) {
-      const imageType = item.types.find(t => t.startsWith('image/'));
+    var items = await navigator.clipboard.read();
+    for (var item of items) {
+      var imageType = item.types.find(t => t.startsWith('image/'));
       if (imageType) {
-        const blob = await item.getType(imageType);
+        var blob = await item.getType(imageType);
         processImageFile(blob, target);
         return;
       }
@@ -1882,18 +1881,18 @@ async function pasteFromClipboard(target) {
 // TAG SUGGESTIONS
 // ================================================================
 function updateTagSuggestions() {
-  const allTags = {};
+  var allTags = {};
   DATA.problems.forEach(p => (p.tags || []).forEach(t => { allTags[t] = (allTags[t] || 0) + 1; }));
-  const sorted = Object.entries(allTags).sort((a,b) => b[1] - a[1]).slice(0, 8);
-  const container = document.getElementById('tagSuggestions');
+  var sorted = Object.entries(allTags).sort((a,b) => b[1] - a[1]).slice(0, 8);
+  var container = document.getElementById('tagSuggestions');
   if (!container) return;
   container.innerHTML = sorted.map(([tag]) => 
     `<button class="sp-btn" style="font-size:11px" onclick="addTagFromSuggestion('${tag}')">#${tag}</button>`
   ).join('');
 }
 function addTagFromSuggestion(tag) {
-  const input = document.getElementById('addTags');
-  const current = input.value.trim();
+  var input = document.getElementById('addTags');
+  var current = input.value.trim();
   if (current.split(/[\s,]+/).includes(tag)) return;
   input.value = current ? current + ' ' + tag : tag;
 }
@@ -1902,15 +1901,15 @@ function addTagFromSuggestion(tag) {
 // CONFETTI EFFECT
 // ================================================================
 function fireConfetti() {
-  const canvas = document.createElement('canvas');
+  var canvas = document.createElement('canvas');
   canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999';
   document.body.appendChild(canvas);
-  const ctx = canvas.getContext('2d');
+  var ctx = canvas.getContext('2d');
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  const pieces = [];
-  const colors = ['#6c63ff','#4ecdc4','#ff6b6b','#ffd93d','#51cf66','#ff9ff3','#54a0ff'];
-  for (let i = 0; i < 80; i++) {
+  var pieces = [];
+  var colors = ['#6c63ff','#4ecdc4','#ff6b6b','#ffd93d','#51cf66','#ff9ff3','#54a0ff'];
+  for (var i = 0; i < 80; i++) {
     pieces.push({
       x: canvas.width * 0.5 + (Math.random() - 0.5) * 200,
       y: canvas.height * 0.5,
@@ -1924,7 +1923,7 @@ function fireConfetti() {
       gravity: 0.4 + Math.random() * 0.2
     });
   }
-  let frame = 0;
+  var frame = 0;
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     pieces.forEach(p => {
@@ -1943,10 +1942,10 @@ function fireConfetti() {
 // ================================================================
 // PROBLEM DETAIL VIEW (from list → solve/edit)
 // ================================================================
-let isSingleProblemMode = false;
+var isSingleProblemMode = false;
 
 function openProblemDetail(id) {
-  const p = DATA.problems.find(x => x.id === id);
+  var p = DATA.problems.find(x => x.id === id);
   if (!p) return;
   isSingleProblemMode = true;
   currentQueue = [p];
@@ -1962,9 +1961,9 @@ function openProblemDetail(id) {
 // ================================================================
 // PROBLEM LIST
 // ================================================================
-let listFilter = 'all';
-let listTagFilter = '';
-let listSubjectFilter = '';
+var listFilter = 'all';
+var listTagFilter = '';
+var listSubjectFilter = '';
 function renderList() {
   // Curriculum filter
   var cFilter = document.getElementById('curriculumFilter');
@@ -1972,11 +1971,11 @@ function renderList() {
   var juku = DATA.settings.jukuType || 'none';
   var gradeInfo = getJukuGradeMonth(DATA.settings.birthDate);
 
-  const container = document.getElementById('problemListContainer');
-  const filterRow = document.getElementById('filterRow');
-  const subjectFilterRow = document.getElementById('subjectFilterRow');
-  const tagFilterRow = document.getElementById('tagFilterRow');
-  const filters = [
+  var container = document.getElementById('problemListContainer');
+  var filterRow = document.getElementById('filterRow');
+  var subjectFilterRow = document.getElementById('subjectFilterRow');
+  var tagFilterRow = document.getElementById('tagFilterRow');
+  var filters = [
     { key: 'all', label: 'すべて' },
     { key: 'priority', label: '🔴 最優先' },
     { key: 'review', label: '🟡 復習' },
@@ -1988,24 +1987,24 @@ function renderList() {
   ).join('');
 
   // Subject filter
-  const subjects = [...new Set(DATA.problems.map(p => p.subject))];
+  var subjects = [...new Set(DATA.problems.map(p => p.subject))];
   subjectFilterRow.innerHTML = `<button class="filter-chip ${!listSubjectFilter ? 'active' : ''}" onclick="listSubjectFilter='';renderList()">全教科</button>` +
     subjects.map(s => `<button class="filter-chip ${listSubjectFilter === s ? 'active' : ''}" onclick="listSubjectFilter='${s}';renderList()">${s}</button>`).join('');
 
   // Tag filter
-  const allTags = {};
+  var allTags = {};
   DATA.problems.forEach(p => (p.tags || []).forEach(t => { allTags[t] = (allTags[t] || 0) + 1; }));
-  const tagList = Object.entries(allTags).sort((a,b) => b[1] - a[1]);
+  var tagList = Object.entries(allTags).sort((a,b) => b[1] - a[1]);
   tagFilterRow.innerHTML = tagList.length ? (`<button class="filter-chip ${!listTagFilter ? 'active' : ''}" onclick="listTagFilter='';renderList()">全タグ</button>` +
     tagList.map(([tag]) => `<button class="filter-chip ${listTagFilter === tag ? 'active' : ''}" onclick="listTagFilter='${tag}';renderList()">#${tag}</button>`).join('')) : '';
 
-  let items = DATA.problems;
+  var items = DATA.problems;
   if (listFilter !== 'all') items = items.filter(p => classifyZone(p) === listFilter);
   if (listSubjectFilter) items = items.filter(p => p.subject === listSubjectFilter);
   if (listTagFilter) items = items.filter(p => (p.tags || []).includes(listTagFilter));
 
   // Sort
-  const sortKey = document.getElementById('listSort') ? document.getElementById('listSort').value : 'next';
+  var sortKey = document.getElementById('listSort') ? document.getElementById('listSort').value : 'next';
   items = [...items].sort((a, b) => {
     if (sortKey === 'next') return (a.nextReviewDate || '').localeCompare(b.nextReviewDate || '');
     if (sortKey === 'created') return (b.createdAt || '').localeCompare(a.createdAt || '');
@@ -2019,12 +2018,12 @@ function renderList() {
     return;
   }
   container.innerHTML = items.map(p => {
-    const zone = classifyZone(p);
-    const sz = classifyStretchZone(p);
-    const color = {priority:'var(--danger)',review:'var(--warning)',graduated:'var(--success)',frozen:'var(--frozen)',discard:'var(--text2)'}[zone] || 'var(--text2)';
-    const hist = (p.history || []).slice(-5);
-    const dotsHtml = hist.map(h => h.result === 'correct' ? '⭕' : h.result === 'hard' ? '🔺' : '❌').join('');
-    const tagsHtml = (p.tags||[]).map(t => `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--surface2);color:var(--text2)">#${t}</span>`).join(' ');
+    var zone = classifyZone(p);
+    var sz = classifyStretchZone(p);
+    var color = {priority:'var(--danger)',review:'var(--warning)',graduated:'var(--success)',frozen:'var(--frozen)',discard:'var(--text2)'}[zone] || 'var(--text2)';
+    var hist = (p.history || []).slice(-5);
+    var dotsHtml = hist.map(h => h.result === 'correct' ? '⭕' : h.result === 'hard' ? '🔺' : '❌').join('');
+    var tagsHtml = (p.tags||[]).map(t => `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--surface2);color:var(--text2)">#${t}</span>`).join(' ');
     return `
       <div class="problem-list-item" style="flex-wrap:wrap">
         <div class="pli-status" style="background:${color}"></div>
@@ -2047,11 +2046,11 @@ function renderList() {
 
 
 function freezeProblem(id) {
-  const p = DATA.problems.find(x => x.id === id);
+  var p = DATA.problems.find(x => x.id === id);
   if (p) { p.frozen = true; saveData(DATA); renderList(); renderToday(); }
 }
 function unfreezeProblem(id) {
-  const p = DATA.problems.find(x => x.id === id);
+  var p = DATA.problems.find(x => x.id === id);
   if (p) { p.frozen = false; p.nextReviewDate = today(); saveData(DATA); renderList(); }
 }
 function deleteProblem(id) {
@@ -2064,9 +2063,9 @@ function deleteProblem(id) {
 // DASHBOARD
 // ================================================================
 function renderDashboard() {
-  const zones = { priority: 0, review: 0, graduated: 0, frozen: 0, discard: 0 };
+  var zones = { priority: 0, review: 0, graduated: 0, frozen: 0, discard: 0 };
   _zoneProbs={priority:[],review:[],graduated:[],frozen:[],discard:[]};
-  DATA.problems.forEach(p => { const z = classifyZone(p); zones[z] = (zones[z]||0) + 1; (_zoneProbs[z]=_zoneProbs[z]||[]).push(p); });
+  DATA.problems.forEach(p => { var z = classifyZone(p); zones[z] = (zones[z]||0) + 1; (_zoneProbs[z]=_zoneProbs[z]||[]).push(p); });
   // Stretch Zone stats
   var szStats = getStretchZoneStats();
   var szEl = document.getElementById('stretchZoneGrid');
@@ -2099,13 +2098,13 @@ function renderDashboard() {
     <div class="zone-card zone-review" onclick="showZoneDetail('review','🟡 復習待ち')" style="cursor:pointer"><div class="num">${zones.review + zones.discard}</div><div class="label">🟡 復習待ち</div></div>
   `;
   // subject bars
-  const subjects = getSubjects();
-  const colors = ['var(--accent)', 'var(--danger)', 'var(--accent2)', 'var(--warning)', 'var(--frozen)'];
-  const bars = document.getElementById('subjectBars');
+  var subjects = getSubjects();
+  var colors = ['var(--accent)', 'var(--danger)', 'var(--accent2)', 'var(--warning)', 'var(--frozen)'];
+  var bars = document.getElementById('subjectBars');
   bars.innerHTML = subjects.map((s, i) => {
-    const all = DATA.problems.filter(p => p.subject === s);
-    const grad = all.filter(p => p.masteryLevel >= 4).length;
-    const pct = all.length > 0 ? Math.round(grad / all.length * 100) : 0;
+    var all = DATA.problems.filter(p => p.subject === s);
+    var grad = all.filter(p => p.masteryLevel >= 4).length;
+    var pct = all.length > 0 ? Math.round(grad / all.length * 100) : 0;
     return `
       <div class="subject-row">
         <span class="subject-name">${s}</span>
@@ -2115,12 +2114,12 @@ function renderDashboard() {
     `;
   }).join('');
   // weekly report
-  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
-  const weekStr = weekAgo.toISOString().split('T')[0];
-  const weekSessions = DATA.sessionLog.filter(s => s.date >= weekStr);
-  const weekCorrect = weekSessions.reduce((a, s) => a + s.correct, 0);
-  const weekWrong = weekSessions.reduce((a, s) => a + s.wrong, 0);
-  const weekGrad = weekSessions.reduce((a, s) => a + (s.graduated || 0), 0);
+  var weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+  var weekStr = weekAgo.toISOString().split('T')[0];
+  var weekSessions = DATA.sessionLog.filter(s => s.date >= weekStr);
+  var weekCorrect = weekSessions.reduce((a, s) => a + s.correct, 0);
+  var weekWrong = weekSessions.reduce((a, s) => a + s.wrong, 0);
+  var weekGrad = weekSessions.reduce((a, s) => a + (s.graduated || 0), 0);
   document.getElementById('weeklyContent').innerHTML = `
     復習セッション: <strong>${weekSessions.length}回</strong><br>
     正解: <strong style="color:var(--success)">${weekCorrect}</strong> ／
@@ -2141,7 +2140,7 @@ function renderSettings() {
   document.getElementById('settingExamDate').value=DATA.settings.examDate||'';
     document.getElementById('settingExamName').value=DATA.settings.examName||'';
   }
-  const level = (DATA.settings && DATA.settings.schoolLevel) || 'elementary';
+  var level = (DATA.settings && DATA.settings.schoolLevel) || 'elementary';
   document.getElementById('settingSchoolLevel').value = level;
   document.getElementById('settingCap').value = DATA.settings.dailyCap || 15;
   document.getElementById('settingFreeze').value = DATA.settings.freezeThreshold || 5;
@@ -2149,13 +2148,13 @@ function renderSettings() {
   updateFreezeLabel();
 }
 function updateCapLabel() {
-  const v = document.getElementById('settingCap').value;
+  var v = document.getElementById('settingCap').value;
   document.getElementById('capLabel').textContent = v + '問';
   DATA.settings.dailyCap = parseInt(v);
   saveData(DATA);
 }
 function updateFreezeLabel() {
-  const v = document.getElementById('settingFreeze').value;
+  var v = document.getElementById('settingFreeze').value;
   document.getElementById('freezeLabel').textContent = v + '回';
   document.getElementById('algoFreezeN').textContent = v;
   DATA.settings.freezeThreshold = parseInt(v);
@@ -2166,19 +2165,19 @@ function updateFreezeLabel() {
 // IMPORT / EXPORT
 // ================================================================
 function exportData() {
-  const blob = new Blob([JSON.stringify(DATA, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  var blob = new Blob([JSON.stringify(DATA, null, 2)], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
   a.href = url; a.download = `revenge-note-${today()}.json`;
   a.click(); URL.revokeObjectURL(url);
 }
 function importData(e) {
-  const file = e.target.files[0];
+  var file = e.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
+  var reader = new FileReader();
   reader.onload = () => {
     try {
-      const imported = JSON.parse(reader.result);
+      var imported = JSON.parse(reader.result);
       if (imported.problems) {
         DATA = imported;
         saveData(DATA);
@@ -2200,7 +2199,7 @@ function resetAll() {
 // ================================================================
 function loadSampleData() {
   if (DATA.problems.length > 0 && !confirm('既存データに追加されます。続けますか？')) return;
-  const samples = [
+  var samples = [
     // ============ 4年生 ============
     // 算数4年
     { subject:'算数', topic:'計算 - 計算の工夫', source:'予習シリーズ 4年上 第3回', frequency:'high', difficulty:'basic', content:'25×36 を工夫して計算しなさい', answer:'【解法】25×4=100を利用\n25×36=25×4×9=100×9=900\n💡25×4=100を覚えると計算が速い', correctRate:75, tags:['4年','計算'] },
@@ -2283,18 +2282,18 @@ function loadSampleData() {
 
   // Generate varied review states for demo
   samples.forEach((s, i) => {
-    const d = new Date();
+    var d = new Date();
     // Vary next review dates
-    const offsets = [-7,-3,-1,0,0,1,2,3,5,7,14];
-    const offset = offsets[i % offsets.length];
+    var offsets = [-7,-3,-1,0,0,1,2,3,5,7,14];
+    var offset = offsets[i % offsets.length];
     d.setDate(d.getDate() + offset);
 
     // Simulate history for some problems
-    const history = [];
-    const histCount = Math.floor(Math.random() * 5);
-    const results = ['correct','hard','incorrect'];
-    for (let h = 0; h < histCount; h++) {
-      const hDate = new Date();
+    var history = [];
+    var histCount = Math.floor(Math.random() * 5);
+    var results = ['correct','hard','incorrect'];
+    for (var h = 0; h < histCount; h++) {
+      var hDate = new Date();
       hDate.setDate(hDate.getDate() - (histCount - h) * 3);
       history.push({
         date: hDate.toISOString().split('T')[0],
@@ -2304,8 +2303,8 @@ function loadSampleData() {
     }
 
     // Vary mastery levels
-    let masteryLevel, reps, consFailures, ef, interval;
-    const rand = Math.random();
+    var masteryLevel, reps, consFailures, ef, interval;
+    var rand = Math.random();
     if (rand < 0.12) {
       // Graduated
       masteryLevel = 4; reps = 5; consFailures = 0; ef = 2.8; interval = 30;
@@ -2320,7 +2319,7 @@ function loadSampleData() {
       masteryLevel = 2 + Math.floor(Math.random()*2); reps = 2 + Math.floor(Math.random()*2); consFailures = 0; ef = 2.3 + Math.random()*0.5; interval = 3 + Math.floor(Math.random()*10);
     }
 
-    const p = {
+    var p = {
       id: 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2,5) + '_' + i,
       subject: s.subject,
       topic: s.topic,
@@ -2354,8 +2353,8 @@ function loadSampleData() {
 // UTILS
 // ================================================================
 function formatDate(d) {
-  const dt = new Date(d + 'T00:00:00');
-  const days = ['日','月','火','水','木','金','土'];
+  var dt = new Date(d + 'T00:00:00');
+  var days = ['日','月','火','水','木','金','土'];
   return `${dt.getMonth()+1}月${dt.getDate()}日（${days[dt.getDay()]}）`;
 }
 
@@ -2363,10 +2362,10 @@ function formatDate(d) {
 // ================================================================
 // TIMER (Pomodoro)
 // ================================================================
-let timerSec=25*60,timerRunning=false,timerInterval=null;
-const timerModes=[{label:'25分',sec:25*60},{label:'5分休',sec:5*60},{label:'50分',sec:50*60},{label:'10分休',sec:10*60}];
-let timerModeIdx=0;
-function updateTimerDisplay(){const m=Math.floor(timerSec/60),s=timerSec%60;document.getElementById('timerDisplay').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')}
+var timerSec=25*60,timerRunning=false,timerInterval=null;
+var timerModes=[{label:'25分',sec:25*60},{label:'5分休',sec:5*60},{label:'50分',sec:50*60},{label:'10分休',sec:10*60}];
+var timerModeIdx=0;
+function updateTimerDisplay(){var m=Math.floor(timerSec/60),s=timerSec%60;document.getElementById('timerDisplay').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')}
 function toggleTimer(){if(timerRunning){clearInterval(timerInterval);timerRunning=false;document.getElementById('timerStartBtn').textContent='▶'}else{timerRunning=true;document.getElementById('timerStartBtn').textContent='⏸';timerInterval=setInterval(function(){timerSec--;if(timerSec<=0){clearInterval(timerInterval);timerRunning=false;document.getElementById('timerStartBtn').textContent='▶';alert('⏰ タイマー終了！')}updateTimerDisplay()},1000)}}
 function resetTimer(){clearInterval(timerInterval);timerRunning=false;timerSec=timerModes[timerModeIdx].sec;updateTimerDisplay();document.getElementById('timerStartBtn').textContent='▶'}
 function cycleTimerMode(){timerModeIdx=(timerModeIdx+1)%timerModes.length;timerSec=timerModes[timerModeIdx].sec;document.getElementById('timerModeBtn').textContent=timerModes[timerModeIdx].label;updateTimerDisplay();if(timerRunning){clearInterval(timerInterval);timerRunning=false;document.getElementById('timerStartBtn').textContent='▶'}}
@@ -2374,7 +2373,7 @@ function cycleTimerMode(){timerModeIdx=(timerModeIdx+1)%timerModes.length;timerS
 // ================================================================
 // CALENDAR
 // ================================================================
-let calMonth=new Date().getMonth(),calYear=new Date().getFullYear();
+var calMonth=new Date().getMonth(),calYear=new Date().getFullYear();
 function renderCalendar(){
   var el=document.getElementById('calTitle');if(!el)return;
   el.textContent=calYear+'年'+(calMonth+1)+'月';
@@ -2574,7 +2573,7 @@ function initTheme(){
 // School year: Feb=start. '4-2'~'4-7'=前期, '4-9'~'5-1'=後期
 // null = not in standard curriculum for that juku
 
-const JUKU_CURRICULUM = {
+var JUKU_CURRICULUM = {
   // ===== 算数 =====
   // --- 4年 前期 (2月~7月) ---
   '計算の工夫':        {subject:'算数', yotsuya:'4-2',  sapix:'4-2',  nichinoken:'4-2'},
@@ -2816,7 +2815,7 @@ function generateSampleProblems() {
 // INIT
 // ================================================================
 // Initialize school level
-const initLevel = (DATA.settings && DATA.settings.schoolLevel) || 'elementary';
+var initLevel = (DATA.settings && DATA.settings.schoolLevel) || 'elementary';
 document.getElementById('settingSchoolLevel').value = initLevel;
 updateSubjectDropdown();
 
