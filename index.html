@@ -206,6 +206,12 @@ body {
   transition: transform .15s;
 }
 .btn-reveal:active { transform: scale(0.97); }
+.btn-skip {
+  width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: none; color: var(--text2); font-size: 13px; cursor: pointer; font-family: inherit;
+  margin-top: 4px;
+}
+.btn-skip:active { background: var(--surface2); }
 .answer-section { display: none; margin-top: 12px; padding: 14px; background: var(--surface2); border-radius: 10px; }
 .answer-section.show { display: block; }
 .answer-section strong { font-size: 12px; color: var(--text2); }
@@ -463,24 +469,17 @@ body {
 .today-layout { display:block; }
 .today-left, .today-right { display:block; }
 @media(min-width:1024px) {
-  /* Bottom nav hidden, sidebar shown */
   nav.nav{display:none!important}
   .nav-side{display:flex!important}
   .timer-bar{left:72px}
   .screen { max-width:none; padding:56px 16px 8px 16px; margin-left:72px; }
-  /* Today: 2-column grid */
-  .today-layout{display:grid;grid-template-columns:240px 1fr;gap:12px;height:calc(100vh - 64px)}
-  .today-left{overflow-y:auto;max-height:calc(100vh - 64px);padding-right:4px;-webkit-overflow-scrolling:touch}
-  .today-right{overflow:hidden;max-height:calc(100vh - 64px)}
-  .today-right .card-wrap{display:flex!important;height:100%}
-  /* Review: problem+answer left column, scratchpad right column, fill height */
-  .review-columns{flex-direction:row!important;gap:12px;height:100%}
-  .review-info{flex:0 0 320px;overflow-y:auto;max-height:100%;-webkit-overflow-scrolling:touch;padding-right:8px}
-  .review-scratch{flex:1;min-width:0;height:100%;display:flex;flex-direction:column}
-  .review-scratch .scratchpad-wrap{flex:1;display:flex;flex-direction:column}
-  .review-scratch .scratchpad-canvas{flex:1;min-height:0!important;width:100%!important}
-  .today-right .btn-reveal{width:100%}
-  .today-right .answer-btns{flex-wrap:nowrap}
+  /* Today: 2-column, left=info+problem, right=scratchpad */
+  .today-layout{display:grid;grid-template-columns:340px 1fr;gap:12px;height:calc(100vh - 64px)}
+  .today-left{overflow-y:auto;max-height:calc(100vh - 64px);padding-right:8px;-webkit-overflow-scrolling:touch}
+  .today-right{overflow:hidden;height:calc(100vh - 64px);display:flex;flex-direction:column}
+  .today-right .scratchpad-wrap{flex:1;display:flex;flex-direction:column}
+  .today-right .scratchpad-canvas{flex:1;min-height:0!important;width:100%!important}
+  .today-left .card-wrap{display:flex!important}
   /* Compact left pane */
   .queue-summary{padding:10px}
   .queue-count{font-size:20px}
@@ -561,7 +560,7 @@ body {
 <!-- === SCREEN: TODAY === -->
 <div class="screen active" id="screenToday">
   <div class="today-layout">
-    <!-- LEFT PANE -->
+    <!-- LEFT PANE: today info + problem/answer -->
     <div class="today-left">
       <div class="header">
         <div>
@@ -601,6 +600,22 @@ body {
         <p id="completionMsg"></p>
         <div class="completion-stats" id="completionStats"></div>
       </div>
+      <!-- Problem card + answer (in left pane) -->
+      <div class="card-wrap" id="cardWrap">
+        <div id="cardProgress" style="font-size:12px;color:var(--text2);text-align:center"></div>
+        <div class="problem-card" id="problemCard"></div>
+        <button class="btn-reveal" id="btnReveal" onclick="revealAnswer()">👁 答えを見る</button>
+        <div class="answer-section" id="answerSection"></div>
+        <div class="review-memo" id="reviewMemo" style="display:none">
+          <textarea id="reviewMemoText" placeholder="メモ（気づいたこと、間違えたポイントなど）"></textarea>
+        </div>
+        <div class="answer-btns" id="answerBtns" style="display:none">
+          <button class="btn-ans btn-wrong" onclick="recordAnswer(0)">❌ できなかった</button>
+          <button class="btn-ans btn-hard" onclick="recordAnswer(3)">🤔 あやしい</button>
+          <button class="btn-ans btn-correct" onclick="recordAnswer(5)">✅ できた！</button>
+        </div>
+        <button class="btn-skip" id="btnSkip" onclick="skipProblem()" style="display:none">⏭ スキップ</button>
+      </div>
       <div class="card" id="calCard" style="margin-top:12px;background:var(--surface);border-radius:var(--radius);padding:12px 16px;border:1px solid var(--border)">
         <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleCalendar()">
           <span style="font-size:12px;font-weight:600">📅 学習カレンダー</span>
@@ -616,41 +631,19 @@ body {
         </div>
       </div>
     </div>
-    <!-- RIGHT PANE (review area) -->
+    <!-- RIGHT PANE: scratchpad only -->
     <div class="today-right">
-      <div class="card-wrap" id="cardWrap">
-        <div class="review-columns">
-          <!-- Review Left: problem info + answer -->
-          <div class="review-info" id="reviewInfo">
-            <div id="cardProgress" style="font-size:12px;color:var(--text2);text-align:center"></div>
-            <div class="problem-card" id="problemCard"></div>
-            <button class="btn-reveal" id="btnReveal" onclick="revealAnswer()">👁 答えを見る</button>
-            <div class="answer-section" id="answerSection"></div>
-            <div class="review-memo" id="reviewMemo" style="display:none">
-              <textarea id="reviewMemoText" placeholder="メモ（気づいたこと、間違えたポイントなど）"></textarea>
-            </div>
-            <div class="answer-btns" id="answerBtns" style="display:none">
-              <button class="btn-ans btn-wrong" onclick="recordAnswer(0)">❌ できなかった</button>
-              <button class="btn-ans btn-hard" onclick="recordAnswer(3)">🤔 あやしい</button>
-              <button class="btn-ans btn-correct" onclick="recordAnswer(5)">✅ できた！</button>
-            </div>
-          </div>
-          <!-- Review Right: scratchpad -->
-          <div class="review-scratch">
-            <div class="scratchpad-wrap" id="scratchpadWrap">
-              <div class="scratchpad-toolbar" id="scratchpadToolbar">
-                <button class="sp-btn" onclick="clearScratchpad()">消す</button>
-                <button class="sp-btn" id="spEraser" onclick="toggleEraser()">消しゴム</button>
-                <input type="range" min="1" max="8" value="3" id="spLineWidth" style="width:50px;accent-color:var(--accent)">
-                <div class="sp-color active" style="background:#333" onclick="setScratchColor('#333',this)"></div>
-                <div class="sp-color" style="background:#6c63ff" onclick="setScratchColor('#6c63ff',this)"></div>
-                <div class="sp-color" style="background:#ff6b6b" onclick="setScratchColor('#ff6b6b',this)"></div>
-                <div class="sp-color" style="background:#51cf66" onclick="setScratchColor('#51cf66',this)"></div>
-              </div>
-              <canvas class="scratchpad-canvas" id="scratchpadCanvas" width="500" height="350"></canvas>
-            </div>
-          </div>
+      <div class="scratchpad-wrap" id="scratchpadWrap">
+        <div class="scratchpad-toolbar" id="scratchpadToolbar">
+          <button class="sp-btn" onclick="clearScratchpad()">消す</button>
+          <button class="sp-btn" id="spEraser" onclick="toggleEraser()">消しゴム</button>
+          <input type="range" min="1" max="8" value="3" id="spLineWidth" style="width:50px;accent-color:var(--accent)">
+          <div class="sp-color active" style="background:#333" onclick="setScratchColor('#333',this)"></div>
+          <div class="sp-color" style="background:#6c63ff" onclick="setScratchColor('#6c63ff',this)"></div>
+          <div class="sp-color" style="background:#ff6b6b" onclick="setScratchColor('#ff6b6b',this)"></div>
+          <div class="sp-color" style="background:#51cf66" onclick="setScratchColor('#51cf66',this)"></div>
         </div>
+        <canvas class="scratchpad-canvas" id="scratchpadCanvas" width="500" height="350"></canvas>
       </div>
     </div>
   </div>
@@ -1247,7 +1240,7 @@ function showCard() {
     <div class="card-topic">${p.topic}</div>
     ${p.lastMemo ? `<div style="font-size:11px;color:var(--accent);margin-bottom:4px">📝 ${p.lastMemo}</div>` : ''}
     <div class="card-content" id="cardContentArea">
-      ${hasImage ? `<div class="img-canvas-wrap" id="imgCanvasWrap"><img id="problemImg" src="${p.contentImage}" alt="問題画像" crossorigin="anonymous" onload="initImageCanvas()"><canvas id="imgOverlayCanvas"></canvas></div><div class="img-draw-hint">✏️ 画像の上に直接書き込めます</div>` : (p.content || '')}
+      ${hasImage ? `<div class="img-canvas-wrap" id="imgCanvasWrap"><img id="problemImg" src="${p.contentImage}" alt="問題画像" onload="initImageCanvas()"><canvas id="imgOverlayCanvas"></canvas></div><div class="img-draw-hint">✏️ 画像の上に直接書き込めます</div>` : (p.content || '')}
     </div>
     <div class="card-meta">
       ${getStretchZoneBadge(classifyStretchZone(p))}
@@ -1268,6 +1261,7 @@ function showCard() {
   document.getElementById('answerBtns').style.display = 'none';
   document.getElementById('reviewMemo').style.display = 'none';
   document.getElementById('reviewMemoText').value = '';
+  document.getElementById('btnSkip').style.display = '';
 
   // Reset scratchpad
   clearScratchpad();
@@ -1284,6 +1278,17 @@ function revealAnswer() {
   document.getElementById('btnReveal').style.display = 'none';
   document.getElementById('answerBtns').style.display = 'flex';
   document.getElementById('reviewMemo').style.display = 'block';
+  document.getElementById('btnSkip').style.display = 'none';
+}
+
+function skipProblem() {
+  // Move to next without recording answer - problem stays in queue for later
+  currentIndex++;
+  if (currentIndex >= currentQueue.length) {
+    finishSession();
+  } else {
+    showCard();
+  }
 }
 
 // ================================================================
