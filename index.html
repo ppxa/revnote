@@ -23,6 +23,18 @@
   --grad2: linear-gradient(135deg, #ff6b6b 0%, #ffd93d 100%);
   --radius: 14px;
   --shadow: 0 4px 24px rgba(0,0,0,0.3);
+  --canvas-bg: #f5f5f5;
+}
+/* Light theme */
+:root.light {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface2: #eef0f4;
+  --border: #d8dce6;
+  --text: #1a1d27;
+  --text2: #6b7085;
+  --shadow: 0 4px 24px rgba(0,0,0,0.08);
+  --canvas-bg: #ffffff;
 }
 
 /* STRETCH ZONE */
@@ -200,7 +212,7 @@ body {
 /* scratchpad */
 .scratchpad-wrap { margin-top: 10px; position: relative; -webkit-user-select:none; user-select:none; }
 .scratchpad-canvas {
-  width: 100%; border-radius: 10px; background: #f5f5f5;
+  width: 100%; border-radius: 10px; background: var(--canvas-bg);
   border: 1px solid var(--border); touch-action: none;
   -webkit-user-select:none; user-select:none;
   -webkit-touch-callout:none;
@@ -523,6 +535,8 @@ body {
   <button class="s-item" data-screen="List" onclick="switchScreen('List')"><span>📚</span>一覧</button>
   <button class="s-item" data-screen="Dash" onclick="switchScreen('Dash')"><span>📊</span>分析</button>
   <button class="s-item" data-screen="Settings" onclick="switchScreen('Settings')"><span>⚙️</span>設定</button>
+  <div style="flex:1"></div>
+  <button class="s-item" onclick="toggleTheme()" id="sideThemeBtn"><span>🌙</span>テーマ</button>
 </nav>
 
 <!-- === GRADUATED FLASH === -->
@@ -810,6 +824,13 @@ body {
     <div class="setting-row" style="margin-top:8px"><span class="setting-label">目標校</span><input class="form-input" id="settingExamName" onchange="saveExamGoal()" placeholder="例: 開成中学" style="width:180px"></div>
   </div>
   <div class="setting-card">
+    <h3>🎨 テーマ</h3>
+    <div class="setting-row">
+      <span class="setting-label">表示モード</span>
+      <button class="btn-export" id="settingThemeBtn" onclick="toggleTheme()" style="min-width:100px">🌙 ダーク</button>
+    </div>
+  </div>
+  <div class="setting-card">
     <h3>学校段階</h3>
     <div class="setting-row">
       <span class="setting-label">対象</span>
@@ -1029,8 +1050,14 @@ let sessionStats = { correct: 0, wrong: 0, hard: 0, graduated: 0 };
 function switchScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen' + name).classList.add('active');
-  document.querySelectorAll('.nav-item,.s-item').forEach((n, i) => {
-    n.classList.toggle('active', ['Today','Add','List','Dash','Settings'][i] === name);
+  // Update bottom nav
+  var screens = ['Today','Add','List','Dash','Settings'];
+  document.querySelectorAll('.nav-item').forEach((n, i) => {
+    n.classList.toggle('active', screens[i] === name);
+  });
+  // Update sidebar nav
+  document.querySelectorAll('.s-item').forEach(n => {
+    n.classList.toggle('active', n.getAttribute('data-screen') === name);
   });
   if (name !== 'Add') { addCount = 0; document.getElementById('addContinueHint').style.display = 'none'; }
   if (name === 'Today') renderToday();
@@ -1256,7 +1283,7 @@ function initScratchpad() {
   spCtx = canvas.getContext('2d');
   spCtx.lineCap = 'round';
   spCtx.lineJoin = 'round';
-  spCtx.fillStyle = '#f5f5f5';
+  spCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim() || '#f5f5f5';
   spCtx.fillRect(0, 0, canvas.width, canvas.height);
   spDrawing = false;
   spErasing = false;
@@ -1277,7 +1304,7 @@ function spPos(e) {
 
 function clearScratchpad() {
   const c = document.getElementById('scratchpadCanvas');
-  if (c && c.getContext) { const ctx = c.getContext('2d'); ctx.fillStyle = '#f5f5f5'; ctx.fillRect(0, 0, c.width, c.height); }
+  if (c && c.getContext) { const ctx = c.getContext('2d'); ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim() || '#f5f5f5'; ctx.fillRect(0, 0, c.width, c.height); }
 }
 
 function toggleEraser() {
@@ -2518,6 +2545,29 @@ function getStretchZoneStats() {
 }
 
 // ================================================================
+// THEME (light/dark)
+// ================================================================
+function toggleTheme(){
+  var isLight = document.documentElement.classList.toggle('light');
+  localStorage.setItem('revnote-theme', isLight ? 'light' : 'dark');
+  updateThemeButtons();
+}
+function updateThemeButtons(){
+  var isLight = document.documentElement.classList.contains('light');
+  var icon = isLight ? '☀️' : '🌙';
+  var label = isLight ? 'ライト' : 'ダーク';
+  var btn = document.getElementById('settingThemeBtn');
+  if(btn) btn.textContent = icon + ' ' + label;
+  var sBtn = document.getElementById('sideThemeBtn');
+  if(sBtn) sBtn.innerHTML = '<span>' + icon + '</span>テーマ';
+}
+function initTheme(){
+  var saved = localStorage.getItem('revnote-theme');
+  if(saved === 'light') document.documentElement.classList.add('light');
+  updateThemeButtons();
+}
+
+// ================================================================
 // JUKU CURRICULUM DATA
 // ================================================================
 // Format: grade-month (e.g. '4-2' = 4年生2月 = 新4年最初)
@@ -2771,6 +2821,7 @@ document.getElementById('settingSchoolLevel').value = initLevel;
 updateSubjectDropdown();
 
 updateTimerDisplay();
+initTheme();
 if(location.hash.startsWith("#sync="))importFromURL();
 renderToday();
 </script>
