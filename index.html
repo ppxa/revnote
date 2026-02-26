@@ -467,32 +467,28 @@ body {
   nav.nav{display:none!important}
   .nav-side{display:flex!important}
   .timer-bar{left:72px}
-  .screen { max-width:none; padding:56px 20px 8px 20px; margin-left:72px; }
-  /* Today: single column, no 2-col grid */
-  .today-layout{display:flex;flex-direction:column;height:calc(100vh - 64px);overflow:hidden}
-  .today-left{overflow:hidden;flex-shrink:0;padding:0}
-  .today-right{flex:1;min-height:0;overflow:hidden}
+  .screen { max-width:none; padding:56px 16px 8px 16px; margin-left:72px; }
+  /* Today: 2-column grid */
+  .today-layout{display:grid;grid-template-columns:240px 1fr;gap:12px;height:calc(100vh - 64px)}
+  .today-left{overflow-y:auto;max-height:calc(100vh - 64px);padding-right:4px;-webkit-overflow-scrolling:touch}
+  .today-right{overflow:hidden;max-height:calc(100vh - 64px)}
   .today-right .card-wrap{display:flex!important;height:100%}
-  /* Review: problem+answer left, scratchpad right, fill height */
+  /* Review: problem+answer left column, scratchpad right column, fill height */
   .review-columns{flex-direction:row!important;gap:12px;height:100%}
-  .review-info{flex:0 0 340px;overflow-y:auto;max-height:100%;-webkit-overflow-scrolling:touch;padding-right:8px}
+  .review-info{flex:0 0 320px;overflow-y:auto;max-height:100%;-webkit-overflow-scrolling:touch;padding-right:8px}
   .review-scratch{flex:1;min-width:0;height:100%;display:flex;flex-direction:column}
   .review-scratch .scratchpad-wrap{flex:1;display:flex;flex-direction:column}
   .review-scratch .scratchpad-canvas{flex:1;min-height:0!important;width:100%!important}
   .today-right .btn-reveal{width:100%}
   .today-right .answer-btns{flex-wrap:nowrap}
-  /* Compact left pane in landscape */
-  .today-left .header{display:none}
-  .today-left .streak-bar{padding:6px 10px;margin-bottom:4px}
-  .today-left .streak-num{font-size:16px}
+  /* Compact left pane */
   .queue-summary{padding:10px}
   .queue-count{font-size:20px}
-  .today-left .card{margin-bottom:6px!important;padding:10px!important}
-  .problem-list-item{padding:14px 16px}
+  .today-left .header{margin-bottom:2px}
+  .today-left .header h1{font-size:15px}
+  .today-left .streak-bar{padding:6px 10px;margin-bottom:6px}
+  .today-left .streak-num{font-size:16px}
   .screen{padding-bottom:4px!important}
-  /* Hide calendar, exam countdown, month topics in landscape to save space */
-  #examCountdown{display:none!important}
-  #monthTopics{display:none!important}
 }
 
 /* Image canvas overlay for drawing on problem image */
@@ -2308,7 +2304,12 @@ function loadSampleData() {
     { subject:'社会', topic:'公民 - 憲法・人権', source:'予習シリーズ 6年下 第1回', frequency:'high', difficulty:'standard', content:'日本国憲法の三大原則', answer:'国民主権・基本的人権の尊重・平和主義', correctRate:80, tags:['6年','公民'] },
     { subject:'社会', topic:'公民 - 国会・内閣・裁判所', source:'予習シリーズ 6年下 第3回', frequency:'high', difficulty:'hard', content:'三権分立の仕組み（それぞれの抑制関係）', answer:'国会→内閣（内閣不信任） 内閣→国会（衆議院解散） 裁判所→国会（違憲立法審査） 等', correctRate:38, tags:['6年','公民','頻出'] },
     { subject:'社会', topic:'歴史（近世〜現代） - 昭和〜戦後', source:'予習シリーズ 6年上 第12回', frequency:'high', difficulty:'standard', content:'戦後の日本の出来事を年代順に', answer:'日本国憲法(1946)→サンフランシスコ講和(1951)→高度経済成長(1960s)→沖縄返還(1972)', correctRate:42, tags:['6年','歴史'] },
-    { subject:'社会', topic:'国際 - 国際連合', source:'予習シリーズ 6年下 第6回', frequency:'medium', difficulty:'standard', content:'国連の主な機関と安全保障理事会の常任理事国', answer:'総会・安保理・経社理・事務局。常任理事国: 米英仏露中（拒否権あり）', correctRate:50, tags:['6年','公民'] },
+    { subject:'社会', topic:'国際 - 国際連合', source:'予習シリーズ 6年下 第6回', frequency:'medium', difficulty:'standard', content:'国連の主な機関と安全保障理事会の常任理事国', answer:'総会・安保理・経社理・事務局。常任理事国: 米英仏露中（拒否権あり）', correctRate:50, tags:['6年','公民'] },,
+    // ===== 📸 画像問題サンプル =====
+    { subject:'算数', topic:'角度（図形問題）', source:'予シリ4上', frequency:'high', difficulty:'standard', contentImage:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMjgwIiBzdHlsZT0iYmFja2dyb3VuZDojZmZmO2ZvbnQtZmFtaWx5OnNhbnMtc2VyaWYiPgo8dGV4dCB4PSIyMCIgeT0iMzAiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSJib2xkIj7kuIvjga7lm7Pjga5444Gu6KeS5bqm44KS5rGC44KB44Gq44GV44GE44CCPC90ZXh0Pgo8cG9seWdvbiBwb2ludHM9IjIwMCw2MCA4MCwyMjAgMzIwLDIyMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzMzIiBzdHJva2Utd2lkdGg9IjIiLz4KPHRleHQgeD0iMTg1IiB5PSI1NSIgZm9udC1zaXplPSIxMyIgZmlsbD0iIzMzMyI+QTwvdGV4dD4KPHRleHQgeD0iNTUiIHk9IjI0MCIgZm9udC1zaXplPSIxMyIgZmlsbD0iIzMzMyI+QjwvdGV4dD4KPHRleHQgeD0iMzI1IiB5PSIyNDAiIGZvbnQtc2l6ZT0iMTMiIGZpbGw9IiMzMzMiPkM8L3RleHQ+Cjx0ZXh0IHg9IjE4MiIgeT0iMTAwIiBmb250LXNpemU9IjE2IiBmaWxsPSIjNmM2M2ZmIiBmb250LXdlaWdodD0iYm9sZCI+eMKwPC90ZXh0Pgo8dGV4dCB4PSIxMDAiIHk9IjIxNSIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2U3NGMzYyI+NjXCsDwvdGV4dD4KPHRleHQgeD0iMjcwIiB5PSIyMTUiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiNlNzRjM2MiPjQwwrA8L3RleHQ+CjxwYXRoIGQ9Ik0gMTEwLDIyMCBBIDMwLDMwIDAgMCwxIDk0LDE5OCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZTc0YzNjIiBzdHJva2Utd2lkdGg9IjEuNSIvPgo8cGF0aCBkPSJNIDI5MCwyMjAgQSAzMCwzMCAwIDAsMCAzMDYsMTk4IiBmaWxsPSJub25lIiBzdHJva2U9IiNlNzRjM2MiIHN0cm9rZS13aWR0aD0iMS41Ii8+Cjwvc3ZnPg==', answer:'三角形の内角の和=180°\nx=180-65-40=75°\n💡三角形の内角の和は180°', correctRate:70, tags:['4年','図形','📸画像'] },
+    { subject:'算数', topic:'速さ（図つき）', source:'予シリ5上', frequency:'high', difficulty:'standard', contentImage:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMjUwIiBzdHlsZT0iYmFja2dyb3VuZDojZmZmO2ZvbnQtZmFtaWx5OnNhbnMtc2VyaWYiPgo8dGV4dCB4PSIyMCIgeT0iMjgiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSJib2xkIj5B5Zyw54K544GL44KJQuWcsOeCueOBvuOBpzEyMDBt6Zui44KM44Gm44GE44G+44GZ44CCPC90ZXh0Pgo8dGV4dCB4PSIyMCIgeT0iNTAiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSJib2xkIj7lpKrpg47jga/liIbpgJ82MG3jgIHoirHlrZDjga/liIbpgJ84MG3jgaflkIzmmYLjgas8L3RleHQ+Cjx0ZXh0IHg9IjIwIiB5PSI3MiIgZm9udC1zaXplPSIxNCIgZm9udC13ZWlnaHQ9ImJvbGQiPkHlnLDngrnjgpLlh7rnmbrjgZfjgb7jgZfjgZ/jgILoirHlrZDjgYzliLDnnYDjgZnjgovjga7jga88L3RleHQ+Cjx0ZXh0IHg9IjIwIiB5PSI5NCIgZm9udC1zaXplPSIxNCIgZm9udC13ZWlnaHQ9ImJvbGQiPuWkqumDjuOCiOOCiuS9leWIhuaXqeOBhOOBp+OBmeOBi+OAgjwvdGV4dD4KPGxpbmUgeDE9IjYwIiB5MT0iMTYwIiB4Mj0iMzQwIiB5Mj0iMTYwIiBzdHJva2U9IiMzMzMiIHN0cm9rZS13aWR0aD0iMiIvPgo8Y2lyY2xlIGN4PSI2MCIgY3k9IjE2MCIgcj0iNiIgZmlsbD0iIzZjNjNmZiIvPgo8Y2lyY2xlIGN4PSIzNDAiIGN5PSIxNjAiIHI9IjYiIGZpbGw9IiNlNzRjM2MiLz4KPHRleHQgeD0iNDUiIHk9IjE5MCIgZm9udC1zaXplPSIxMyIgZmlsbD0iIzZjNjNmZiIgZm9udC13ZWlnaHQ9ImJvbGQiPkE8L3RleHQ+Cjx0ZXh0IHg9IjMzMCIgeT0iMTkwIiBmb250LXNpemU9IjEzIiBmaWxsPSIjZTc0YzNjIiBmb250LXdlaWdodD0iYm9sZCI+QjwvdGV4dD4KPHRleHQgeD0iMTcwIiB5PSIxNTUiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiM4ODgiPjEyMDBtPC90ZXh0Pgo8dGV4dCB4PSIxMDAiIHk9IjIyMCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzZjNjNmZiI+5aSq6YOOIOWIhumAnzYwbSDihpI8L3RleHQ+Cjx0ZXh0IHg9IjEwMCIgeT0iMjQwIiBmb250LXNpemU9IjEyIiBmaWxsPSIjZTc0YzNjIj7oirHlrZAg5YiG6YCfODBtIOKGkjwvdGV4dD4KPGxpbmUgeDE9IjYwIiB5MT0iMTY1IiB4Mj0iMzQwIiB5Mj0iMTY1IiBzdHJva2U9IiM2YzYzZmYiIHN0cm9rZS13aWR0aD0iMSIgc3Ryb2tlLWRhc2hhcnJheT0iNCIvPgo8L3N2Zz4=', answer:'太郎: 1200÷60=20分\n花子: 1200÷80=15分\n差: 20-15=5分早い\n💡時間=距離÷速さ', correctRate:58, tags:['5年','速さ','📸画像'] },
+    { subject:'算数', topic:'円と正方形（面積）', source:'予シリ5上', frequency:'high', difficulty:'hard', contentImage:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBzdHlsZT0iYmFja2dyb3VuZDojZmZmO2ZvbnQtZmFtaWx5OnNhbnMtc2VyaWYiPgo8dGV4dCB4PSIyMCIgeT0iMjgiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSJib2xkIj7kuIvjga7lm7Pjga7oibLjgYzjgaTjgYTjgZ/pg6jliIbjga7pnaLnqY3jgpI8L3RleHQ+Cjx0ZXh0IHg9IjIwIiB5PSI1MCIgZm9udC1zaXplPSIxNCIgZm9udC13ZWlnaHQ9ImJvbGQiPuaxguOCgeOBquOBleOBhOOAgu+8iOWGhuWRqOeOh+OBrzMuMTTvvIk8L3RleHQ+CjxyZWN0IHg9IjEwMCIgeT0iODAiIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSJub25lIiBzdHJva2U9IiMzMzMiIHN0cm9rZS13aWR0aD0iMiIvPgo8Y2lyY2xlIGN4PSIyMDAiIGN5PSIxODAiIHI9IjEwMCIgZmlsbD0iIzZjNjNmZiIgZmlsbC1vcGFjaXR5PSIwLjE1IiBzdHJva2U9IiM2YzYzZmYiIHN0cm9rZS13aWR0aD0iMiIvPgo8dGV4dCB4PSI5MCIgeT0iNzUiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiMzMzMiPkE8L3RleHQ+Cjx0ZXh0IHg9IjMwMiIgeT0iNzUiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiMzMzMiPkI8L3RleHQ+Cjx0ZXh0IHg9IjMwMiIgeT0iMjkwIiBmb250LXNpemU9IjEyIiBmaWxsPSIjMzMzIj5DPC90ZXh0Pgo8dGV4dCB4PSI5MCIgeT0iMjkwIiBmb250LXNpemU9IjEyIiBmaWxsPSIjMzMzIj5EPC90ZXh0Pgo8bGluZSB4MT0iMjAwIiB5MT0iMjgwIiB4Mj0iMjAwIiB5Mj0iMjcwIiBzdHJva2U9IiMzMzMiIHN0cm9rZS13aWR0aD0iMSIvPgo8bGluZSB4MT0iMTk1IiB5MT0iMjc1IiB4Mj0iMjA1IiB5Mj0iMjc1IiBzdHJva2U9IiMzMzMiIHN0cm9rZS13aWR0aD0iMSIvPgo8dGV4dCB4PSIxNDAiIHk9IjI5NSIgZm9udC1zaXplPSIxMyIgZmlsbD0iI2U3NGMzYyIgZm9udC13ZWlnaHQ9ImJvbGQiPjIwY208L3RleHQ+CjxsaW5lIHgxPSIzMDUiIHkxPSI4MCIgeDI9IjMxNSIgeTI9IjgwIiBzdHJva2U9IiMzMzMiIHN0cm9rZS13aWR0aD0iMSIvPgo8bGluZSB4MT0iMzA1IiB5MT0iMjgwIiB4Mj0iMzE1IiB5Mj0iMjgwIiBzdHJva2U9IiMzMzMiIHN0cm9rZS13aWR0aD0iMSIvPgo8bGluZSB4MT0iMzEwIiB5MT0iODAiIHgyPSIzMTAiIHkyPSIyODAiIHN0cm9rZT0iIzMzMyIgc3Ryb2tlLXdpZHRoPSIxIi8+Cjx0ZXh0IHg9IjMxOCIgeT0iMTg1IiBmb250LXNpemU9IjEzIiBmaWxsPSIjZTc0YzNjIiBmb250LXdlaWdodD0iYm9sZCI+MjBjbTwvdGV4dD4KPC9zdmc+', answer:'正方形: 20×20=400cm²\n円: 10×10×3.14=314cm²\n色つき=400-314=86cm²\n💡正方形-内接円', correctRate:45, tags:['5年','図形','📸画像'] },
+    { subject:'算数', topic:'割合（グラフ読取）', source:'予シリ5上', frequency:'high', difficulty:'standard', contentImage:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMjgwIiBzdHlsZT0iYmFja2dyb3VuZDojZmZmO2ZvbnQtZmFtaWx5OnNhbnMtc2VyaWYiPgo8dGV4dCB4PSIyMCIgeT0iMjgiIGZvbnQtc2l6ZT0iMTQiIGZvbnQtd2VpZ2h0PSJib2xkIj7lj7Pjga7jgrDjg6njg5Xjga80MOS6uuOBruOCr+ODqeOCueOBrumAmuWtpuaWueazleOCkjwvdGV4dD4KPHRleHQgeD0iMjAiIHk9IjUwIiBmb250LXNpemU9IjE0IiBmb250LXdlaWdodD0iYm9sZCI+6KGo44GX44Gm44GE44G+44GZ44CC6Ieq6Lui6LuK44Gn6YCa44GG5Lq644Gv5L2V5Lq677yfPC90ZXh0Pgo8Y2lyY2xlIGN4PSIzMDAiIGN5PSIxNzAiIHI9IjgwIiBmaWxsPSJub25lIiBzdHJva2U9IiMzMzMiIHN0cm9rZS13aWR0aD0iMiIvPgo8cGF0aCBkPSJNMzAwLDE3MCBMMzAwLDkwIEE4MCw4MCAwIDAsMSAzNzIsMTQyIFoiIGZpbGw9IiM2YzYzZmYiIGZpbGwtb3BhY2l0eT0iMC4zIi8+CjxwYXRoIGQ9Ik0zMDAsMTcwIEwzNzIsMTQyIEE4MCw4MCAwIDAsMSAzNDAsMjQ1IFoiIGZpbGw9IiNlNzRjM2MiIGZpbGwtb3BhY2l0eT0iMC4zIi8+CjxwYXRoIGQ9Ik0zMDAsMTcwIEwzNDAsMjQ1IEE4MCw4MCAwIDAsMSAyMjgsMTk4IFoiIGZpbGw9IiMyZWNjNzEiIGZpbGwtb3BhY2l0eT0iMC4zIi8+CjxwYXRoIGQ9Ik0zMDAsMTcwIEwyMjgsMTk4IEE4MCw4MCAwIDAsMSAzMDAsOTAgWiIgZmlsbD0iI2YzOWMxMiIgZmlsbC1vcGFjaXR5PSIwLjMiLz4KPHRleHQgeD0iMzIwIiB5PSIxMjUiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM2YzYzZmYiIGZvbnQtd2VpZ2h0PSJib2xkIj7lvpLmrakgMzAlPC90ZXh0Pgo8dGV4dCB4PSIzNDgiIHk9IjE5MCIgZm9udC1zaXplPSIxMSIgZmlsbD0iI2U3NGMzYyIgZm9udC13ZWlnaHQ9ImJvbGQiPuODkOOCuSAyNSU8L3RleHQ+Cjx0ZXh0IHg9IjI2MCIgeT0iMjQwIiBmb250LXNpemU9IjExIiBmaWxsPSIjMmVjYzcxIiBmb250LXdlaWdodD0iYm9sZCI+6Ieq6Lui6LuKID8lPC90ZXh0Pgo8dGV4dCB4PSIyNDIiIHk9IjE1MCIgZm9udC1zaXplPSIxMSIgZmlsbD0iI2YzOWMxMiIgZm9udC13ZWlnaHQ9ImJvbGQiPumbu+i7iiAyNSU8L3RleHQ+Cjwvc3ZnPg==', answer:'自転車=100-30-25-25=20%\n40人×0.2=8人\n💡全体=100%から引く', correctRate:65, tags:['5年','割合','📸画像'] },
   ];
 
   // Generate varied review states for demo
@@ -2356,7 +2357,7 @@ function loadSampleData() {
       topic: s.topic,
       source: s.source,
       content: s.content,
-      contentImage: null,
+      contentImage: s.contentImage || null,
       answer: s.answer,
       answerImage: null,
       correctRate: s.correctRate != null ? s.correctRate : null,
@@ -2828,7 +2829,7 @@ function generateSampleProblems() {
     {subject:'社会',topic:'公民',question:'三権分立とは？',answer:'立法(国会)・行政(内閣)・司法(裁判所)\n互いに抑制と均衡(チェック&バランス)\n💡権力の集中を防ぐ仕組み',source:'基本',difficulty:1,curriculum:'公民'},
   ];
 
-  return samples.map(function(s, i) {
+    return samples.map(function(s, i) {
     return {
       id: id + i,
       subject: s.subject,
@@ -2838,6 +2839,7 @@ function generateSampleProblems() {
       source: s.source || '',
       difficulty: s.difficulty || 2,
       image: null,
+      contentImage: s.contentImage || null,
       memo: '',
       tags: [s.curriculum || ''],
       history: [],
