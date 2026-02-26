@@ -444,24 +444,29 @@ body {
   .nav-bottom{display:none!important}
   .nav-side{display:flex!important}
   .timer-bar{left:72px}
-  .screen { max-width:none; padding:56px 24px 24px 24px; margin-left:72px; }
-  /* Today: 2-column */
-  .today-layout{display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start;height:calc(100vh - 80px)}
-  .today-left{overflow-y:auto;max-height:calc(100vh - 80px);padding-right:8px}
-  .today-right{position:sticky;top:0;overflow-y:auto;max-height:calc(100vh - 80px)}
+  .screen { max-width:none; padding:56px 24px 24px 24px; margin-left:72px; padding-bottom:0; }
+  /* Today: 2-column, fill viewport */
+  .today-layout{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start;height:calc(100vh - 72px)}
+  .today-left{overflow-y:auto;max-height:calc(100vh - 72px);padding-right:8px;scrollbar-width:thin}
+  .today-right{overflow-y:auto;max-height:calc(100vh - 72px);scrollbar-width:thin}
   .today-right .card-wrap{display:block!important}
-  .today-right .scratchpad-canvas{width:100%!important;height:350px!important}
+  /* Maximize scratchpad canvas */
+  .today-right .scratchpad-canvas{width:100%!important;height:calc(100vh - 420px)!important;min-height:250px!important}
   .today-right .btn-reveal{width:100%}
   .today-right .answer-btns{flex-wrap:nowrap}
-  /* Queue summary compact in left */
-  .queue-summary{padding:14px}
-  .queue-count{font-size:28px}
-  .nav { max-width: 600px; margin: 0 auto; border-radius: 16px 16px 0 0; }
+  /* Queue summary compact */
+  .queue-summary{padding:12px}
+  .queue-count{font-size:24px}
+  /* No bottom nav needed */
+  .nav{display:none!important}
   .problem-list-item { padding: 16px 20px; }
   /* Header compact */
-  .today-left .header{margin-bottom:8px}
-  .today-left .header h1{font-size:18px}
-  .today-left .streak-bar{padding:10px 14px;margin-bottom:10px}
+  .today-left .header{margin-bottom:6px}
+  .today-left .header h1{font-size:16px}
+  .today-left .streak-bar{padding:8px 12px;margin-bottom:8px}
+  .today-left .streak-num{font-size:20px}
+  /* Remove bottom padding for all screens */
+  .screen{padding-bottom:12px!important}
 }
 
 /* Image canvas overlay for drawing on problem image */
