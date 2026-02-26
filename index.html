@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>revnote</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -210,7 +210,7 @@ body {
 .answer-section.show { display: block; }
 .answer-section strong { font-size: 12px; color: var(--text2); }
 /* scratchpad */
-.scratchpad-wrap { margin-top: 10px; position: relative; -webkit-user-select:none; user-select:none; }
+.scratchpad-wrap { margin-top: 0; position: relative; -webkit-user-select:none; user-select:none; }
 .scratchpad-canvas {
   width: 100%; border-radius: 10px; background: var(--canvas-bg);
   border: 1px solid var(--border); touch-action: none;
@@ -218,16 +218,24 @@ body {
   -webkit-touch-callout:none;
 }
 .scratchpad-toolbar {
-  display: flex; gap: 6px; margin-top: 6px; align-items: center;
+  display: flex; gap: 4px; align-items: center; padding: 4px 6px;
+  background: var(--surface); border:1px solid var(--border); border-radius: 8px;
+  position: absolute; top: 6px; right: 6px; z-index: 10; opacity: 0.85;
 }
+.scratchpad-toolbar:hover,.scratchpad-toolbar:active { opacity: 1; }
 .sp-btn {
-  padding: 4px 10px; border-radius: 6px; font-size: 11px;
+  padding: 3px 8px; border-radius: 6px; font-size: 10px;
   border: 1px solid var(--border); background: var(--surface);
   color: var(--text2); cursor: pointer; font-family: inherit;
 }
 .sp-btn.active { border-color: var(--accent); color: var(--accent); }
-.sp-color { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; }
+.sp-color { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; }
 .sp-color.active { border-color: #fff; box-shadow: 0 0 4px rgba(255,255,255,.4); }
+
+/* Review columns layout */
+.review-columns { display: flex; flex-direction: column; gap: 12px; }
+.review-info { display: flex; flex-direction: column; gap: 10px; }
+.review-scratch { display: flex; flex-direction: column; }
 /* memo after answer */
 .review-memo { margin-top: 10px; }
 .review-memo textarea {
@@ -461,13 +469,16 @@ body {
   .timer-bar{left:72px}
   .screen { max-width:none; padding:56px 20px 16px 20px; margin-left:72px; }
   /* Today: 2-column, fill viewport */
-  .today-layout{display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start;height:calc(100vh - 72px)}
+  .today-layout{display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start;height:calc(100vh - 72px)}
   .today-left{overflow-y:auto;max-height:calc(100vh - 72px);padding-right:8px;-webkit-overflow-scrolling:touch}
-  .today-right{overflow-y:auto;max-height:calc(100vh - 72px);-webkit-overflow-scrolling:touch}
+  .today-right{overflow-y:hidden;max-height:calc(100vh - 72px)}
   .today-right .card-wrap{display:block!important}
-  /* Maximize scratchpad */
-  .today-right .scratchpad-wrap{margin-top:8px}
-  .today-right .scratchpad-canvas{width:100%!important;min-height:300px!important}
+  /* Review: problem+answer left, scratchpad right */
+  .review-columns{flex-direction:row!important;gap:16px;height:calc(100vh - 100px)}
+  .review-info{flex:0 0 320px;overflow-y:auto;max-height:100%;-webkit-overflow-scrolling:touch;padding-right:8px}
+  .review-scratch{flex:1;min-width:0;height:100%;display:flex;flex-direction:column}
+  .review-scratch .scratchpad-wrap{flex:1;display:flex;flex-direction:column}
+  .review-scratch .scratchpad-canvas{flex:1;min-height:0!important;width:100%!important}
   .today-right .btn-reveal{width:100%}
   .today-right .answer-btns{flex-wrap:nowrap}
   /* Compact left pane */
@@ -600,34 +611,40 @@ body {
         <div class="cal-grid" id="calGrid"></div>
       </div>
     </div>
-    <!-- RIGHT PANE -->
+    <!-- RIGHT PANE (review area) -->
     <div class="today-right">
       <div class="card-wrap" id="cardWrap">
-        <div id="cardProgress" style="font-size:12px;color:var(--text2);text-align:center"></div>
-        <div class="problem-card" id="problemCard"></div>
-        <div class="scratchpad-wrap" id="scratchpadWrap">
-          <div style="font-size:11px;color:var(--text2);margin-bottom:4px">✏️ 計算スペース</div>
-          <canvas class="scratchpad-canvas" id="scratchpadCanvas" width="500" height="350"></canvas>
-          <div class="scratchpad-toolbar">
-            <button class="sp-btn" onclick="clearScratchpad()">消す</button>
-            <button class="sp-btn" id="spEraser" onclick="toggleEraser()">消しゴム</button>
-            <span style="font-size:10px;color:var(--text2);margin-left:4px">太さ</span>
-            <input type="range" min="1" max="8" value="3" id="spLineWidth" style="width:60px;accent-color:var(--accent)">
-            <div class="sp-color active" style="background:#333" onclick="setScratchColor('#333',this)"></div>
-            <div class="sp-color" style="background:#6c63ff" onclick="setScratchColor('#6c63ff',this)"></div>
-            <div class="sp-color" style="background:#ff6b6b" onclick="setScratchColor('#ff6b6b',this)"></div>
-            <div class="sp-color" style="background:#51cf66" onclick="setScratchColor('#51cf66',this)"></div>
+        <div class="review-columns">
+          <!-- Review Left: problem info + answer -->
+          <div class="review-info" id="reviewInfo">
+            <div id="cardProgress" style="font-size:12px;color:var(--text2);text-align:center"></div>
+            <div class="problem-card" id="problemCard"></div>
+            <button class="btn-reveal" id="btnReveal" onclick="revealAnswer()">👁 答えを見る</button>
+            <div class="answer-section" id="answerSection"></div>
+            <div class="review-memo" id="reviewMemo" style="display:none">
+              <textarea id="reviewMemoText" placeholder="メモ（気づいたこと、間違えたポイントなど）"></textarea>
+            </div>
+            <div class="answer-btns" id="answerBtns" style="display:none">
+              <button class="btn-ans btn-wrong" onclick="recordAnswer(0)">❌ できなかった</button>
+              <button class="btn-ans btn-hard" onclick="recordAnswer(3)">🤔 あやしい</button>
+              <button class="btn-ans btn-correct" onclick="recordAnswer(5)">✅ できた！</button>
+            </div>
           </div>
-        </div>
-        <button class="btn-reveal" id="btnReveal" onclick="revealAnswer()">👁 答えを見る</button>
-        <div class="answer-section" id="answerSection"></div>
-        <div class="review-memo" id="reviewMemo" style="display:none">
-          <textarea id="reviewMemoText" placeholder="メモ（気づいたこと、間違えたポイントなど）"></textarea>
-        </div>
-        <div class="answer-btns" id="answerBtns" style="display:none">
-          <button class="btn-ans btn-wrong" onclick="recordAnswer(0)">❌ できなかった</button>
-          <button class="btn-ans btn-hard" onclick="recordAnswer(3)">🤔 あやしい</button>
-          <button class="btn-ans btn-correct" onclick="recordAnswer(5)">✅ できた！</button>
+          <!-- Review Right: scratchpad -->
+          <div class="review-scratch">
+            <div class="scratchpad-wrap" id="scratchpadWrap">
+              <div class="scratchpad-toolbar" id="scratchpadToolbar">
+                <button class="sp-btn" onclick="clearScratchpad()">消す</button>
+                <button class="sp-btn" id="spEraser" onclick="toggleEraser()">消しゴム</button>
+                <input type="range" min="1" max="8" value="3" id="spLineWidth" style="width:50px;accent-color:var(--accent)">
+                <div class="sp-color active" style="background:#333" onclick="setScratchColor('#333',this)"></div>
+                <div class="sp-color" style="background:#6c63ff" onclick="setScratchColor('#6c63ff',this)"></div>
+                <div class="sp-color" style="background:#ff6b6b" onclick="setScratchColor('#ff6b6b',this)"></div>
+                <div class="sp-color" style="background:#51cf66" onclick="setScratchColor('#51cf66',this)"></div>
+              </div>
+              <canvas class="scratchpad-canvas" id="scratchpadCanvas" width="500" height="350"></canvas>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1250,6 +1267,11 @@ function showCard() {
   // Reset scratchpad
   clearScratchpad();
   initScratchpad();
+  // Mobile: scroll problem card to top
+  if(window.innerWidth < 1024) {
+    var el = document.getElementById('problemCard');
+    if(el) setTimeout(function(){ el.scrollIntoView({behavior:'smooth',block:'start'}); }, 50);
+  }
 }
 
 function revealAnswer() {
