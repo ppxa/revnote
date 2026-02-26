@@ -24,6 +24,22 @@
   --radius: 14px;
   --shadow: 0 4px 24px rgba(0,0,0,0.3);
 }
+
+/* STRETCH ZONE */
+.sz-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.sz-comfort{background:rgba(78,205,196,.15);color:#4ecdc4}
+.sz-stretch{background:rgba(108,99,255,.15);color:var(--accent)}
+.sz-panic{background:rgba(255,107,107,.15);color:var(--danger)}
+.sz-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.sz-card{border-radius:var(--radius);padding:14px;text-align:center;cursor:pointer;border:1px solid var(--border);transition:transform .15s}
+.sz-card:active{transform:scale(.97)}
+.sz-card .sz-num{font-size:28px;font-weight:900}
+.sz-card .sz-label{font-size:11px;margin-top:2px}
+.sz-comfort-card{background:rgba(78,205,196,.08)}
+.sz-stretch-card{background:rgba(108,99,255,.08)}
+.sz-panic-card{background:rgba(255,107,107,.08)}
+.sz-bar{display:flex;height:6px;border-radius:3px;overflow:hidden;margin-top:8px;background:var(--surface2)}
+.sz-bar-seg{height:100%;transition:width .3s}
 /* TIMER BAR */
 .timer-bar{position:fixed;top:0;left:0;right:0;height:44px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:150;gap:8px}
 .timer-display{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;min-width:72px;text-align:center}
@@ -546,6 +562,7 @@ body {
         <div class="queue-label">問 やるべき問題</div>
         <div class="queue-progress"><div class="queue-progress-fill" id="queueProgress" style="width:0%"></div></div>
         <div id="queueBreakdown" style="font-size:11px;color:var(--text2);margin-top:8px"></div>
+        <div id="queueStretchBar" style="margin-top:6px"></div>
         <button class="btn-start" id="btnStart" onclick="startSession()">復習をはじめる</button>
       </div>
       <div class="completion" id="completionView" style="display:none">
@@ -745,6 +762,15 @@ body {
 <!-- === SCREEN: DASHBOARD === -->
 <div class="screen" id="screenDash">
   <div class="header"><h1>ダッシュボード</h1></div>
+  <div style="margin-bottom:16px">
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:10px">🎯 ストレッチゾーン</h3>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:8px">最適な負荷の問題を優先出題</div>
+    <div id="stretchZoneGrid"></div>
+    <div id="szDetailPanel" style="display:none;margin-top:8px;padding:12px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border)">
+      <h4 id="szDetailTitle" style="font-size:12px;font-weight:700;margin-bottom:6px"></h4>
+      <div id="szDetailList" class="zone-detail"></div>
+    </div>
+  </div>
   <div class="filter-row" style="margin-bottom:8px"><select class="form-select" id="dashSubjectFilter" onchange="renderDashboard()" style="width:auto;padding:6px 12px;font-size:12px"><option value="">全教科</option></select></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><select class="form-select" id="curriculumFilter" onchange="renderList()" style="width:auto;padding:6px 10px;font-size:11px"><option value="all">全単元</option><option value="learned">履修済み</option><option value="upcoming">未履修（先取り）</option></select></div>
   <div class="zone-grid" id="zoneGrid"></div>
@@ -978,7 +1004,13 @@ function calcPriority(p, t) {
     else if (p.correctRate >= 20) rateMult = 1.0;
     else rateMult = 0.7;
   }
-  return urgency * freqMult * failPenalty * rateMult;
+  // Stretch zone boost: stretch=×2.0, panic=×1.2, comfort=×0.5
+  var szMult = 1.0;
+  var sz = classifyStretchZone(p);
+  if (sz === 'stretch') szMult = 2.0;
+  else if (sz === 'panic') szMult = 1.2;
+  else if (sz === 'comfort') szMult = 0.5;
+  return urgency * freqMult * failPenalty * rateMult * szMult;
 }
 
 // ================================================================
@@ -1014,12 +1046,46 @@ function renderToday() {
   let breakdown = '';
   if (overdue > 0) breakdown = `（他に ${overdue} 問が待機中・明日以降に繰り越し）`;
   document.getElementById('queueBreakdown').textContent = breakdown;
+  // Stretch zone bar
+  var szCounts = {comfort:0,stretch:0,panic:0};
+  currentQueue.forEach(function(p){szCounts[classifyStretchZone(p)]++});
+  var szTotal = currentQueue.length || 1;
+  var szBar = document.getElementById('queueStretchBar');
+  if(szBar && currentQueue.length){
+    szBar.innerHTML='<div style="display:flex;gap:8px;font-size:10px;margin-bottom:4px">'
+      +'<span class="sz-badge sz-stretch">✨最適 '+szCounts.stretch+'</span>'
+      +'<span class="sz-badge sz-comfort">⚠️簡単 '+szCounts.comfort+'</span>'
+      +'<span class="sz-badge sz-panic">🔴難しい '+szCounts.panic+'</span>'
+      +'</div>'
+      +'<div class="sz-bar">'
+      +'<div class="sz-bar-seg" style="width:'+Math.round(szCounts.stretch/szTotal*100)+'%;background:var(--accent)"></div>'
+      +'<div class="sz-bar-seg" style="width:'+Math.round(szCounts.comfort/szTotal*100)+'%;background:#4ecdc4"></div>'
+      +'<div class="sz-bar-seg" style="width:'+Math.round(szCounts.panic/szTotal*100)+'%;background:var(--danger)"></div>'
+      +'</div>';
+  }else if(szBar){szBar.innerHTML=''}
   // subject breakdown
   const bySubj = {};
   currentQueue.forEach(p => { bySubj[p.subject] = (bySubj[p.subject]||0)+1; });
   const parts = Object.entries(bySubj).map(([s,n]) => `${s}${n}問`);
   if (parts.length) breakdown = parts.join(' / ') + (overdue > 0 ? ` ＋繰越${overdue}問` : '');
   document.getElementById('queueBreakdown').textContent = breakdown;
+  // Stretch zone bar
+  var szCounts = {comfort:0,stretch:0,panic:0};
+  currentQueue.forEach(function(p){szCounts[classifyStretchZone(p)]++});
+  var szTotal = currentQueue.length || 1;
+  var szBar = document.getElementById('queueStretchBar');
+  if(szBar && currentQueue.length){
+    szBar.innerHTML='<div style="display:flex;gap:8px;font-size:10px;margin-bottom:4px">'
+      +'<span class="sz-badge sz-stretch">✨最適 '+szCounts.stretch+'</span>'
+      +'<span class="sz-badge sz-comfort">⚠️簡単 '+szCounts.comfort+'</span>'
+      +'<span class="sz-badge sz-panic">🔴難しい '+szCounts.panic+'</span>'
+      +'</div>'
+      +'<div class="sz-bar">'
+      +'<div class="sz-bar-seg" style="width:'+Math.round(szCounts.stretch/szTotal*100)+'%;background:var(--accent)"></div>'
+      +'<div class="sz-bar-seg" style="width:'+Math.round(szCounts.comfort/szTotal*100)+'%;background:#4ecdc4"></div>'
+      +'<div class="sz-bar-seg" style="width:'+Math.round(szCounts.panic/szTotal*100)+'%;background:var(--danger)"></div>'
+      +'</div>';
+  }else if(szBar){szBar.innerHTML=''}
 
   document.getElementById('btnStart').disabled = count === 0;
   document.getElementById('queueProgress').style.width = '0%';
@@ -1130,6 +1196,7 @@ function showCard() {
       ${hasImage ? `<div class="img-canvas-wrap" id="imgCanvasWrap"><img id="problemImg" src="${p.contentImage}" alt="問題画像" crossorigin="anonymous" onload="initImageCanvas()"><canvas id="imgOverlayCanvas"></canvas></div><div class="img-draw-hint">✏️ 画像の上に直接書き込めます</div>` : (p.content || '')}
     </div>
     <div class="card-meta">
+      ${getStretchZoneBadge(classifyStretchZone(p))}
       <span class="meta-tag ${p.frequency === 'high' ? 'meta-freq-high' : ''}">${freqLabel}</span>
       <span class="meta-tag ${p.difficulty === 'hard' ? 'meta-diff-hard' : ''}">${diffLabel}</span>
       ${p.correctRate != null ? `<span class="meta-tag" style="color:${p.correctRate >= 70 ? 'var(--success)' : p.correctRate >= 40 ? 'var(--warning)' : 'var(--danger)'}">正答率${p.correctRate}%</span>` : ''}
@@ -1917,6 +1984,7 @@ function renderList() {
   }
   container.innerHTML = items.map(p => {
     const zone = classifyZone(p);
+    const sz = classifyStretchZone(p);
     const color = {priority:'var(--danger)',review:'var(--warning)',graduated:'var(--success)',frozen:'var(--frozen)',discard:'var(--text2)'}[zone] || 'var(--text2)';
     const hist = (p.history || []).slice(-5);
     const dotsHtml = hist.map(h => h.result === 'correct' ? '⭕' : h.result === 'hard' ? '🔺' : '❌').join('');
@@ -1925,7 +1993,7 @@ function renderList() {
       <div class="problem-list-item" style="flex-wrap:wrap">
         <div class="pli-status" style="background:${color}"></div>
         <div class="pli-info" style="min-width:0;flex:1">
-          <div class="pli-topic">${p.subject} / ${p.topic}</div>
+          <div class="pli-topic">${p.subject} / ${p.topic} ${p.masteryLevel<4&&!p.frozen?getStretchZoneBadge(sz):''}</div>
           <div class="pli-sub">${p.source || ''} ・ ${p.interval||0}日後</div>
           <div style="display:flex;gap:4px;align-items:center;margin-top:2px;font-size:10px">
             ${dotsHtml || '<span style="color:var(--text2)">履歴なし</span>'}
@@ -1963,6 +2031,31 @@ function renderDashboard() {
   const zones = { priority: 0, review: 0, graduated: 0, frozen: 0, discard: 0 };
   _zoneProbs={priority:[],review:[],graduated:[],frozen:[],discard:[]};
   DATA.problems.forEach(p => { const z = classifyZone(p); zones[z] = (zones[z]||0) + 1; (_zoneProbs[z]=_zoneProbs[z]||[]).push(p); });
+  // Stretch Zone stats
+  var szStats = getStretchZoneStats();
+  var szEl = document.getElementById('stretchZoneGrid');
+  if(szEl){
+    szEl.innerHTML = '<div class="sz-grid">'
+      +'<div class="sz-card sz-stretch-card" onclick="showSZDetail(\'stretch\')"><div class="sz-num">'+szStats.totals.stretch+'</div><div class="sz-label">✨ ストレッチ</div></div>'
+      +'<div class="sz-card sz-comfort-card" onclick="showSZDetail(\'comfort\')"><div class="sz-num">'+szStats.totals.comfort+'</div><div class="sz-label">⚠️ コンフォート</div></div>'
+      +'<div class="sz-card sz-panic-card" onclick="showSZDetail(\'panic\')"><div class="sz-num">'+szStats.totals.panic+'</div><div class="sz-label">🔴 パニック</div></div>'
+      +'</div>';
+    // Per-subject breakdown
+    var subjects = getSubjects();
+    var szBreakdown = subjects.map(function(s){
+      var st=szStats.bySubject.stretch[s]||0,co=szStats.bySubject.comfort[s]||0,pa=szStats.bySubject.panic[s]||0;
+      var tot=st+co+pa;if(!tot)return'';
+      return '<div style="display:flex;align-items:center;gap:8px;font-size:11px;margin-top:4px">'
+        +'<span style="width:40px;font-weight:600">'+s+'</span>'
+        +'<div class="sz-bar" style="flex:1">'
+        +'<div class="sz-bar-seg" style="width:'+Math.round(st/tot*100)+'%;background:var(--accent)"></div>'
+        +'<div class="sz-bar-seg" style="width:'+Math.round(co/tot*100)+'%;background:#4ecdc4"></div>'
+        +'<div class="sz-bar-seg" style="width:'+Math.round(pa/tot*100)+'%;background:var(--danger)"></div>'
+        +'</div>'
+        +'<span style="color:var(--text2)">'+tot+'問</span></div>';
+    }).join('');
+    szEl.innerHTML += szBreakdown;
+  }
   document.getElementById('zoneGrid').innerHTML = `
     <div class="zone-card zone-priority" onclick="showZoneDetail('priority','🔴 最優先')" style="cursor:pointer"><div class="num">${zones.priority}</div><div class="label">🔴 最優先</div></div>
     <div class="zone-card zone-graduated" onclick="showZoneDetail('graduated','🟢 定着済')" style="cursor:pointer"><div class="num">${zones.graduated}</div><div class="label">🟢 定着済み</div></div>
@@ -2350,6 +2443,21 @@ function importFromURL(){var h=location.hash;if(!h.startsWith('#sync=')){alert('
 // DASHBOARD ZONE DETAIL
 // ================================================================
 var _zoneProbs={};
+
+function showSZDetail(zone){
+  var panel=document.getElementById('szDetailPanel');
+  if(!panel)return;
+  panel.style.display='';
+  var labels={comfort:'⚠️ コンフォートゾーン（簡単すぎる）',stretch:'✨ ストレッチゾーン（最適な負荷）',panic:'🔴 パニックゾーン（難しすぎる）'};
+  document.getElementById('szDetailTitle').textContent=labels[zone]||zone;
+  var probs=DATA.problems.filter(function(p){return !p.frozen && p.masteryLevel<4 && classifyStretchZone(p)===zone});
+  document.getElementById('szDetailList').innerHTML=probs.length?probs.map(function(p){
+    var hist=p.history||[];var recent=hist.slice(-3);
+    var c=0;recent.forEach(function(h){if(h.result==='correct'||h.quality>=4)c++});
+    var rateStr=recent.length?Math.round(c/recent.length*100)+'%':'--';
+    return'<div class="zone-detail-item"><strong>'+p.subject+'</strong> '+p.topic+' <span style="color:var(--text2);font-size:10px">直近'+rateStr+'</span></div>';
+  }).join(''):'<div style="color:var(--text2);font-size:12px">なし</div>';
+}
 function showZoneDetail(zone,title){
   var panel=document.getElementById('zoneDetailPanel');if(!panel)return;
   panel.style.display='';
@@ -2358,6 +2466,46 @@ function showZoneDetail(zone,title){
   document.getElementById('zoneDetailList').innerHTML=probs.length?probs.map(function(p){
     return'<div class="zone-detail-item"><strong>'+p.subject+'</strong> '+p.topic+' <span style="color:var(--text2);font-size:10px">'+(p.source||'')+' ・ '+(p.interval||0)+'日間隔</span></div>'
   }).join(''):'<div style="color:var(--text2);font-size:12px">なし</div>';
+}
+
+
+// ================================================================
+// STRETCH ZONE SYSTEM
+// ================================================================
+// Classify problem into comfort/stretch/panic based on recent history
+function classifyStretchZone(p) {
+  var hist = p.history || [];
+  if (hist.length < 2) return 'stretch'; // new problems = stretch by default
+  // Take last 3 (or fewer)
+  var recent = hist.slice(-3);
+  var correct = 0;
+  recent.forEach(function(h) { if (h.result === 'correct' || h.quality >= 4) correct++; });
+  var rate = correct / recent.length;
+  if (rate >= 0.8) return 'comfort';   // 80%+ correct = too easy
+  if (rate < 0.4) return 'panic';      // <40% = too hard
+  return 'stretch';                     // 40-80% = optimal zone
+}
+
+function getStretchZoneLabel(zone) {
+  return {comfort:'⚠️ コンフォート',stretch:'✨ ストレッチ',panic:'🔴 パニック'}[zone] || zone;
+}
+function getStretchZoneBadge(zone) {
+  var cls = {comfort:'sz-comfort',stretch:'sz-stretch',panic:'sz-panic'}[zone]||'sz-stretch';
+  var label = {comfort:'⚠️ 簡単',stretch:'✨ 最適',panic:'🔴 難しい'}[zone]||'';
+  return '<span class="sz-badge '+cls+'">'+label+'</span>';
+}
+
+// Stretch zone stats by subject
+function getStretchZoneStats() {
+  var stats = {comfort:{},stretch:{},panic:{}};
+  var totals = {comfort:0,stretch:0,panic:0};
+  DATA.problems.forEach(function(p){
+    if(p.frozen || p.masteryLevel >= 4) return;
+    var sz = classifyStretchZone(p);
+    stats[sz][p.subject] = (stats[sz][p.subject]||0) + 1;
+    totals[sz]++;
+  });
+  return {bySubject:stats, totals:totals};
 }
 
 // ================================================================
