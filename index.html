@@ -1242,7 +1242,7 @@ function showCard() {
     <div class="card-topic">${p.topic}</div>
     ${p.lastMemo ? `<div style="font-size:11px;color:var(--accent);margin-bottom:4px">📝 ${p.lastMemo}</div>` : ''}
     <div class="card-content" id="cardContentArea">
-      ${hasImage ? '<div style="font-size:11px;color:var(--accent)">📸 図つき問題 — 計算スペースに表示</div>' : (p.content || '')}
+      ${hasImage ? '<div style="font-size:11px;color:var(--accent)">📸 図つき問題 — 計算スペースに表示（2本指で移動・拡縮）</div>' : (p.content || '')}
     </div>
     <div class="card-meta">
       ${getStretchZoneBadge(classifyStretchZone(p))}
@@ -1422,57 +1422,77 @@ window._spStrokes = [];
 var _currentStroke = null;
 
 function setupCanvasEvents(canvas) {
+  var _touches = 0;
+  var _imgMode = false; // true when 2-finger image manipulation active
+  var _pinchStart = null; // {dist, imgW, imgH, cx, cy}
+
   canvas.onpointerdown = function(e) {
     e.preventDefault();
+    _touches++;
     var pt = spPos(e);
-    // Check resize handle first
-    if (_imgState && _imgState.selected && isPointOnResizeHandle(pt.x, pt.y)) {
-      _imgState.resizing = true;
-      _imgState.dragStart = { x: pt.x, y: pt.y, origW: _imgState.w, origH: _imgState.h };
-      return;
-    }
-    // Check if tapping on image
-    if (_imgState && isPointInImage(pt.x, pt.y) && !spErasing) {
+
+    if (_touches >= 2 && _imgState) {
+      // 2-finger: enter image mode
+      _imgMode = true;
+      spDrawing = false;
       _imgState.selected = true;
-      _imgState.dragStart = { x: pt.x - _imgState.x, y: pt.y - _imgState.y };
-      _imgState.resizing = false;
+      if (!_pinchStart) {
+        _pinchStart = { x: pt.x, y: pt.y, imgX: _imgState.x, imgY: _imgState.y, imgW: _imgState.w, imgH: _imgState.h };
+      } else {
+        // Second finger down - calc initial pinch distance
+        var dx = pt.x - _pinchStart.x;
+        var dy = pt.y - _pinchStart.y;
+        _pinchStart.dist = Math.sqrt(dx * dx + dy * dy);
+        _pinchStart.cx = (_pinchStart.x + pt.x) / 2;
+        _pinchStart.cy = (_pinchStart.y + pt.y) / 2;
+        _pinchStart.pt2 = { x: pt.x, y: pt.y };
+      }
       redrawCanvas();
       return;
     }
-    // Tapping outside image - deselect and draw
+
+    // 1 finger: always draw (even on image)
     if (_imgState && _imgState.selected) {
       _imgState.selected = false;
-      _imgState.dragStart = null;
       redrawCanvas();
     }
-    // Normal drawing
     spDrawing = true;
     var lw = parseInt(document.getElementById('spLineWidth').value) * 2;
     _currentStroke = { color: spColor, width: lw, erasing: spErasing, points: [pt] };
     spCtx.beginPath(); spCtx.moveTo(pt.x, pt.y);
   };
+
   canvas.onpointermove = function(e) {
     e.preventDefault();
     var pt = spPos(e);
-    // Resizing image
-    if (_imgState && _imgState.resizing && _imgState.dragStart) {
-      var dxMove = pt.x - _imgState.dragStart.x;
-      var dyMove = pt.y - _imgState.dragStart.y;
-      var avgD = (dxMove + dyMove) / 2;
-      var newW = Math.max(60, _imgState.dragStart.origW + avgD);
-      var aspect = _imgState.dragStart.origH / _imgState.dragStart.origW;
-      _imgState.w = newW;
-      _imgState.h = newW * aspect;
+
+    // 2-finger image manipulation
+    if (_imgMode && _imgState && _pinchStart) {
+      if (_pinchStart.pt2) {
+        // Pinch resize: compare current distance to initial
+        var dx = pt.x - _pinchStart.x;
+        var dy = pt.y - _pinchStart.y;
+        var curDist = Math.sqrt(dx * dx + dy * dy);
+        if (_pinchStart.dist > 10) {
+          var scale = curDist / _pinchStart.dist;
+          var aspect = _pinchStart.imgH / _pinchStart.imgW;
+          _imgState.w = Math.max(40, _pinchStart.imgW * scale);
+          _imgState.h = _imgState.w * aspect;
+        }
+        // Move based on midpoint shift
+        var curCx = (_pinchStart.x + pt.x) / 2;
+        var curCy = (_pinchStart.y + pt.y) / 2;
+        _imgState.x = _pinchStart.imgX + (curCx - _pinchStart.cx);
+        _imgState.y = _pinchStart.imgY + (curCy - _pinchStart.cy);
+      } else {
+        // Single second touch - just move
+        _imgState.x = _pinchStart.imgX + (pt.x - _pinchStart.x);
+        _imgState.y = _pinchStart.imgY + (pt.y - _pinchStart.y);
+      }
       redrawCanvas();
       return;
     }
-    // Moving image
-    if (_imgState && _imgState.selected && _imgState.dragStart && !_imgState.resizing) {
-      _imgState.x = pt.x - _imgState.dragStart.x;
-      _imgState.y = pt.y - _imgState.dragStart.y;
-      redrawCanvas();
-      return;
-    }
+
     // Normal drawing
     if (!spDrawing) return;
     var lw = parseInt(document.getElementById('spLineWidth').value) * 2;
@@ -1485,12 +1505,18 @@ function setupCanvasEvents(canvas) {
     spCtx.lineTo(pt.x, pt.y); spCtx.stroke();
     if (_currentStroke) _currentStroke.points.push(pt);
   };
+
   canvas.onpointerup = function(e) {
     e.preventDefault();
-    if (_imgState && (_imgState.resizing || (_imgState.selected && _imgState.dragStart))) {
-      _imgState.resizing = false;
-      // Keep dragStart for continued move on next touch
-      return;
+    _touches = Math.max(0, _touches - 1);
+    if (_touches === 0) {
+      if (_imgMode && _imgState) {
+        // Keep image position, exit image mode after short delay
+        setTimeout(function() {
+          if (_touches === 0) { _imgMode = false; _imgState.selected = false; _pinchStart = null; redrawCanvas(); }
+        }, 300);
+      }
+      _pinchStart = null;
     }
     spDrawing = false;
     if (_currentStroke && _currentStroke.points.length > 1) {
@@ -1498,9 +1524,10 @@ function setupCanvasEvents(canvas) {
     }
     _currentStroke = null;
   };
+
   canvas.onpointerleave = function() {
+    _touches = Math.max(0, _touches - 1);
     spDrawing = false;
-    if (_imgState) { _imgState.resizing = false; }
     if (_currentStroke && _currentStroke.points.length > 1) {
       window._spStrokes.push(_currentStroke);
     }
