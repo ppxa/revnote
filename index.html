@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>revnote</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -822,6 +823,32 @@ body {
 <!-- === SCREEN: SETTINGS === -->
 <div class="screen" id="screenSettings">
   <div class="header"><h1>設定</h1></div>
+  <!-- Cloud Auth -->
+  <div class="setting-card" id="authCard">
+    <h3>☁️ クラウド同期</h3>
+    <div id="authLoggedOut">
+      <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px">
+        ログインすると問題データがクラウドに保存され、<br>複数端末で同期・親子共有ができます。
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;max-width:300px">
+        <input class="form-input" id="authEmail" type="email" placeholder="メールアドレス">
+        <input class="form-input" id="authPassword" type="password" placeholder="パスワード（6文字以上）">
+        <div style="display:flex;gap:8px">
+          <button class="btn-export" onclick="authLogin()" style="flex:1;border-color:var(--accent);color:var(--accent)">ログイン</button>
+          <button class="btn-export" onclick="authSignup()" style="flex:1">新規登録</button>
+        </div>
+      </div>
+      <div id="authMsg" style="font-size:12px;margin-top:8px;min-height:18px"></div>
+    </div>
+    <div id="authLoggedIn" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:13px">✅ <strong id="authUserEmail"></strong></span>
+        <button class="btn-export" onclick="cloudSync()" style="border-color:var(--accent);color:var(--accent)">🔄 今すぐ同期</button>
+        <button class="btn-export" onclick="authLogout()">ログアウト</button>
+      </div>
+      <div id="syncStatus" style="font-size:11px;color:var(--text2);margin-top:6px"></div>
+    </div>
+  </div>
   <div class="setting-card"><h3>👶 お子様情報</h3>
     <div class="setting-row"><span class="setting-label">生年月日</span><input type="date" class="form-input" id="settingBirthDate" onchange="saveBirthJuku()" style="width:auto"></div>
     <div class="setting-row" style="margin-top:8px"><span class="setting-label">準拠塾</span>
@@ -935,20 +962,166 @@ body {
 var STORAGE_KEY = 'revengeNote_v1';
 var today = () => new Date().toISOString().split('T')[0];
 
+// ================================================================
+// SUPABASE
+// ================================================================
+var SUPABASE_URL = 'https://hciwivjeuqgywwjdeegn.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjaXdpdmpldXFneXd3amRlZWduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyMzI3MDAsImV4cCI6MjA4NzgwODcwMH0.UHUsaMgz-RaCb_fPVNnw2TQnwKsu9_w1NSG-ngNSRt8';
+var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var _syncTimer = null;
+var _currentUser = null;
+
 function loadData() {
   var raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return defaultData();
   try { return JSON.parse(raw); } catch { return defaultData(); }
 }
-function saveData(d) { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
+function saveData(d) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+  // Debounced cloud sync
+  if (_currentUser) {
+    clearTimeout(_syncTimer);
+    _syncTimer = setTimeout(function() { cloudSync(true); }, 3000);
+  }
+}
 function defaultData() {
   return {
     version: '1.0',
     problems: [],
     settings: { dailyCap: 15, freezeThreshold: 5 },
     streak: { count: 0, lastDate: null, history: [] },
-    sessionLog: [] // {date, correct, wrong, hard, graduated}
+    sessionLog: []
   };
+}
+
+// Auth functions
+async function authSignup() {
+  var email = document.getElementById('authEmail').value.trim();
+  var pass = document.getElementById('authPassword').value;
+  var msg = document.getElementById('authMsg');
+  if (!email || pass.length < 6) { msg.textContent = 'メールとパスワード（6文字以上）を入力'; msg.style.color = 'var(--danger)'; return; }
+  msg.textContent = '登録中...'; msg.style.color = 'var(--text2)';
+  var res = await supabase.auth.signUp({ email: email, password: pass });
+  if (res.error) { msg.textContent = res.error.message; msg.style.color = 'var(--danger)'; return; }
+  if (res.data.user && !res.data.session) {
+    msg.textContent = '確認メールを送信しました。メール内のリンクをクリックしてから再度ログインしてください。';
+    msg.style.color = 'var(--accent)';
+  } else {
+    msg.textContent = '登録完了！';
+    msg.style.color = 'var(--success)';
+    onAuthStateChange(res.data.session);
+  }
+}
+
+async function authLogin() {
+  var email = document.getElementById('authEmail').value.trim();
+  var pass = document.getElementById('authPassword').value;
+  var msg = document.getElementById('authMsg');
+  if (!email || !pass) { msg.textContent = 'メールとパスワードを入力'; msg.style.color = 'var(--danger)'; return; }
+  msg.textContent = 'ログイン中...'; msg.style.color = 'var(--text2)';
+  var res = await supabase.auth.signInWithPassword({ email: email, password: pass });
+  if (res.error) { msg.textContent = res.error.message; msg.style.color = 'var(--danger)'; return; }
+  onAuthStateChange(res.data.session);
+}
+
+async function authLogout() {
+  await supabase.auth.signOut();
+  _currentUser = null;
+  document.getElementById('authLoggedOut').style.display = '';
+  document.getElementById('authLoggedIn').style.display = 'none';
+}
+
+function onAuthStateChange(session) {
+  if (session && session.user) {
+    _currentUser = session.user;
+    document.getElementById('authLoggedOut').style.display = 'none';
+    document.getElementById('authLoggedIn').style.display = '';
+    document.getElementById('authUserEmail').textContent = session.user.email;
+    // Sync: load cloud data
+    cloudLoad();
+  } else {
+    _currentUser = null;
+    document.getElementById('authLoggedOut').style.display = '';
+    document.getElementById('authLoggedIn').style.display = 'none';
+  }
+}
+
+async function cloudSync(silent) {
+  if (!_currentUser) return;
+  var status = document.getElementById('syncStatus');
+  if (!silent) status.textContent = '同期中...';
+  try {
+    var res = await supabase.from('user_data').upsert({
+      user_id: _currentUser.id,
+      data: DATA
+    }, { onConflict: 'user_id' });
+    if (res.error) throw res.error;
+    var now = new Date().toLocaleTimeString('ja-JP');
+    status.textContent = '最終同期: ' + now;
+  } catch (e) {
+    status.textContent = '同期エラー: ' + (e.message || e);
+    status.style.color = 'var(--danger)';
+  }
+}
+
+async function cloudLoad() {
+  if (!_currentUser) return;
+  var status = document.getElementById('syncStatus');
+  status.textContent = 'データ読み込み中...';
+  try {
+    var res = await supabase.from('user_data').select('data, updated_at').eq('user_id', _currentUser.id).single();
+    if (res.error && res.error.code === 'PGRST116') {
+      // No data in cloud yet - upload current local data
+      status.textContent = 'クラウドにデータをアップロード中...';
+      await cloudSync();
+      return;
+    }
+    if (res.error) throw res.error;
+
+    var cloudData = res.data.data;
+    var localProblems = DATA.problems.length;
+    var cloudProblems = (cloudData.problems || []).length;
+
+    if (cloudProblems === 0 && localProblems > 0) {
+      // Cloud empty, local has data - upload
+      await cloudSync();
+      status.textContent = 'ローカルデータをクラウドにアップロード完了';
+    } else if (cloudProblems > 0 && localProblems === 0) {
+      // Local empty, cloud has data - download
+      DATA = cloudData;
+      saveData(DATA);
+      renderToday();
+      status.textContent = 'クラウドからデータを復元しました（' + cloudProblems + '問）';
+    } else if (cloudProblems > 0 && localProblems > 0) {
+      // Both have data - ask user
+      var cloudDate = new Date(res.data.updated_at).toLocaleString('ja-JP');
+      if (confirm('クラウドにデータがあります（' + cloudProblems + '問, ' + cloudDate + '）\n\nクラウドのデータを使いますか？\n「OK」→クラウドを使う\n「キャンセル」→今の端末のデータを使う（クラウドに上書き）')) {
+        DATA = cloudData;
+        saveData(DATA);
+        renderToday();
+        status.textContent = 'クラウドから復元（' + cloudProblems + '問）';
+      } else {
+        await cloudSync();
+        status.textContent = 'ローカルデータでクラウドを更新';
+      }
+    } else {
+      status.textContent = '同期完了（データなし）';
+    }
+  } catch (e) {
+    status.textContent = '読み込みエラー: ' + (e.message || e);
+  }
+}
+
+// Check existing session on load
+async function initAuth() {
+  var res = await supabase.auth.getSession();
+  if (res.data.session) {
+    onAuthStateChange(res.data.session);
+  }
+  // Listen for auth changes
+  supabase.auth.onAuthStateChange(function(event, session) {
+    onAuthStateChange(session);
+  });
 }
 var DATA = loadData();
 
@@ -3127,6 +3300,7 @@ updateSubjectDropdown();
 
 updateTimerDisplay();
 initTheme();
+initAuth();
 if(location.hash.startsWith("#sync="))importFromURL();
 renderToday();
 </script>
