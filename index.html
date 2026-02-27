@@ -49,6 +49,7 @@
 .type-badge{display:inline-flex;align-items:center;font-size:9px;font-weight:600;padding:1px 6px;border-radius:8px;white-space:nowrap}
 .type-flash{background:rgba(255,193,7,.12);color:#f0ad4e}
 .type-think{background:rgba(108,99,255,.12);color:var(--accent)}
+@keyframes xpPop{0%{opacity:1;transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-80%) scale(1.3)}100%{opacity:0;transform:translate(-50%,-120%) scale(0.8)}}
 .sz-comfort{background:rgba(78,205,196,.15);color:#4ecdc4}
 .sz-stretch{background:rgba(108,99,255,.15);color:var(--accent)}
 .sz-panic{background:rgba(255,107,107,.15);color:var(--danger)}
@@ -602,7 +603,25 @@ body {
         <div class="queue-progress"><div class="queue-progress-fill" id="queueProgress" style="width:0%"></div></div>
         <div id="queueBreakdown" style="font-size:11px;color:var(--text2);margin-top:8px"></div>
         <div id="queueStretchBar" style="margin-top:6px"></div>
-        <button class="btn-start" id="btnStart" onclick="startSession()">復習をはじめる</button>
+        <!-- Session filter -->
+        <div id="sessionFilter" style="margin-top:10px;padding:10px;background:var(--surface2);border-radius:10px">
+          <div style="font-size:11px;font-weight:600;margin-bottom:6px;color:var(--text2)">📚 今回やる範囲</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px" id="filterSubjectChips"></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap" id="filterTypeChips">
+            <button class="filter-chip active" onclick="setSessionType('all',this)">全部</button>
+            <button class="filter-chip" onclick="setSessionType('think',this)">🧠 思考</button>
+            <button class="filter-chip" onclick="setSessionType('flash',this)">⚡ 暗記</button>
+          </div>
+        </div>
+        <!-- XP & Level -->
+        <div id="playerStats" style="margin-top:10px;display:flex;align-items:center;gap:10px">
+          <div style="font-size:13px;font-weight:700" id="playerLevel">Lv.1</div>
+          <div style="flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden">
+            <div id="xpBar" style="height:100%;background:linear-gradient(90deg,var(--accent),#ff6b6b);border-radius:4px;width:0%;transition:width .5s"></div>
+          </div>
+          <div style="font-size:10px;color:var(--text2)" id="xpText">0 / 100 XP</div>
+        </div>
+        <button class="btn-start" id="btnStart" onclick="startFilteredSession()">復習をはじめる</button>
       </div>
       <div class="completion" id="completionView" style="display:none">
         <div class="completion-icon">🏆</div>
@@ -1376,6 +1395,138 @@ function renderToday() {
   document.getElementById('cardWrap').classList.remove('active');
   document.getElementById('completionView').style.display = 'none';
   document.getElementById('queueSummary').style.display = '';
+  // Render subject filter chips
+  renderSessionFilters();
+  // Render XP
+  renderPlayerStats();
+}
+
+// Session filter state
+var _sessionSubject = 'all';
+var _sessionType = 'all';
+
+function renderSessionFilters() {
+  var subjects = {};
+  currentQueue.forEach(p => { subjects[p.subject] = (subjects[p.subject]||0)+1; });
+  var el = document.getElementById('filterSubjectChips');
+  if (!el) return;
+  var html = '<button class="filter-chip ' + (_sessionSubject === 'all' ? 'active' : '') + '" onclick="setSessionSubject(\'all\',this)">全教科</button>';
+  Object.entries(subjects).forEach(([s, n]) => {
+    html += '<button class="filter-chip ' + (_sessionSubject === s ? 'active' : '') + '" onclick="setSessionSubject(\'' + s + '\',this)">' + s + ' ' + n + '</button>';
+  });
+  el.innerHTML = html;
+  updateFilteredCount();
+}
+
+function setSessionSubject(subj, btn) {
+  _sessionSubject = subj;
+  document.querySelectorAll('#filterSubjectChips .filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  updateFilteredCount();
+}
+
+function setSessionType(type, btn) {
+  _sessionType = type;
+  document.querySelectorAll('#filterTypeChips .filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  updateFilteredCount();
+}
+
+function updateFilteredCount() {
+  var filtered = getFilteredQueue();
+  var btn = document.getElementById('btnStart');
+  btn.textContent = filtered.length > 0 ? '復習をはじめる（' + filtered.length + '問）' : '対象の問題がありません';
+  btn.disabled = filtered.length === 0;
+}
+
+function getFilteredQueue() {
+  return currentQueue.filter(function(p) {
+    if (_sessionSubject !== 'all' && p.subject !== _sessionSubject) return false;
+    if (_sessionType !== 'all' && getProblemType(p) !== _sessionType) return false;
+    return true;
+  });
+}
+
+function startFilteredSession() {
+  var filtered = getFilteredQueue();
+  if (filtered.length === 0) return;
+  currentQueue = filtered;
+  startSession();
+}
+
+// ================================================================
+// XP & LEVEL SYSTEM
+// ================================================================
+function getXP() { return DATA.xp || 0; }
+function getLevel() {
+  var xp = getXP();
+  // XP needed: Lv1=0, Lv2=100, Lv3=250, Lv4=450...
+  // Formula: level = floor(sqrt(xp/50)) + 1
+  return Math.floor(Math.sqrt(xp / 50)) + 1;
+}
+function getXPForLevel(lv) { return (lv - 1) * (lv - 1) * 50; }
+
+function addXP(amount, reason) {
+  DATA.xp = (DATA.xp || 0) + amount;
+  saveData(DATA);
+  renderPlayerStats();
+  // Show XP popup
+  showXPPopup('+' + amount + ' XP ' + (reason || ''));
+}
+
+function showXPPopup(text) {
+  var el = document.createElement('div');
+  el.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--accent);color:#fff;padding:12px 24px;border-radius:12px;font-size:18px;font-weight:800;z-index:9999;animation:xpPop .8s ease-out forwards;pointer-events:none';
+  el.textContent = text;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1000);
+}
+
+function renderPlayerStats() {
+  var lv = getLevel();
+  var xp = getXP();
+  var curLvXP = getXPForLevel(lv);
+  var nextLvXP = getXPForLevel(lv + 1);
+  var progress = nextLvXP > curLvXP ? ((xp - curLvXP) / (nextLvXP - curLvXP) * 100) : 100;
+  var lvEl = document.getElementById('playerLevel');
+  var barEl = document.getElementById('xpBar');
+  var textEl = document.getElementById('xpText');
+  if (lvEl) lvEl.textContent = 'Lv.' + lv;
+  if (barEl) barEl.style.width = Math.min(100, progress) + '%';
+  if (textEl) textEl.textContent = xp + ' / ' + nextLvXP + ' XP';
+}
+
+// Boss battle check - every 5 levels
+function checkBossBattle(prevLv) {
+  var newLv = getLevel();
+  if (newLv > prevLv && newLv % 5 === 0) {
+    showBossDefeat(newLv);
+  } else if (newLv > prevLv) {
+    showLevelUp(newLv);
+  }
+}
+
+function showLevelUp(lv) {
+  var flash = document.getElementById('graduatedFlash');
+  document.getElementById('graduatedMsg').textContent = '🎉 Lv.' + lv + ' に上がった！';
+  flash.classList.add('show');
+  setTimeout(() => flash.classList.remove('show'), 2500);
+}
+
+function showBossDefeat(lv) {
+  var bosses = ['スライムキング','ゴブリンロード','ドラゴンパピー','フロストギガント','ダークナイト','フェニックス','リヴァイアサン','ケルベロス','魔王ラスボスⅠ','魔王ラスボスⅡ'];
+  var bossIdx = Math.floor(lv / 5) - 1;
+  var bossName = bosses[Math.min(bossIdx, bosses.length - 1)];
+  // Full screen boss defeat overlay
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;animation:fadeIn .3s';
+  overlay.innerHTML = '<div style="font-size:60px;animation:xpPop .6s">⚔️</div>'
+    + '<div style="font-size:24px;font-weight:900;color:#ffd700;margin:16px 0;text-shadow:0 0 20px rgba(255,215,0,.5)">BOSS DEFEATED!</div>'
+    + '<div style="font-size:18px;color:#fff;font-weight:700">Lv.' + lv + ' 「' + bossName + '」を撃破！</div>'
+    + '<div style="font-size:13px;color:var(--text2);margin-top:8px">定着した知識が武器になる💪</div>'
+    + '<button onclick="this.parentElement.remove()" style="margin-top:24px;padding:10px 32px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;border:none;font-size:15px;cursor:pointer">続ける</button>';
+  document.body.appendChild(overlay);
+  fireConfetti(); fireConfetti();
 }
 
 function renderStreak() {
@@ -1894,6 +2045,7 @@ function recordAnswer(quality) {
   var real = DATA.problems.find(x => x.id === p.id);
   if (!real) { currentIndex++; showCard(); return; }
 
+  var prevLv = getLevel();
   var result = calcNextReview(real, quality);
   Object.assign(real, result);
   real.history = real.history || [];
@@ -1906,16 +2058,26 @@ function recordAnswer(quality) {
   });
   if (memo) real.lastMemo = memo;
 
-  if (quality >= 4) { sessionStats.correct++; fireConfetti(); }
-  else if (quality >= 3) sessionStats.hard++;
-  else sessionStats.wrong++;
+  // XP rewards
+  var xpGain = 0;
+  if (quality >= 4) { sessionStats.correct++; xpGain = 15; fireConfetti(); }
+  else if (quality >= 3) { sessionStats.hard++; xpGain = 8; }
+  else { sessionStats.wrong++; xpGain = 3; } // even trying earns XP
+  // Bonus: flash type = less XP (easier), think = more XP
+  if (getProblemType(real) === 'think' && quality >= 4) xpGain += 5;
+  // Streak bonus
+  if (DATA.streak.count >= 7) xpGain = Math.round(xpGain * 1.5);
+  else if (DATA.streak.count >= 3) xpGain = Math.round(xpGain * 1.2);
+  addXP(xpGain);
 
-  // check graduated
+  // check mastered
   if (getStage(real) === 'mastered') {
     sessionStats.graduated++;
     showGraduated(real);
+    addXP(30, '定着ボーナス！');
   }
 
+  checkBossBattle(prevLv);
   saveData(DATA);
   currentIndex++;
   showCard();
@@ -2523,12 +2685,20 @@ function renderList() {
     var lastReview = (p.history && p.history.length > 0) ? p.history[p.history.length-1].date : null;
     var createdShort = p.createdAt ? p.createdAt.replace(/^\d{4}-/,'') : '';
     var lastShort = lastReview ? lastReview.replace(/^\d{4}-/,'') : '';
+    var preview = '';
+    if (p.contentImage) {
+      preview = '<div style="margin-top:4px"><img src="' + p.contentImage + '" style="max-height:40px;border-radius:4px;opacity:.8"></div>';
+    } else if (p.content) {
+      var txt = p.content.length > 40 ? p.content.substring(0, 40) + '…' : p.content;
+      preview = '<div style="font-size:10px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px">' + txt + '</div>';
+    }
     return `
       <div class="problem-list-item" style="flex-wrap:wrap">
         <div class="pli-status" style="background:${color}"></div>
         <div class="pli-info" style="min-width:0;flex:1">
           <div class="pli-topic">${p.subject} / ${p.topic} ${getStageBadge(p)} ${getTypeBadge(p)}</div>
           <div class="pli-sub">${p.source || ''} ・ ${p.interval||0}日後 ・ <span style="color:var(--text2)">作成${createdShort}</span>${lastShort?' ・ <span style="color:var(--text2)">最終'+lastShort+'</span>':''}</div>
+          ${preview}
           <div style="display:flex;gap:4px;align-items:center;margin-top:2px;font-size:10px">
             ${dotsHtml || '<span style="color:var(--text2)">履歴なし</span>'}
             ${tagsHtml ? ' ' + tagsHtml : ''}
