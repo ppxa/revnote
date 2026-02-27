@@ -1980,10 +1980,11 @@ function openProblemDetail(id) {
   var p = DATA.problems.find(x => x.id === id);
   if (!p) return;
   isSingleProblemMode = true;
-  currentQueue = [p];
-  currentIndex = 0;
   sessionStats = { correct: 0, wrong: 0, hard: 0, graduated: 0 };
   switchScreen('Today');
+  // Set queue AFTER switchScreen (which calls renderToday and overwrites currentQueue)
+  currentQueue = [p];
+  currentIndex = 0;
   document.getElementById('queueSummary').style.display = 'none';
   document.getElementById('completionView').style.display = 'none';
   document.getElementById('cardWrap').classList.add('active');
@@ -2056,12 +2057,15 @@ function renderList() {
     var hist = (p.history || []).slice(-5);
     var dotsHtml = hist.map(h => h.result === 'correct' ? '⭕' : h.result === 'hard' ? '🔺' : '❌').join('');
     var tagsHtml = (p.tags||[]).map(t => `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--surface2);color:var(--text2)">#${t}</span>`).join(' ');
+    var lastReview = (p.history && p.history.length > 0) ? p.history[p.history.length-1].date : null;
+    var createdShort = p.createdAt ? p.createdAt.replace(/^\d{4}-/,'') : '';
+    var lastShort = lastReview ? lastReview.replace(/^\d{4}-/,'') : '';
     return `
       <div class="problem-list-item" style="flex-wrap:wrap">
         <div class="pli-status" style="background:${color}"></div>
         <div class="pli-info" style="min-width:0;flex:1">
           <div class="pli-topic">${p.subject} / ${p.topic} ${p.masteryLevel<4&&!p.frozen?getStretchZoneBadge(sz):''}</div>
-          <div class="pli-sub">${p.source || ''} ・ ${p.interval||0}日後</div>
+          <div class="pli-sub">${p.source || ''} ・ ${p.interval||0}日後 ・ <span style="color:var(--text2)">作成${createdShort}</span>${lastShort?' ・ <span style="color:var(--text2)">最終'+lastShort+'</span>':''}</div>
           <div style="display:flex;gap:4px;align-items:center;margin-top:2px;font-size:10px">
             ${dotsHtml || '<span style="color:var(--text2)">履歴なし</span>'}
             ${tagsHtml ? ' ' + tagsHtml : ''}
