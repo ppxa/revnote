@@ -1324,52 +1324,188 @@ function initScratchpad() {
   document.getElementById('spEraser').classList.remove('active');
 
   // Draw problem image if present
+  window._spStrokes = [];
+  _imgState = null;
+  _imgLoaded = null;
   drawProblemImageOnCanvas();
 
-  // Touch / mouse events - preventDefault stops text selection highlight
-  canvas.onpointerdown = (e) => { e.preventDefault(); spDrawing = true; spCtx.beginPath(); var p = spPos(e); spCtx.moveTo(p.x, p.y); };
-  canvas.onpointermove = (e) => { e.preventDefault(); if (!spDrawing) return; var p = spPos(e); var lw = parseInt(document.getElementById('spLineWidth').value); spCtx.lineWidth = lw * 2; if (spErasing) { spCtx.globalCompositeOperation = 'destination-out'; spCtx.strokeStyle = 'rgba(0,0,0,1)'; } else { spCtx.globalCompositeOperation = 'source-over'; spCtx.strokeStyle = spColor; } spCtx.lineTo(p.x, p.y); spCtx.stroke(); };
-  canvas.onpointerup = (e) => { e.preventDefault(); spDrawing = false; };
-  canvas.onpointerleave = () => { spDrawing = false; };
+  // Setup pointer events (handles both drawing and image interaction)
+  setupCanvasEvents(canvas);
 }
+
+// Image state for interactive positioning
+var _imgState = null; // {img, x, y, w, h, selected, dragStart, resizing}
+var _imgLoaded = null; // cached Image object
 
 function drawProblemImageOnCanvas() {
   if (!window._currentProblemImage || !spCtx) return;
   var canvas = document.getElementById('scratchpadCanvas');
   var img = new Image();
   img.onload = function() {
+    _imgLoaded = img;
     var cw = canvas.width;
     var ch = canvas.height;
     var isLandscape = window.innerWidth >= 1024;
-    // Landscape: left-top 1/4, Mobile: top half
     var maxW, maxH, dx, dy;
     if (isLandscape) {
-      maxW = cw * 0.45;
-      maxH = ch * 0.45;
-      dx = 16;
-      dy = 16;
+      maxW = cw * 0.45; maxH = ch * 0.45; dx = 24; dy = 24;
     } else {
-      maxW = cw * 0.9;
-      maxH = ch * 0.45;
-      dx = (cw - maxW) / 2;
-      dy = 16;
+      maxW = cw * 0.9; maxH = ch * 0.45; dy = 24; dx = 0;
     }
-    // Scale to fit
     var scale = Math.min(maxW / img.width, maxH / img.height);
     var drawW = img.width * scale;
     var drawH = img.height * scale;
     if (!isLandscape) dx = (cw - drawW) / 2;
-    // White background behind image
-    spCtx.globalCompositeOperation = 'source-over';
-    spCtx.fillStyle = '#fff';
-    spCtx.fillRect(dx - 8, dy - 8, drawW + 16, drawH + 16);
-    spCtx.strokeStyle = '#ddd';
-    spCtx.lineWidth = 2;
-    spCtx.strokeRect(dx - 8, dy - 8, drawW + 16, drawH + 16);
-    // Draw image
-    spCtx.drawImage(img, dx, dy, drawW, drawH);
+    _imgState = { x: dx, y: dy, w: drawW, h: drawH, selected: false, dragStart: null, resizing: false, origW: drawW, origH: drawH };
+    redrawCanvas();
   };
   img.src = window._currentProblemImage;
+}
+
+function redrawCanvas() {
+  var canvas = document.getElementById('scratchpadCanvas');
+  if (!canvas || !spCtx) return;
+  var bgColor = getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim() || '#f5f5f5';
+  spCtx.globalCompositeOperation = 'source-over';
+  spCtx.fillStyle = bgColor;
+  spCtx.fillRect(0, 0, canvas.width, canvas.height);
+  // Redraw saved strokes
+  if (window._spStrokes && window._spStrokes.length > 0) {
+    _spStrokes.forEach(function(stroke) {
+      spCtx.globalCompositeOperation = stroke.erasing ? 'destination-out' : 'source-over';
+      spCtx.strokeStyle = stroke.erasing ? 'rgba(0,0,0,1)' : stroke.color;
+      spCtx.lineWidth = stroke.width;
+      spCtx.lineCap = 'round'; spCtx.lineJoin = 'round';
+      spCtx.beginPath();
+      stroke.points.forEach(function(pt, i) {
+        if (i === 0) spCtx.moveTo(pt.x, pt.y);
+        else { spCtx.lineTo(pt.x, pt.y); spCtx.stroke(); }
+      });
+    });
+    spCtx.globalCompositeOperation = 'source-over';
+  }
+  // Draw image
+  if (_imgState && _imgLoaded) {
+    spCtx.fillStyle = '#fff';
+    spCtx.fillRect(_imgState.x - 6, _imgState.y - 6, _imgState.w + 12, _imgState.h + 12);
+    spCtx.drawImage(_imgLoaded, _imgState.x, _imgState.y, _imgState.w, _imgState.h);
+    if (_imgState.selected) {
+      // Selection border
+      spCtx.strokeStyle = '#6c63ff'; spCtx.lineWidth = 3; spCtx.setLineDash([8, 4]);
+      spCtx.strokeRect(_imgState.x - 6, _imgState.y - 6, _imgState.w + 12, _imgState.h + 12);
+      spCtx.setLineDash([]);
+      // Resize handle (bottom-right)
+      var hx = _imgState.x + _imgState.w; var hy = _imgState.y + _imgState.h;
+      spCtx.fillStyle = '#6c63ff';
+      spCtx.beginPath(); spCtx.arc(hx, hy, 16, 0, Math.PI * 2); spCtx.fill();
+      spCtx.fillStyle = '#fff'; spCtx.font = 'bold 18px sans-serif'; spCtx.textAlign = 'center'; spCtx.textBaseline = 'middle';
+      spCtx.fillText('⤡', hx, hy);
+    }
+  }
+}
+
+function isPointInImage(px, py) {
+  if (!_imgState) return false;
+  return px >= _imgState.x - 20 && px <= _imgState.x + _imgState.w + 20 &&
+         py >= _imgState.y - 20 && py <= _imgState.y + _imgState.h + 20;
+}
+
+function isPointOnResizeHandle(px, py) {
+  if (!_imgState || !_imgState.selected) return false;
+  var hx = _imgState.x + _imgState.w;
+  var hy = _imgState.y + _imgState.h;
+  return Math.sqrt((px - hx) * (px - hx) + (py - hy) * (py - hy)) < 30;
+}
+
+// Stroke recording
+window._spStrokes = [];
+var _currentStroke = null;
+
+function setupCanvasEvents(canvas) {
+  canvas.onpointerdown = function(e) {
+    e.preventDefault();
+    var pt = spPos(e);
+    // Check resize handle first
+    if (_imgState && _imgState.selected && isPointOnResizeHandle(pt.x, pt.y)) {
+      _imgState.resizing = true;
+      _imgState.dragStart = { x: pt.x, y: pt.y, origW: _imgState.w, origH: _imgState.h };
+      return;
+    }
+    // Check if tapping on image
+    if (_imgState && isPointInImage(pt.x, pt.y) && !spErasing) {
+      _imgState.selected = true;
+      _imgState.dragStart = { x: pt.x - _imgState.x, y: pt.y - _imgState.y };
+      _imgState.resizing = false;
+      redrawCanvas();
+      return;
+    }
+    // Tapping outside image - deselect and draw
+    if (_imgState && _imgState.selected) {
+      _imgState.selected = false;
+      _imgState.dragStart = null;
+      redrawCanvas();
+    }
+    // Normal drawing
+    spDrawing = true;
+    var lw = parseInt(document.getElementById('spLineWidth').value) * 2;
+    _currentStroke = { color: spColor, width: lw, erasing: spErasing, points: [pt] };
+    spCtx.beginPath(); spCtx.moveTo(pt.x, pt.y);
+  };
+  canvas.onpointermove = function(e) {
+    e.preventDefault();
+    var pt = spPos(e);
+    // Resizing image
+    if (_imgState && _imgState.resizing && _imgState.dragStart) {
+      var dxMove = pt.x - _imgState.dragStart.x;
+      var dyMove = pt.y - _imgState.dragStart.y;
+      var avgD = (dxMove + dyMove) / 2;
+      var newW = Math.max(60, _imgState.dragStart.origW + avgD);
+      var aspect = _imgState.dragStart.origH / _imgState.dragStart.origW;
+      _imgState.w = newW;
+      _imgState.h = newW * aspect;
+      redrawCanvas();
+      return;
+    }
+    // Moving image
+    if (_imgState && _imgState.selected && _imgState.dragStart && !_imgState.resizing) {
+      _imgState.x = pt.x - _imgState.dragStart.x;
+      _imgState.y = pt.y - _imgState.dragStart.y;
+      redrawCanvas();
+      return;
+    }
+    // Normal drawing
+    if (!spDrawing) return;
+    var lw = parseInt(document.getElementById('spLineWidth').value) * 2;
+    spCtx.lineWidth = lw;
+    if (spErasing) {
+      spCtx.globalCompositeOperation = 'destination-out'; spCtx.strokeStyle = 'rgba(0,0,0,1)';
+    } else {
+      spCtx.globalCompositeOperation = 'source-over'; spCtx.strokeStyle = spColor;
+    }
+    spCtx.lineTo(pt.x, pt.y); spCtx.stroke();
+    if (_currentStroke) _currentStroke.points.push(pt);
+  };
+  canvas.onpointerup = function(e) {
+    e.preventDefault();
+    if (_imgState && (_imgState.resizing || (_imgState.selected && _imgState.dragStart))) {
+      _imgState.resizing = false;
+      // Keep dragStart for continued move on next touch
+      return;
+    }
+    spDrawing = false;
+    if (_currentStroke && _currentStroke.points.length > 1) {
+      window._spStrokes.push(_currentStroke);
+    }
+    _currentStroke = null;
+  };
+  canvas.onpointerleave = function() {
+    spDrawing = false;
+    if (_imgState) { _imgState.resizing = false; }
+    if (_currentStroke && _currentStroke.points.length > 1) {
+      window._spStrokes.push(_currentStroke);
+    }
+    _currentStroke = null;
+  };
 }
 
 function spPos(e) {
@@ -1381,12 +1517,9 @@ function spPos(e) {
 function clearScratchpad() {
   var c = document.getElementById('scratchpadCanvas');
   if (c && c.getContext) {
-    var ctx = c.getContext('2d');
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim() || '#f5f5f5';
-    ctx.fillRect(0, 0, c.width, c.height);
-    // Redraw problem image if present
-    drawProblemImageOnCanvas();
+    window._spStrokes = [];
+    _currentStroke = null;
+    redrawCanvas();
   }
 }
 
