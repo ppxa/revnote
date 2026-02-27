@@ -635,7 +635,7 @@ body {
     <div class="today-right">
       <div class="scratchpad-wrap" id="scratchpadWrap">
         <div class="scratchpad-toolbar" id="scratchpadToolbar">
-          <button class="sp-btn" onclick="clearScratchpad()">消す</button>
+          <button class="sp-btn" onclick="clearScratchpad()">リセット</button>
           <button class="sp-btn" id="spEraser" onclick="toggleEraser()">消しゴム</button>
           <input type="range" min="1" max="8" value="3" id="spLineWidth" style="width:50px;accent-color:var(--accent)">
           <div class="sp-color active" style="background:#333" onclick="setScratchColor('#333',this)"></div>
@@ -1422,79 +1422,71 @@ window._spStrokes = [];
 var _currentStroke = null;
 
 function setupCanvasEvents(canvas) {
-  var _touches = 0;
-  var _imgMode = false; // true when 2-finger image manipulation active
-  var _pinchStart = null; // {dist, imgW, imgH, cx, cy}
+  // Use touch events for multi-finger, pointer for single-finger drawing
+  var _imgMode = false;
+  var _pinchStart = null; // {dist, cx, cy, imgX, imgY, imgW, imgH}
 
-  canvas.onpointerdown = function(e) {
+  function getTouchPos(touch) {
+    var r = canvas.getBoundingClientRect();
+    return { x: (touch.clientX - r.left) * (canvas.width / r.width), y: (touch.clientY - r.top) * (canvas.height / r.height) };
+  }
+  function pinchDist(t) {
+    var dx = t[0].clientX - t[1].clientX;
+    var dy = t[0].clientY - t[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  function pinchCenter(t) {
+    var r = canvas.getBoundingClientRect();
+    var cx = (t[0].clientX + t[1].clientX) / 2;
+    var cy = (t[0].clientY + t[1].clientY) / 2;
+    return { x: (cx - r.left) * (canvas.width / r.width), y: (cy - r.top) * (canvas.height / r.height) };
+  }
+
+  canvas.addEventListener('touchstart', function(e) {
     e.preventDefault();
-    _touches++;
-    var pt = spPos(e);
-
-    if (_touches >= 2 && _imgState) {
-      // 2-finger: enter image mode
+    if (e.touches.length >= 2 && _imgState) {
+      // Enter image mode
       _imgMode = true;
       spDrawing = false;
+      _currentStroke = null;
       _imgState.selected = true;
-      if (!_pinchStart) {
-        _pinchStart = { x: pt.x, y: pt.y, imgX: _imgState.x, imgY: _imgState.y, imgW: _imgState.w, imgH: _imgState.h };
-      } else {
-        // Second finger down - calc initial pinch distance
-        var dx = pt.x - _pinchStart.x;
-        var dy = pt.y - _pinchStart.y;
-        _pinchStart.dist = Math.sqrt(dx * dx + dy * dy);
-        _pinchStart.cx = (_pinchStart.x + pt.x) / 2;
-        _pinchStart.cy = (_pinchStart.y + pt.y) / 2;
-        _pinchStart.pt2 = { x: pt.x, y: pt.y };
-      }
+      _pinchStart = {
+        dist: pinchDist(e.touches),
+        center: pinchCenter(e.touches),
+        imgX: _imgState.x, imgY: _imgState.y,
+        imgW: _imgState.w, imgH: _imgState.h
+      };
       redrawCanvas();
       return;
     }
-
-    // 1 finger: always draw (even on image)
-    if (_imgState && _imgState.selected) {
-      _imgState.selected = false;
-      redrawCanvas();
-    }
+    // 1 finger = draw
+    if (_imgState && _imgState.selected) { _imgState.selected = false; redrawCanvas(); }
+    var pt = getTouchPos(e.touches[0]);
     spDrawing = true;
     var lw = parseInt(document.getElementById('spLineWidth').value) * 2;
     _currentStroke = { color: spColor, width: lw, erasing: spErasing, points: [pt] };
     spCtx.beginPath(); spCtx.moveTo(pt.x, pt.y);
-  };
+  }, { passive: false });
 
-  canvas.onpointermove = function(e) {
+  canvas.addEventListener('touchmove', function(e) {
     e.preventDefault();
-    var pt = spPos(e);
-
-    // 2-finger image manipulation
-    if (_imgMode && _imgState && _pinchStart) {
-      if (_pinchStart.pt2) {
-        // Pinch resize: compare current distance to initial
-        var dx = pt.x - _pinchStart.x;
-        var dy = pt.y - _pinchStart.y;
-        var curDist = Math.sqrt(dx * dx + dy * dy);
-        if (_pinchStart.dist > 10) {
-          var scale = curDist / _pinchStart.dist;
-          var aspect = _pinchStart.imgH / _pinchStart.imgW;
-          _imgState.w = Math.max(40, _pinchStart.imgW * scale);
-          _imgState.h = _imgState.w * aspect;
-        }
-        // Move based on midpoint shift
-        var curCx = (_pinchStart.x + pt.x) / 2;
-        var curCy = (_pinchStart.y + pt.y) / 2;
-        _imgState.x = _pinchStart.imgX + (curCx - _pinchStart.cx);
-        _imgState.y = _pinchStart.imgY + (curCy - _pinchStart.cy);
-      } else {
-        // Single second touch - just move
-        _imgState.x = _pinchStart.imgX + (pt.x - _pinchStart.x);
-        _imgState.y = _pinchStart.imgY + (pt.y - _pinchStart.y);
-      }
+    if (_imgMode && _imgState && _pinchStart && e.touches.length >= 2) {
+      // Pinch resize
+      var curDist = pinchDist(e.touches);
+      var scale = curDist / _pinchStart.dist;
+      var aspect = _pinchStart.imgH / _pinchStart.imgW;
+      _imgState.w = Math.max(40, _pinchStart.imgW * scale);
+      _imgState.h = _imgState.w * aspect;
+      // Pan move
+      var curCenter = pinchCenter(e.touches);
+      _imgState.x = _pinchStart.imgX + (curCenter.x - _pinchStart.center.x);
+      _imgState.y = _pinchStart.imgY + (curCenter.y - _pinchStart.center.y);
       redrawCanvas();
       return;
     }
-
-    // Normal drawing
-    if (!spDrawing) return;
+    // 1 finger draw
+    if (!spDrawing || e.touches.length !== 1) return;
+    var pt = getTouchPos(e.touches[0]);
     var lw = parseInt(document.getElementById('spLineWidth').value) * 2;
     spCtx.lineWidth = lw;
     if (spErasing) {
@@ -1504,35 +1496,50 @@ function setupCanvasEvents(canvas) {
     }
     spCtx.lineTo(pt.x, pt.y); spCtx.stroke();
     if (_currentStroke) _currentStroke.points.push(pt);
-  };
+  }, { passive: false });
 
-  canvas.onpointerup = function(e) {
+  canvas.addEventListener('touchend', function(e) {
     e.preventDefault();
-    _touches = Math.max(0, _touches - 1);
-    if (_touches === 0) {
+    if (e.touches.length === 0) {
       if (_imgMode && _imgState) {
-        // Keep image position, exit image mode after short delay
-        setTimeout(function() {
-          if (_touches === 0) { _imgMode = false; _imgState.selected = false; _pinchStart = null; redrawCanvas(); }
-        }, 300);
+        _imgMode = false; _imgState.selected = false; _pinchStart = null; redrawCanvas();
       }
+      spDrawing = false;
+      if (_currentStroke && _currentStroke.points.length > 1) { window._spStrokes.push(_currentStroke); }
+      _currentStroke = null;
+    } else if (e.touches.length === 1 && _imgMode) {
+      // Went from 2 to 1 finger - update pinch start for continued pan
       _pinchStart = null;
     }
-    spDrawing = false;
-    if (_currentStroke && _currentStroke.points.length > 1) {
-      window._spStrokes.push(_currentStroke);
-    }
-    _currentStroke = null;
-  };
+  }, { passive: false });
 
-  canvas.onpointerleave = function() {
-    _touches = Math.max(0, _touches - 1);
-    spDrawing = false;
-    if (_currentStroke && _currentStroke.points.length > 1) {
-      window._spStrokes.push(_currentStroke);
-    }
+  // Also support mouse for desktop
+  canvas.onmousedown = function(e) {
+    e.preventDefault();
+    if (_imgState && _imgState.selected) { _imgState.selected = false; redrawCanvas(); }
+    var pt = spPos(e);
+    spDrawing = true;
+    var lw = parseInt(document.getElementById('spLineWidth').value) * 2;
+    _currentStroke = { color: spColor, width: lw, erasing: spErasing, points: [pt] };
+    spCtx.beginPath(); spCtx.moveTo(pt.x, pt.y);
+  };
+  canvas.onmousemove = function(e) {
+    e.preventDefault();
+    if (!spDrawing) return;
+    var pt = spPos(e);
+    var lw = parseInt(document.getElementById('spLineWidth').value) * 2;
+    spCtx.lineWidth = lw;
+    if (spErasing) { spCtx.globalCompositeOperation = 'destination-out'; spCtx.strokeStyle = 'rgba(0,0,0,1)'; }
+    else { spCtx.globalCompositeOperation = 'source-over'; spCtx.strokeStyle = spColor; }
+    spCtx.lineTo(pt.x, pt.y); spCtx.stroke();
+    if (_currentStroke) _currentStroke.points.push(pt);
+  };
+  canvas.onmouseup = function(e) {
+    e.preventDefault(); spDrawing = false;
+    if (_currentStroke && _currentStroke.points.length > 1) { window._spStrokes.push(_currentStroke); }
     _currentStroke = null;
   };
+  canvas.onmouseleave = function() { spDrawing = false; _currentStroke = null; };
 }
 
 function spPos(e) {
@@ -1546,7 +1553,15 @@ function clearScratchpad() {
   if (c && c.getContext) {
     window._spStrokes = [];
     _currentStroke = null;
-    redrawCanvas();
+    // Reset image position/size
+    _imgState = null;
+    _imgLoaded = null;
+    // Redraw bg then re-init image at default position
+    var ctx = c.getContext('2d');
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim() || '#f5f5f5';
+    ctx.fillRect(0, 0, c.width, c.height);
+    drawProblemImageOnCanvas();
   }
 }
 
