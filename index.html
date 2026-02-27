@@ -40,6 +40,15 @@
 
 /* STRETCH ZONE */
 .sz-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.stage-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 8px;border-radius:12px;white-space:nowrap}
+.stage-new{background:rgba(108,99,255,.15);color:var(--accent)}
+.stage-learning{background:rgba(255,193,7,.15);color:#f0ad4e}
+.stage-reviewing{background:rgba(78,205,196,.15);color:#4ecdc4}
+.stage-mastered{background:rgba(0,200,83,.15);color:var(--success)}
+.stage-frozen{background:rgba(120,144,180,.15);color:var(--frozen)}
+.type-badge{display:inline-flex;align-items:center;font-size:9px;font-weight:600;padding:1px 6px;border-radius:8px;white-space:nowrap}
+.type-flash{background:rgba(255,193,7,.12);color:#f0ad4e}
+.type-think{background:rgba(108,99,255,.12);color:var(--accent)}
 .sz-comfort{background:rgba(78,205,196,.15);color:#4ecdc4}
 .sz-stretch{background:rgba(108,99,255,.15);color:var(--accent)}
 .sz-panic{background:rgba(255,107,107,.15);color:var(--danger)}
@@ -1126,82 +1135,164 @@ async function initAuth() {
 var DATA = loadData();
 
 // ================================================================
-// SM-2 SPACED REPETITION ENGINE
+// SPACED REPETITION ENGINE v2 (Type-aware)
 // ================================================================
+// Problem types: 'flash' (暗記) vs 'think' (思考)
+// Auto-detected from subject + tags, or manually set
+
+// Interval tables (days)
+var INTERVALS = {
+  flash: [0, 1, 3, 7, 14, 30, 60],   // 暗記: 速く回す
+  think: [1, 3, 7, 14, 30, 60, 90]    // 思考: じっくり
+};
+
+function getProblemType(p) {
+  if (p.problemType) return p.problemType; // manual override
+  // Auto-detect from tags
+  var tags = (p.tags || []).join(' ').toLowerCase();
+  if (tags.match(/暗記|漢字|年号|語彙|四字熟語/)) return 'flash';
+  // Auto-detect from subject + topic
+  var topic = (p.topic || '').toLowerCase();
+  if (topic.match(/漢字|書き取り|四字熟語|ことわざ|慣用句/)) return 'flash';
+  if (topic.match(/年号|年代|暗記|用語/)) return 'flash';
+  if (p.subject === '国語' && topic.match(/語彙|文法/)) return 'flash';
+  if (p.subject === '理科' && topic.match(/暗記|星座|岩石|人体|植物|昆虫/)) return 'flash';
+  if (p.subject === '社会') return 'flash'; // 社会はほぼ暗記
+  // Default: think
+  return 'think';
+}
+
+// Stage: visible to user
+// 🆕 new(0) → 📝 learning(1-2) → 🔄 reviewing(3+) → ✅ mastered(interval≧14)
+function getStage(p) {
+  if (p.frozen) return 'frozen';
+  var reps = p.repetitions || 0;
+  var interval = p.interval || 0;
+  if (interval >= 14 && reps >= 4) return 'mastered';
+  if (reps >= 3) return 'reviewing';
+  if (reps >= 1) return 'learning';
+  return 'new';
+}
+
+function getStageBadge(p) {
+  var s = getStage(p);
+  var map = {
+    'new':       '<span class="stage-badge stage-new">🆕 はじめて</span>',
+    'learning':  '<span class="stage-badge stage-learning">📝 練習中</span>',
+    'reviewing': '<span class="stage-badge stage-reviewing">🔄 復習中</span>',
+    'mastered':  '<span class="stage-badge stage-mastered">✅ 定着</span>',
+    'frozen':    '<span class="stage-badge stage-frozen">❄️ 凍結</span>'
+  };
+  return map[s] || '';
+}
+
+function getTypeBadge(p) {
+  var t = getProblemType(p);
+  return t === 'flash'
+    ? '<span class="type-badge type-flash">⚡暗記</span>'
+    : '<span class="type-badge type-think">🧠思考</span>';
+}
+
 function calcNextReview(problem, quality) {
   // quality: 0=wrong, 3=hard, 5=correct
-  var ef = problem.easeFactor || 2.5;
-  var interval = problem.interval || 0;
+  var type = getProblemType(problem);
+  var intervals = INTERVALS[type];
   var reps = problem.repetitions || 0;
+  var interval = problem.interval || 0;
   var consFailures = problem.consecutiveFailures || 0;
 
-  if (quality >= 3) { // correct or hard
-    if (reps === 0) interval = 1;
-    else if (reps === 1) interval = 3;
-    else interval = Math.round(interval * ef);
+  if (quality >= 4) {
+    // Correct: advance to next interval
     reps++;
+    var idx = Math.min(reps, intervals.length - 1);
+    interval = intervals[idx];
     consFailures = 0;
-  } else { // wrong
+  } else if (quality >= 3) {
+    // Hard: same stage, shorter interval
+    reps = Math.max(0, reps); // don't advance
+    interval = Math.max(1, Math.round(interval * 0.5));
+    consFailures = 0;
+  } else {
+    // Wrong: reset
     reps = 0;
-    interval = 1;
+    interval = type === 'flash' ? 0 : 1; // flash: same day retry
     consFailures++;
   }
-  // update ease factor
-  ef = ef + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
-  if (ef < 1.3) ef = 1.3;
-  // "hard" halves the interval
-  if (quality === 3) interval = Math.max(1, Math.round(interval / 2));
 
   var nextDate = new Date();
   nextDate.setDate(nextDate.getDate() + interval);
 
   return {
-    easeFactor: ef,
     interval: interval,
     repetitions: reps,
     consecutiveFailures: consFailures,
     nextReviewDate: nextDate.toISOString().split('T')[0],
-    masteryLevel: calcMastery(reps, consFailures)
+    // Keep easeFactor/masteryLevel for backward compat but derive from reps
+    easeFactor: problem.easeFactor || 2.5,
+    masteryLevel: (interval >= 14 && reps >= 4) ? 4 : Math.min(3, reps)
   };
 }
 
 function calcMastery(reps, failures) {
   if (failures >= 3) return 0;
-  if (reps >= 5) return 4; // graduated
+  if (reps >= 5) return 4;
   if (reps >= 3) return 3;
   if (reps >= 1) return 2;
   return 1;
 }
 
 // ================================================================
-// ZONE CLASSIFICATION
+// ZONE CLASSIFICATION (simplified)
 // ================================================================
 function classifyZone(p) {
   if (p.frozen) return 'frozen';
-  if (p.masteryLevel >= 4) return 'graduated';
+  var stage = getStage(p);
+  if (stage === 'mastered') return 'graduated';
+  // High-priority: new or learning + high frequency
   var isHighFreq = p.frequency === 'high' || p.frequency === 'medium';
-  var isStruggling = (p.consecutiveFailures || 0) >= 3;
-  if (isStruggling && !isHighFreq) return 'discard'; // 捨て問候補
-  if (p.masteryLevel < 3 && isHighFreq) return 'priority'; // 最優先
-  return 'review'; // 後回し or 通常復習
+  if ((stage === 'new' || stage === 'learning') && isHighFreq) return 'priority';
+  return 'review';
 }
 
 // ================================================================
-// DAILY QUEUE GENERATION
+// DAILY QUEUE GENERATION (type-aware)
 // ================================================================
 function generateQueue() {
   var cap = DATA.settings.dailyCap || 15;
   var t = today();
   var eligible = DATA.problems.filter(p =>
-    !p.frozen && p.masteryLevel < 4 && p.nextReviewDate <= t
+    !p.frozen && getStage(p) !== 'mastered' && p.nextReviewDate <= t
   );
-  // sort by priority
-  eligible.sort((a, b) => {
-    var pa = calcPriority(a, t);
-    var pb = calcPriority(b, t);
-    return pb - pa;
-  });
-  return eligible.slice(0, cap);
+  // Separate by type
+  var flashProbs = eligible.filter(p => getProblemType(p) === 'flash');
+  var thinkProbs = eligible.filter(p => getProblemType(p) !== 'flash');
+  // Sort each by priority
+  flashProbs.sort((a, b) => calcPriority(b, t) - calcPriority(a, t));
+  thinkProbs.sort((a, b) => calcPriority(b, t) - calcPriority(a, t));
+  // Mix: alternate think/flash but respect cap
+  // Aim for roughly 60% think, 40% flash (adjustable)
+  var thinkCap = Math.ceil(cap * 0.6);
+  var flashCap = cap - thinkCap;
+  // But if one type has fewer, give to other
+  if (thinkProbs.length < thinkCap) {
+    flashCap += (thinkCap - thinkProbs.length);
+    thinkCap = thinkProbs.length;
+  }
+  if (flashProbs.length < flashCap) {
+    thinkCap += (flashCap - flashProbs.length);
+    flashCap = flashProbs.length;
+  }
+  var queue = thinkProbs.slice(0, thinkCap).concat(flashProbs.slice(0, flashCap));
+  // Interleave: think, flash, think, flash...
+  var result = [];
+  var ti = 0, fi = 0;
+  var thinks = thinkProbs.slice(0, thinkCap);
+  var flashes = flashProbs.slice(0, flashCap);
+  while (ti < thinks.length || fi < flashes.length) {
+    if (ti < thinks.length) result.push(thinks[ti++]);
+    if (fi < flashes.length) result.push(flashes[fi++]);
+  }
+  return result;
 }
 
 function calcPriority(p, t) {
@@ -1209,8 +1300,6 @@ function calcPriority(p, t) {
   var urgency = Math.max(0, daysOverdue) + 1;
   var freqMult = { high: 2, medium: 1, low: 0.5 }[p.frequency] || 1;
   var failPenalty = (p.consecutiveFailures || 0) >= 3 ? 0.3 : 1.0;
-  // 正答率ブースト: 正答率が高い問題ほど「落としちゃいけない」→優先度UP
-  // 正答率70%以上=みんな取れる→×1.5, 40-69%=差がつく→×1.3, 20-39%=難問→×1.0, <20%=捨て問→×0.7
   var rateMult = 1.0;
   if (p.correctRate != null) {
     if (p.correctRate >= 70) rateMult = 1.5;
@@ -1218,13 +1307,10 @@ function calcPriority(p, t) {
     else if (p.correctRate >= 20) rateMult = 1.0;
     else rateMult = 0.7;
   }
-  // Stretch zone boost: stretch=×2.0, panic=×1.2, comfort=×0.5
-  var szMult = 1.0;
-  var sz = classifyStretchZone(p);
-  if (sz === 'stretch') szMult = 2.0;
-  else if (sz === 'panic') szMult = 1.2;
-  else if (sz === 'comfort') szMult = 0.5;
-  return urgency * freqMult * failPenalty * rateMult * szMult;
+  // New problems get a boost
+  var stage = getStage(p);
+  var stageMult = stage === 'new' ? 1.5 : stage === 'learning' ? 1.2 : 1.0;
+  return urgency * freqMult * failPenalty * rateMult * stageMult;
 }
 
 // ================================================================
@@ -1259,51 +1345,29 @@ function renderToday() {
   renderStreak();
   renderFreezeAlerts();
   currentQueue = generateQueue();
-  var total = DATA.problems.filter(p => !p.frozen && p.masteryLevel < 4 && p.nextReviewDate <= today()).length;
+  var total = DATA.problems.filter(p => !p.frozen && getStage(p) !== 'mastered' && p.nextReviewDate <= today()).length;
   var count = currentQueue.length;
   document.getElementById('queueCount').textContent = count;
   var overdue = total - count;
-  var breakdown = '';
-  if (overdue > 0) breakdown = `（他に ${overdue} 問が待機中・明日以降に繰り越し）`;
-  document.getElementById('queueBreakdown').textContent = breakdown;
-  // Stretch zone bar
-  var szCounts = {comfort:0,stretch:0,panic:0};
-  currentQueue.forEach(function(p){szCounts[classifyStretchZone(p)]++});
-  var szTotal = currentQueue.length || 1;
-  var szBar = document.getElementById('queueStretchBar');
-  if(szBar && currentQueue.length){
-    szBar.innerHTML='<div style="display:flex;gap:8px;font-size:10px;margin-bottom:4px">'
-      +'<span class="sz-badge sz-stretch">✨最適 '+szCounts.stretch+'</span>'
-      +'<span class="sz-badge sz-comfort">⚠️簡単 '+szCounts.comfort+'</span>'
-      +'<span class="sz-badge sz-panic">🔴難しい '+szCounts.panic+'</span>'
-      +'</div>'
-      +'<div class="sz-bar">'
-      +'<div class="sz-bar-seg" style="width:'+Math.round(szCounts.stretch/szTotal*100)+'%;background:var(--accent)"></div>'
-      +'<div class="sz-bar-seg" style="width:'+Math.round(szCounts.comfort/szTotal*100)+'%;background:#4ecdc4"></div>'
-      +'<div class="sz-bar-seg" style="width:'+Math.round(szCounts.panic/szTotal*100)+'%;background:var(--danger)"></div>'
-      +'</div>';
-  }else if(szBar){szBar.innerHTML=''}
-  // subject breakdown
+  // Subject breakdown
   var bySubj = {};
   currentQueue.forEach(p => { bySubj[p.subject] = (bySubj[p.subject]||0)+1; });
   var parts = Object.entries(bySubj).map(([s,n]) => `${s}${n}問`);
-  if (parts.length) breakdown = parts.join(' / ') + (overdue > 0 ? ` ＋繰越${overdue}問` : '');
+  var breakdown = parts.length ? parts.join(' / ') + (overdue > 0 ? ` ＋繰越${overdue}問` : '') : '';
   document.getElementById('queueBreakdown').textContent = breakdown;
-  // Stretch zone bar
-  var szCounts = {comfort:0,stretch:0,panic:0};
-  currentQueue.forEach(function(p){szCounts[classifyStretchZone(p)]++});
-  var szTotal = currentQueue.length || 1;
+  // Type + Stage bar
+  var flashCount = currentQueue.filter(p => getProblemType(p) === 'flash').length;
+  var thinkCount = count - flashCount;
+  var stages = {new:0,learning:0,reviewing:0};
+  currentQueue.forEach(function(p){ var s=getStage(p); if(stages[s]!==undefined)stages[s]++; });
   var szBar = document.getElementById('queueStretchBar');
-  if(szBar && currentQueue.length){
-    szBar.innerHTML='<div style="display:flex;gap:8px;font-size:10px;margin-bottom:4px">'
-      +'<span class="sz-badge sz-stretch">✨最適 '+szCounts.stretch+'</span>'
-      +'<span class="sz-badge sz-comfort">⚠️簡単 '+szCounts.comfort+'</span>'
-      +'<span class="sz-badge sz-panic">🔴難しい '+szCounts.panic+'</span>'
-      +'</div>'
-      +'<div class="sz-bar">'
-      +'<div class="sz-bar-seg" style="width:'+Math.round(szCounts.stretch/szTotal*100)+'%;background:var(--accent)"></div>'
-      +'<div class="sz-bar-seg" style="width:'+Math.round(szCounts.comfort/szTotal*100)+'%;background:#4ecdc4"></div>'
-      +'<div class="sz-bar-seg" style="width:'+Math.round(szCounts.panic/szTotal*100)+'%;background:var(--danger)"></div>'
+  if(szBar && count){
+    szBar.innerHTML='<div style="display:flex;gap:8px;font-size:10px;margin-bottom:4px;flex-wrap:wrap">'
+      +'<span class="type-badge type-think">🧠 思考 '+thinkCount+'</span>'
+      +'<span class="type-badge type-flash">⚡ 暗記 '+flashCount+'</span>'
+      +'<span style="margin-left:4px" class="stage-badge stage-new">🆕 '+stages.new+'</span>'
+      +'<span class="stage-badge stage-learning">📝 '+stages.learning+'</span>'
+      +'<span class="stage-badge stage-reviewing">🔄 '+stages.reviewing+'</span>'
       +'</div>';
   }else if(szBar){szBar.innerHTML=''}
 
@@ -1418,7 +1482,7 @@ function showCard() {
       ${hasImage ? '<div style="font-size:11px;color:var(--accent)">📸 図つき問題 — 計算スペースに表示（2本指で移動・拡縮）</div>' : (p.content || '')}
     </div>
     <div class="card-meta">
-      ${getStretchZoneBadge(classifyStretchZone(p))}
+      ${getStageBadge(p)} ${getTypeBadge(p)}
       <span class="meta-tag ${p.frequency === 'high' ? 'meta-freq-high' : ''}">${freqLabel}</span>
       <span class="meta-tag ${p.difficulty === 'hard' ? 'meta-diff-hard' : ''}">${diffLabel}</span>
       ${p.correctRate != null ? `<span class="meta-tag" style="color:${p.correctRate >= 70 ? 'var(--success)' : p.correctRate >= 40 ? 'var(--warning)' : 'var(--danger)'}">正答率${p.correctRate}%</span>` : ''}
@@ -1847,7 +1911,7 @@ function recordAnswer(quality) {
   else sessionStats.wrong++;
 
   // check graduated
-  if (real.masteryLevel >= 4) {
+  if (getStage(real) === 'mastered') {
     sessionStats.graduated++;
     showGraduated(real);
   }
@@ -2190,7 +2254,7 @@ function renderAdd() {
   var catSelect = document.getElementById('addTopicCategory');
   if (catSelect.options.length <= 1) onSubjectChange();
   updateTagSuggestions();
-  var pending = DATA.problems.filter(p => !p.frozen && p.masteryLevel < 4 && p.nextReviewDate <= today()).length;
+  var pending = DATA.problems.filter(p => !p.frozen && getStage(p) !== 'mastered' && p.nextReviewDate <= today()).length;
   var warn = document.getElementById('addQueueWarning');
   if (pending > 20) {
     warn.innerHTML = `<div class="queue-warning">⚠️ キューに${pending}問溜まっています。登録すると明日以降に追加されます。</div>`;
@@ -2451,9 +2515,8 @@ function renderList() {
     return;
   }
   container.innerHTML = items.map(p => {
-    var zone = classifyZone(p);
-    var sz = classifyStretchZone(p);
-    var color = {priority:'var(--danger)',review:'var(--warning)',graduated:'var(--success)',frozen:'var(--frozen)',discard:'var(--text2)'}[zone] || 'var(--text2)';
+    var stage = getStage(p);
+    var color = {new:'var(--accent)',learning:'var(--warning)',reviewing:'#4ecdc4',mastered:'var(--success)',frozen:'var(--frozen)'}[stage] || 'var(--text2)';
     var hist = (p.history || []).slice(-5);
     var dotsHtml = hist.map(h => h.result === 'correct' ? '⭕' : h.result === 'hard' ? '🔺' : '❌').join('');
     var tagsHtml = (p.tags||[]).map(t => `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--surface2);color:var(--text2)">#${t}</span>`).join(' ');
@@ -2464,7 +2527,7 @@ function renderList() {
       <div class="problem-list-item" style="flex-wrap:wrap">
         <div class="pli-status" style="background:${color}"></div>
         <div class="pli-info" style="min-width:0;flex:1">
-          <div class="pli-topic">${p.subject} / ${p.topic} ${p.masteryLevel<4&&!p.frozen?getStretchZoneBadge(sz):''}</div>
+          <div class="pli-topic">${p.subject} / ${p.topic} ${getStageBadge(p)} ${getTypeBadge(p)}</div>
           <div class="pli-sub">${p.source || ''} ・ ${p.interval||0}日後 ・ <span style="color:var(--text2)">作成${createdShort}</span>${lastShort?' ・ <span style="color:var(--text2)">最終'+lastShort+'</span>':''}</div>
           <div style="display:flex;gap:4px;align-items:center;margin-top:2px;font-size:10px">
             ${dotsHtml || '<span style="color:var(--text2)">履歴なし</span>'}
@@ -2527,11 +2590,15 @@ function renderDashboard() {
     }).join('');
     szEl.innerHTML += szBreakdown;
   }
+  // Stage counts for dashboard
+  var stageCounts = {new:0, learning:0, reviewing:0, mastered:0, frozen:0};
+  DATA.problems.forEach(function(p){ stageCounts[getStage(p)]++; });
   document.getElementById('zoneGrid').innerHTML = `
-    <div class="zone-card zone-priority" onclick="showZoneDetail('priority','🔴 最優先')" style="cursor:pointer"><div class="num">${zones.priority}</div><div class="label">🔴 最優先</div></div>
-    <div class="zone-card zone-graduated" onclick="showZoneDetail('graduated','🟢 定着済')" style="cursor:pointer"><div class="num">${zones.graduated}</div><div class="label">🟢 定着済み</div></div>
-    <div class="zone-card zone-frozen" onclick="showZoneDetail('frozen','❄️ 凍結')" style="cursor:pointer"><div class="num">${zones.frozen}</div><div class="label">❄️ 凍結中</div></div>
-    <div class="zone-card zone-review" onclick="showZoneDetail('review','🟡 復習待ち')" style="cursor:pointer"><div class="num">${zones.review + zones.discard}</div><div class="label">🟡 復習待ち</div></div>
+    <div class="zone-card zone-priority" onclick="showZoneDetail('priority','🆕 はじめて')" style="cursor:pointer"><div class="num">${stageCounts.new}</div><div class="label">🆕 はじめて</div></div>
+    <div class="zone-card zone-review" onclick="showZoneDetail('review','📝 練習中')" style="cursor:pointer"><div class="num">${stageCounts.learning}</div><div class="label">📝 練習中</div></div>
+    <div class="zone-card zone-review" onclick="showZoneDetail('review','🔄 復習中')" style="cursor:pointer;border-color:#4ecdc4"><div class="num">${stageCounts.reviewing}</div><div class="label">🔄 復習中</div></div>
+    <div class="zone-card zone-graduated" onclick="showZoneDetail('graduated','✅ 定着')" style="cursor:pointer"><div class="num">${stageCounts.mastered}</div><div class="label">✅ 定着</div></div>
+    <div class="zone-card zone-frozen" onclick="showZoneDetail('frozen','❄️ 凍結')" style="cursor:pointer"><div class="num">${stageCounts.frozen}</div><div class="label">❄️ 凍結中</div></div>
   `;
   // subject bars
   var subjects = getSubjects();
@@ -2539,7 +2606,7 @@ function renderDashboard() {
   var bars = document.getElementById('subjectBars');
   bars.innerHTML = subjects.map((s, i) => {
     var all = DATA.problems.filter(p => p.subject === s);
-    var grad = all.filter(p => p.masteryLevel >= 4).length;
+    var grad = all.filter(p => getStage(p) === 'mastered').length;
     var pct = all.length > 0 ? Math.round(grad / all.length * 100) : 0;
     return `
       <div class="subject-row">
@@ -2561,7 +2628,7 @@ function renderDashboard() {
     正解: <strong style="color:var(--success)">${weekCorrect}</strong> ／
     不正解: <strong style="color:var(--danger)">${weekWrong}</strong><br>
     新たに定着: <strong style="color:var(--accent)">${weekGrad}問</strong><br>
-    全体の定着率: <strong>${DATA.problems.length > 0 ? Math.round(DATA.problems.filter(p=>p.masteryLevel>=4).length / DATA.problems.length * 100) : 0}%</strong>
+    全体の定着率: <strong>${DATA.problems.length > 0 ? Math.round(DATA.problems.filter(p=>getStage(p)==='mastered').length / DATA.problems.length * 100) : 0}%</strong>
   `;
 }
 
@@ -2852,9 +2919,12 @@ function renderCalendar(){
   var first=new Date(calYear,calMonth,1);var startDay=first.getDay();
   var daysInMonth=new Date(calYear,calMonth+1,0).getDate();
   var daysInPrev=new Date(calYear,calMonth,0).getDate();
-  var dayCounts={};
-  DATA.sessionLog.forEach(function(s){dayCounts[s.date]=(dayCounts[s.date]||0)+(s.correct||0)+(s.wrong||0)+(s.hard||0)});
-  DATA.problems.forEach(function(p){(p.history||[]).forEach(function(x){dayCounts[x.date]=(dayCounts[x.date]||0)+1})});
+  var dayCounts={};var dayResults={};
+  DATA.problems.forEach(function(p){(p.history||[]).forEach(function(x){
+    dayCounts[x.date]=(dayCounts[x.date]||0)+1;
+    if(!dayResults[x.date])dayResults[x.date]={correct:0,hard:0,incorrect:0};
+    dayResults[x.date][x.result]=(dayResults[x.date][x.result]||0)+1;
+  })});
   var todayStr=today();
   for(var i=0;i<startDay;i++){h+='<div class="cal-day other-month">'+(daysInPrev-startDay+i+1)+'</div>'}
   for(var d=1;d<=daysInMonth;d++){
@@ -2862,11 +2932,42 @@ function renderCalendar(){
     var cnt=dayCounts[ds]||0;var cls='cal-day';
     if(ds===todayStr)cls+=' today';
     if(cnt>=5)cls+=' has-data-many';else if(cnt>0)cls+=' has-data';
-    h+='<div class="'+cls+'" title="'+cnt+'問">'+d+'</div>';
+    var dots='';
+    if(dayResults[ds]){
+      var r=dayResults[ds];
+      if(r.correct)dots+='<span style="color:var(--success)">●</span>';
+      if(r.hard)dots+='<span style="color:var(--warning)">●</span>';
+      if(r.incorrect)dots+='<span style="color:var(--danger)">●</span>';
+    }
+    h+='<div class="'+cls+'" onclick="showDayDetail(\''+ds+'\')" style="cursor:pointer" title="'+cnt+'問">'+d+(dots?'<div style="font-size:6px;line-height:1;margin-top:-2px">'+dots+'</div>':'')+'</div>';
   }
   var remain=7-(startDay+daysInMonth)%7;
   if(remain<7)for(var j=1;j<=remain;j++)h+='<div class="cal-day other-month">'+j+'</div>';
   grid.innerHTML=h;
+}
+
+function showDayDetail(dateStr) {
+  // Find all history entries for this date
+  var entries = [];
+  DATA.problems.forEach(function(p) {
+    (p.history || []).forEach(function(h) {
+      if (h.date === dateStr) {
+        entries.push({ subject: p.subject, topic: p.topic, result: h.result, memo: h.memo || '' });
+      }
+    });
+  });
+  if (entries.length === 0) return;
+  var correct = entries.filter(e => e.result === 'correct').length;
+  var hard = entries.filter(e => e.result === 'hard').length;
+  var wrong = entries.filter(e => e.result === 'incorrect').length;
+  var list = entries.map(function(e) {
+    var icon = e.result === 'correct' ? '⭕' : e.result === 'hard' ? '🔺' : '❌';
+    return icon + ' ' + e.subject + ' / ' + e.topic + (e.memo ? ' 📝' + e.memo : '');
+  }).join('\n');
+  var summary = dateStr.replace(/^\d{4}-/,'') + ' の学習記録\n\n'
+    + '⭕ ' + correct + '問  🔺 ' + hard + '問  ❌ ' + wrong + '問\n'
+    + '合計: ' + entries.length + '問\n\n' + list;
+  alert(summary);
 }
 function calNav(dir){calMonth+=dir;if(calMonth<0){calMonth=11;calYear--}if(calMonth>11){calMonth=0;calYear++}renderCalendar()}
 
@@ -3004,7 +3105,7 @@ function getStretchZoneStats() {
   var stats = {comfort:{},stretch:{},panic:{}};
   var totals = {comfort:0,stretch:0,panic:0};
   DATA.problems.forEach(function(p){
-    if(p.frozen || p.masteryLevel >= 4) return;
+    if(p.frozen || getStage(p) === 'mastered') return;
     var sz = classifyStretchZone(p);
     stats[sz][p.subject] = (stats[sz][p.subject]||0) + 1;
     totals[sz]++;
