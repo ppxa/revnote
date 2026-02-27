@@ -1234,13 +1234,15 @@ function showCard() {
 
   // Show problem ONLY (no answer)
   var hasImage = !!p.contentImage;
+  // Store image for scratchpad embedding
+  window._currentProblemImage = hasImage ? p.contentImage : null;
   document.getElementById('problemCard').innerHTML = `
     <span class="card-badge ${badgeClass}">${p.subject}</span>
     <div class="card-source">${p.source || ''}</div>
     <div class="card-topic">${p.topic}</div>
     ${p.lastMemo ? `<div style="font-size:11px;color:var(--accent);margin-bottom:4px">📝 ${p.lastMemo}</div>` : ''}
     <div class="card-content" id="cardContentArea">
-      ${hasImage ? `<div class="img-canvas-wrap" id="imgCanvasWrap"><img id="problemImg" src="${p.contentImage}" alt="問題画像" onload="initImageCanvas()"><canvas id="imgOverlayCanvas"></canvas></div><div class="img-draw-hint">✏️ 画像の上に直接書き込めます</div>` : (p.content || '')}
+      ${hasImage ? '<div style="font-size:11px;color:var(--accent)">📸 図つき問題 — 計算スペースに表示</div>' : (p.content || '')}
     </div>
     <div class="card-meta">
       ${getStretchZoneBadge(classifyStretchZone(p))}
@@ -1305,8 +1307,8 @@ function initScratchpad() {
   var w = wrap.offsetWidth;
   if (w < 10) return; // not visible yet
   var isLandscape = window.innerWidth >= 1024;
-  var hRatio = isLandscape ? 0.6 : 0.5;
-  var h = Math.max(200, Math.round(w * hRatio));
+  var hRatio = isLandscape ? 0.8 : 0.7;
+  var h = Math.max(250, Math.round(w * hRatio));
   canvas.width = w * 2; // retina
   canvas.height = h * 2;
   canvas.style.width = w + 'px';
@@ -1314,17 +1316,60 @@ function initScratchpad() {
   spCtx = canvas.getContext('2d');
   spCtx.lineCap = 'round';
   spCtx.lineJoin = 'round';
-  spCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim() || '#f5f5f5';
+  var bgColor = getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim() || '#f5f5f5';
+  spCtx.fillStyle = bgColor;
   spCtx.fillRect(0, 0, canvas.width, canvas.height);
   spDrawing = false;
   spErasing = false;
   document.getElementById('spEraser').classList.remove('active');
+
+  // Draw problem image if present
+  drawProblemImageOnCanvas();
 
   // Touch / mouse events - preventDefault stops text selection highlight
   canvas.onpointerdown = (e) => { e.preventDefault(); spDrawing = true; spCtx.beginPath(); var p = spPos(e); spCtx.moveTo(p.x, p.y); };
   canvas.onpointermove = (e) => { e.preventDefault(); if (!spDrawing) return; var p = spPos(e); var lw = parseInt(document.getElementById('spLineWidth').value); spCtx.lineWidth = lw * 2; if (spErasing) { spCtx.globalCompositeOperation = 'destination-out'; spCtx.strokeStyle = 'rgba(0,0,0,1)'; } else { spCtx.globalCompositeOperation = 'source-over'; spCtx.strokeStyle = spColor; } spCtx.lineTo(p.x, p.y); spCtx.stroke(); };
   canvas.onpointerup = (e) => { e.preventDefault(); spDrawing = false; };
   canvas.onpointerleave = () => { spDrawing = false; };
+}
+
+function drawProblemImageOnCanvas() {
+  if (!window._currentProblemImage || !spCtx) return;
+  var canvas = document.getElementById('scratchpadCanvas');
+  var img = new Image();
+  img.onload = function() {
+    var cw = canvas.width;
+    var ch = canvas.height;
+    var isLandscape = window.innerWidth >= 1024;
+    // Landscape: left-top 1/4, Mobile: top half
+    var maxW, maxH, dx, dy;
+    if (isLandscape) {
+      maxW = cw * 0.45;
+      maxH = ch * 0.45;
+      dx = 16;
+      dy = 16;
+    } else {
+      maxW = cw * 0.9;
+      maxH = ch * 0.45;
+      dx = (cw - maxW) / 2;
+      dy = 16;
+    }
+    // Scale to fit
+    var scale = Math.min(maxW / img.width, maxH / img.height);
+    var drawW = img.width * scale;
+    var drawH = img.height * scale;
+    if (!isLandscape) dx = (cw - drawW) / 2;
+    // White background behind image
+    spCtx.globalCompositeOperation = 'source-over';
+    spCtx.fillStyle = '#fff';
+    spCtx.fillRect(dx - 8, dy - 8, drawW + 16, drawH + 16);
+    spCtx.strokeStyle = '#ddd';
+    spCtx.lineWidth = 2;
+    spCtx.strokeRect(dx - 8, dy - 8, drawW + 16, drawH + 16);
+    // Draw image
+    spCtx.drawImage(img, dx, dy, drawW, drawH);
+  };
+  img.src = window._currentProblemImage;
 }
 
 function spPos(e) {
@@ -1335,7 +1380,14 @@ function spPos(e) {
 
 function clearScratchpad() {
   var c = document.getElementById('scratchpadCanvas');
-  if (c && c.getContext) { var ctx = c.getContext('2d'); ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim() || '#f5f5f5'; ctx.fillRect(0, 0, c.width, c.height); }
+  if (c && c.getContext) {
+    var ctx = c.getContext('2d');
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim() || '#f5f5f5';
+    ctx.fillRect(0, 0, c.width, c.height);
+    // Redraw problem image if present
+    drawProblemImageOnCanvas();
+  }
 }
 
 function toggleEraser() {
@@ -2225,9 +2277,8 @@ function importData(e) {
   reader.readAsText(file);
 }
 function resetAll() {
-  DATA = defaultData();
-  saveData(DATA);
-  switchScreen('Today');
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
 }
 
 // ================================================================
