@@ -632,7 +632,20 @@ body {
       <!-- Problem card + answer (in left pane) -->
       <div class="card-wrap" id="cardWrap">
         <div id="cardProgress" style="font-size:12px;color:var(--text2);text-align:center"></div>
+        <!-- Problem Timer -->
+        <div id="problemTimer" style="display:none;text-align:center;margin:6px 0">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+            <span id="timerDisplay" style="font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent)">5:00</span>
+            <span id="timerLabel" style="font-size:10px;color:var(--text2)">🧠 思考タイム</span>
+          </div>
+          <div style="height:3px;background:var(--surface2);border-radius:2px;margin-top:4px;overflow:hidden">
+            <div id="timerBar" style="height:100%;background:var(--accent);border-radius:2px;width:100%;transition:width 1s linear"></div>
+          </div>
+        </div>
         <div class="problem-card" id="problemCard"></div>
+        <!-- Hint button (before reveal) -->
+        <button class="btn-reveal" id="btnHint" onclick="showHint()" style="display:none;background:var(--surface2);border-color:var(--border);color:var(--text2)">💡 ヒントを見る</button>
+        <div id="hintSection" style="display:none;padding:10px 14px;background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.2);border-radius:8px;margin:6px 0;font-size:13px;color:var(--warning)"></div>
         <button class="btn-reveal" id="btnReveal" onclick="revealAnswer()">👁 答えを見る</button>
         <div class="answer-section" id="answerSection"></div>
         <div class="review-memo" id="reviewMemo" style="display:none">
@@ -643,7 +656,22 @@ body {
           <button class="btn-ans btn-hard" onclick="recordAnswer(3)">🤔 あやしい</button>
           <button class="btn-ans btn-correct" onclick="recordAnswer(5)">✅ できた！</button>
         </div>
+        <!-- Mistake reason (shown after ❌) -->
+        <div id="mistakeReason" style="display:none;margin-top:8px;text-align:center">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px">間違えた理由は？</div>
+          <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+            <button class="filter-chip" onclick="tagMistake('計算ミス')">🔢 計算ミス</button>
+            <button class="filter-chip" onclick="tagMistake('読み違い')">📖 読み違い</button>
+            <button class="filter-chip" onclick="tagMistake('解法不明')">❓ 解法不明</button>
+            <button class="filter-chip" onclick="tagMistake('時間切れ')">⏰ 時間切れ</button>
+            <button class="filter-chip" onclick="tagMistake('')">スキップ</button>
+          </div>
+        </div>
         <button class="btn-skip" id="btnSkip" onclick="skipProblem()" style="display:none">⏭ スキップ</button>
+        <!-- Swipe hint for flash -->
+        <div id="swipeHint" style="display:none;text-align:center;font-size:10px;color:var(--text2);margin-top:6px">
+          ← スワイプ: ❌ できなかった ｜ スワイプ →: ✅ できた
+        </div>
       </div>
       <div class="card" id="calCard" style="margin-top:12px;background:var(--surface);border-radius:var(--radius);padding:12px 16px;border:1px solid var(--border)">
         <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleCalendar()">
@@ -818,6 +846,9 @@ body {
       <option value="created">登録日順</option>
       <option value="topic">単元順</option>
       <option value="failures">苦手順</option>
+      <option value="recentWrong">最近間違えた順</option>
+      <option value="almostMastered">もうすぐ定着</option>
+      <option value="longIdle">長期放置</option>
     </select>
   </div>
   <div id="problemListContainer"></div>
@@ -1869,6 +1900,16 @@ function showCard() {
   // Reset scratchpad
   clearScratchpad();
   initScratchpad();
+
+  // Timer for think problems
+  startProblemTimer(p);
+  // Hint setup
+  setupHint(p);
+  // Swipe for flash
+  setupSwipe(p);
+  // Reset mistake reason
+  document.getElementById('mistakeReason').style.display = 'none';
+
   // Mobile: scroll problem card to top
   if(window.innerWidth < 1024) {
     var el = document.getElementById('problemCard');
@@ -1876,12 +1917,187 @@ function showCard() {
   }
 }
 
+// ================================================================
+// PROBLEM TIMER (think problems)
+// ================================================================
+var _problemTimer = null;
+var _timerSeconds = 0;
+var _timerTotal = 0;
+
+function startProblemTimer(p) {
+  clearInterval(_problemTimer);
+  var el = document.getElementById('problemTimer');
+  if (getProblemType(p) === 'think') {
+    // Default 5 min, can be set per problem
+    var mins = p.timerMinutes || 5;
+    _timerTotal = mins * 60;
+    _timerSeconds = _timerTotal;
+    el.style.display = '';
+    updateTimerUI();
+    _problemTimer = setInterval(function() {
+      _timerSeconds--;
+      updateTimerUI();
+      if (_timerSeconds <= 0) {
+        clearInterval(_problemTimer);
+        // Timer expired - gentle nudge
+        document.getElementById('timerDisplay').style.color = 'var(--danger)';
+        document.getElementById('timerLabel').textContent = '⏰ 時間切れ！';
+      }
+    }, 1000);
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function updateTimerUI() {
+  var m = Math.floor(Math.max(0, _timerSeconds) / 60);
+  var s = Math.max(0, _timerSeconds) % 60;
+  document.getElementById('timerDisplay').textContent = m + ':' + String(s).padStart(2, '0');
+  var pct = _timerTotal > 0 ? (_timerSeconds / _timerTotal * 100) : 0;
+  document.getElementById('timerBar').style.width = pct + '%';
+  // Color changes
+  var disp = document.getElementById('timerDisplay');
+  if (_timerSeconds <= 30) { disp.style.color = 'var(--danger)'; }
+  else if (_timerSeconds <= 60) { disp.style.color = 'var(--warning)'; }
+  else { disp.style.color = 'var(--accent)'; }
+}
+
+// ================================================================
+// HINT SYSTEM
+// ================================================================
+function setupHint(p) {
+  var btnHint = document.getElementById('btnHint');
+  var hintSection = document.getElementById('hintSection');
+  hintSection.style.display = 'none';
+  // Generate hint from problem data
+  var hint = generateHint(p);
+  if (hint) {
+    btnHint.style.display = '';
+    btnHint.setAttribute('data-hint', hint);
+  } else {
+    btnHint.style.display = 'none';
+  }
+}
+
+function generateHint(p) {
+  // Auto-generate hints based on problem type
+  var type = getProblemType(p);
+  if (type === 'flash') {
+    // For flash: show first character of answer, or partial
+    if (p.answer) {
+      var ans = p.answer.trim();
+      if (ans.length <= 2) return null; // too short for hint
+      // Show first char + blanks
+      return '答えの最初: 「' + ans.charAt(0) + '○'.repeat(Math.min(ans.length - 1, 5)) + '」';
+    }
+    return null;
+  } else {
+    // For think: hint from topic
+    var hints = {
+      '食塩水': '食塩の重さ ÷ 食塩水の重さ × 100',
+      '速さ': 'き（距離）= は（速さ）× じ（時間）',
+      '割合': 'くらべる量 ÷ もとにする量 = 割合',
+      '面積': '底辺 × 高さ ÷ 2',
+      '体積': '底面積 × 高さ',
+      '比': '内項の積 = 外項の積',
+      '濃度': '溶質 ÷ 溶液 × 100',
+      '旅人算': '二人の速さの和（出会い）or 差（追いかけ）',
+      '仕事算': '全体を1として、1日あたりの仕事量を求める',
+      '場合の数': '樹形図を書いて数える',
+    };
+    var topic = p.topic || '';
+    for (var key in hints) {
+      if (topic.indexOf(key) >= 0) return '💡 ' + hints[key];
+    }
+    // Generic hint: show tags or memo
+    if (p.lastMemo) return '📝 前回のメモ: ' + p.lastMemo;
+    return null;
+  }
+}
+
+function showHint() {
+  var hint = document.getElementById('btnHint').getAttribute('data-hint');
+  document.getElementById('hintSection').textContent = hint;
+  document.getElementById('hintSection').style.display = '';
+  document.getElementById('btnHint').style.display = 'none';
+}
+
+// ================================================================
+// MISTAKE REASON TAG
+// ================================================================
+var _pendingMistakeQuality = null;
+
+function recordAnswer(quality) {
+  if (quality === 0) {
+    // Show mistake reason selector before recording
+    _pendingMistakeQuality = 0;
+    document.getElementById('mistakeReason').style.display = '';
+    document.getElementById('answerBtns').style.display = 'none';
+    return;
+  }
+  doRecordAnswer(quality, '');
+}
+
+function tagMistake(reason) {
+  document.getElementById('mistakeReason').style.display = 'none';
+  doRecordAnswer(0, reason);
+}
+
 function revealAnswer() {
   document.getElementById('answerSection').classList.add('show');
   document.getElementById('btnReveal').style.display = 'none';
+  document.getElementById('btnHint').style.display = 'none';
+  document.getElementById('hintSection').style.display = 'none';
   document.getElementById('answerBtns').style.display = 'flex';
   document.getElementById('reviewMemo').style.display = 'block';
   document.getElementById('btnSkip').style.display = 'none';
+  document.getElementById('swipeHint').style.display = 'none';
+  clearInterval(_problemTimer);
+}
+
+function doRecordAnswer(quality, mistakeReason) {
+  var p = currentQueue[currentIndex];
+  var real = DATA.problems.find(x => x.id === p.id);
+  if (!real) { currentIndex++; showCard(); return; }
+
+  var prevLv = getLevel();
+  var result = calcNextReview(real, quality);
+  Object.assign(real, result);
+  real.history = real.history || [];
+  var memo = (document.getElementById('reviewMemoText').value || '').trim();
+  var entry = {
+    date: today(),
+    result: quality >= 4 ? 'correct' : quality >= 3 ? 'hard' : 'incorrect',
+    quality: quality,
+    memo: memo || undefined
+  };
+  if (mistakeReason) entry.mistakeReason = mistakeReason;
+  // Record time spent (from timer)
+  if (_timerTotal > 0) entry.timeSpent = _timerTotal - Math.max(0, _timerSeconds);
+  real.history.push(entry);
+  if (memo) real.lastMemo = memo;
+
+  // XP rewards
+  var xpGain = 0;
+  if (quality >= 4) { sessionStats.correct++; xpGain = 15; fireConfetti(); }
+  else if (quality >= 3) { sessionStats.hard++; xpGain = 8; }
+  else { sessionStats.wrong++; xpGain = 3; }
+  if (getProblemType(real) === 'think' && quality >= 4) xpGain += 5;
+  if (DATA.streak.count >= 7) xpGain = Math.round(xpGain * 1.5);
+  else if (DATA.streak.count >= 3) xpGain = Math.round(xpGain * 1.2);
+  addXP(xpGain);
+
+  if (getStage(real) === 'mastered') {
+    sessionStats.graduated++;
+    showGraduated(real);
+    addXP(30, '定着ボーナス！');
+  }
+
+  checkBossBattle(prevLv);
+  clearInterval(_problemTimer);
+  saveData(DATA);
+  currentIndex++;
+  showCard();
 }
 
 function skipProblem() {
@@ -1891,6 +2107,73 @@ function skipProblem() {
     finishSession();
   } else {
     showCard();
+  }
+}
+
+// ================================================================
+// SWIPE GESTURE (flash cards)
+// ================================================================
+var _swipeStartX = 0;
+var _swipeStartY = 0;
+var _swipeActive = false;
+
+function setupSwipe(p) {
+  var card = document.getElementById('problemCard');
+  var hint = document.getElementById('swipeHint');
+  // Only show swipe for flash type after answer is revealed
+  if (getProblemType(p) === 'flash') {
+    hint.style.display = '';
+  } else {
+    hint.style.display = 'none';
+  }
+  // Remove old listeners
+  card.removeEventListener('touchstart', swipeTouchStart);
+  card.removeEventListener('touchmove', swipeTouchMove);
+  card.removeEventListener('touchend', swipeTouchEnd);
+  // Add new
+  card.addEventListener('touchstart', swipeTouchStart, { passive: true });
+  card.addEventListener('touchmove', swipeTouchMove, { passive: false });
+  card.addEventListener('touchend', swipeTouchEnd, { passive: true });
+}
+
+function swipeTouchStart(e) {
+  if (e.touches.length !== 1) return;
+  // Only allow swipe after answer is revealed
+  var ansEl = document.getElementById('answerSection');
+  if (!ansEl.classList.contains('show')) return;
+  _swipeStartX = e.touches[0].clientX;
+  _swipeStartY = e.touches[0].clientY;
+  _swipeActive = true;
+}
+
+function swipeTouchMove(e) {
+  if (!_swipeActive || e.touches.length !== 1) return;
+  var dx = e.touches[0].clientX - _swipeStartX;
+  var dy = e.touches[0].clientY - _swipeStartY;
+  // Only horizontal swipes
+  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
+    e.preventDefault();
+    var card = document.getElementById('problemCard');
+    card.style.transform = 'translateX(' + dx + 'px) rotate(' + (dx * 0.05) + 'deg)';
+    card.style.opacity = Math.max(0.5, 1 - Math.abs(dx) / 300);
+  }
+}
+
+function swipeTouchEnd(e) {
+  if (!_swipeActive) return;
+  _swipeActive = false;
+  var card = document.getElementById('problemCard');
+  var dx = (e.changedTouches[0] ? e.changedTouches[0].clientX : 0) - _swipeStartX;
+  card.style.transform = '';
+  card.style.opacity = '';
+  if (Math.abs(dx) > 100) {
+    if (dx > 0) {
+      // Swipe right = correct
+      doRecordAnswer(5, '');
+    } else {
+      // Swipe left = wrong
+      doRecordAnswer(0, '');
+    }
   }
 }
 
@@ -2251,49 +2534,6 @@ function imgOvPos(e) {
   var c = document.getElementById('imgOverlayCanvas');
   var r = c.getBoundingClientRect();
   return { x: (e.clientX - r.left) * (c.width / r.width), y: (e.clientY - r.top) * (c.height / r.height) };
-}
-
-function recordAnswer(quality) {
-  var p = currentQueue[currentIndex];
-  var real = DATA.problems.find(x => x.id === p.id);
-  if (!real) { currentIndex++; showCard(); return; }
-
-  var prevLv = getLevel();
-  var result = calcNextReview(real, quality);
-  Object.assign(real, result);
-  real.history = real.history || [];
-  var memo = (document.getElementById('reviewMemoText').value || '').trim();
-  real.history.push({
-    date: today(),
-    result: quality >= 4 ? 'correct' : quality >= 3 ? 'hard' : 'incorrect',
-    quality,
-    memo: memo || undefined
-  });
-  if (memo) real.lastMemo = memo;
-
-  // XP rewards
-  var xpGain = 0;
-  if (quality >= 4) { sessionStats.correct++; xpGain = 15; fireConfetti(); }
-  else if (quality >= 3) { sessionStats.hard++; xpGain = 8; }
-  else { sessionStats.wrong++; xpGain = 3; } // even trying earns XP
-  // Bonus: flash type = less XP (easier), think = more XP
-  if (getProblemType(real) === 'think' && quality >= 4) xpGain += 5;
-  // Streak bonus
-  if (DATA.streak.count >= 7) xpGain = Math.round(xpGain * 1.5);
-  else if (DATA.streak.count >= 3) xpGain = Math.round(xpGain * 1.2);
-  addXP(xpGain);
-
-  // check mastered
-  if (getStage(real) === 'mastered') {
-    sessionStats.graduated++;
-    showGraduated(real);
-    addXP(30, '定着ボーナス！');
-  }
-
-  checkBossBattle(prevLv);
-  saveData(DATA);
-  currentIndex++;
-  showCard();
 }
 
 function showGraduated(p) {
@@ -2888,6 +3128,24 @@ function renderList() {
     if (sortKey === 'created') return (b.createdAt || '').localeCompare(a.createdAt || '');
     if (sortKey === 'topic') return (a.topic || '').localeCompare(b.topic || '');
     if (sortKey === 'failures') return (b.consecutiveFailures || 0) - (a.consecutiveFailures || 0);
+    if (sortKey === 'recentWrong') {
+      var aLast = (a.history || []).slice().reverse().find(h => h.result === 'incorrect');
+      var bLast = (b.history || []).slice().reverse().find(h => h.result === 'incorrect');
+      var aDate = aLast ? aLast.date : '0000';
+      var bDate = bLast ? bLast.date : '0000';
+      return bDate.localeCompare(aDate);
+    }
+    if (sortKey === 'almostMastered') {
+      // Problems closest to mastery (high reps, not yet mastered)
+      var aScore = getStage(a) === 'reviewing' ? (a.repetitions || 0) : -1;
+      var bScore = getStage(b) === 'reviewing' ? (b.repetitions || 0) : -1;
+      return bScore - aScore;
+    }
+    if (sortKey === 'longIdle') {
+      var aLR = (a.history && a.history.length > 0) ? a.history[a.history.length-1].date : a.createdAt || '0000';
+      var bLR = (b.history && b.history.length > 0) ? b.history[b.history.length-1].date : b.createdAt || '0000';
+      return aLR.localeCompare(bLR); // oldest first
+    }
     return 0;
   });
 
