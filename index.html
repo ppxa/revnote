@@ -3616,7 +3616,14 @@ function importData(e) {
   };
   reader.readAsText(file);
 }
-function resetAll() {
+async function resetAll() {
+  // Clear cloud data if logged in
+  if (_currentUser) {
+    try {
+      await supabase.from('user_data').delete().eq('user_id', _currentUser.id);
+      await supabase.auth.signOut();
+    } catch(e) { console.log('Cloud cleanup error:', e); }
+  }
   localStorage.removeItem(STORAGE_KEY);
   location.reload();
 }
