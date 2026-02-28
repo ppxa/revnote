@@ -3805,6 +3805,21 @@ nichinoken: {
 // ================================================================
 var _currSubjFilter = '';
 
+function getCurrentTermId() {
+  var gradeInfo = getJukuGradeMonth(DATA.settings.birthDate);
+  if (!gradeInfo) return null;
+  var g = gradeInfo.grade;
+  var m = gradeInfo.month;
+  // Term 1 (上/前期) = Feb-Jul, Term 2 (下/後期) = Sep-Jan
+  // Feb-Jul → term 1 of that juku grade
+  // Aug → summer break, still term 1
+  // Sep-Jan → term 2 of that juku grade
+  var term;
+  if (m >= 2 && m <= 8) { term = 1; }
+  else { term = 2; } // Sep-Jan
+  return g + '-' + term;
+}
+
 function renderCurriculum() {
   var juku = DATA.settings.jukuType || 'none';
   var el = document.getElementById('curriculumContent');
@@ -3813,6 +3828,8 @@ function renderCurriculum() {
     return;
   }
   var cur = CURRICULUM[juku];
+  var currentTermId = getCurrentTermId();
+
   var html = '<div style="font-size:15px;font-weight:800;margin-bottom:8px">' + cur.name + '</div>';
   // Subject filter
   var subjects = ['算数','国語','理科','社会'];
@@ -3827,14 +3844,28 @@ function renderCurriculum() {
     var units = term.units;
     if (_currSubjFilter) units = units.filter(function(u) { return u.subj === _currSubjFilter; });
     if (units.length === 0) return;
-    html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">';
+
+    var isCurrent = (term.id === currentTermId);
+    var termIdx = cur.terms.indexOf(term);
+    var currentIdx = cur.terms.findIndex(function(t) { return t.id === currentTermId; });
+    var isPast = currentIdx >= 0 && termIdx < currentIdx;
+    var isFuture = currentIdx >= 0 && termIdx > currentIdx;
+
+    var borderColor = isCurrent ? 'var(--accent)' : 'var(--border)';
+    var bgColor = isCurrent ? 'rgba(108,99,255,.06)' : 'var(--surface)';
+    var opacity = isFuture ? 'opacity:0.6' : '';
+
+    html += '<div id="term_' + term.id + '" style="background:' + bgColor + ';border:2px solid ' + borderColor + ';border-radius:10px;padding:12px;margin-bottom:10px;' + opacity + '">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-    html += '<span style="font-size:14px;font-weight:700">' + term.label + '</span>';
+    html += '<span style="font-size:14px;font-weight:700">' + term.label;
+    if (isCurrent) html += ' <span style="font-size:10px;background:var(--accent);color:#fff;padding:2px 8px;border-radius:10px;margin-left:6px">📍いまここ</span>';
+    if (isPast) html += ' <span style="font-size:10px;color:var(--success)">✅ 学習済み</span>';
+    if (isFuture) html += ' <span style="font-size:10px;color:var(--text2)">🔜 これから</span>';
+    html += '</span>';
     html += '<span style="font-size:10px;color:var(--text2)">' + term.period + '</span>';
     html += '</div>';
     html += '<div style="display:flex;flex-direction:column;gap:4px">';
     units.forEach(function(u) {
-      // Count matching problems
       var matching = DATA.problems.filter(function(p) {
         return p.topic && p.topic.indexOf(u.topic) >= 0 && p.subject === u.subj;
       });
@@ -3863,6 +3894,16 @@ function renderCurriculum() {
     html += '</div></div>';
   });
   el.innerHTML = html;
+
+  // Auto-scroll to current term
+  if (currentTermId) {
+    var target = document.getElementById('term_' + currentTermId);
+    if (target) {
+      setTimeout(function() {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+  }
 }
 
 function filterByUnit(subj, topic) {
