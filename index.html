@@ -554,16 +554,18 @@ body {
     <button class="timer-btn" id="timerModeBtn" onclick="cycleTimerMode()">25分</button>
   </div>
   <div id="countdownBadge" class="countdown-badge"></div>
+<button id="modeToggleBtn" onclick="toggleParentChild()" style="font-size:10px;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-weight:600;white-space:nowrap">👦 子ども</button>
 </div>
 
 <!-- SIDEBAR NAV (landscape) -->
 <nav class="nav-side" id="navSide">
-  <div class="s-logo">rn<div style="font-size:8px;color:var(--text2);font-weight:400">v3.8</div></div>
+  <div class="s-logo">rn<div style="font-size:8px;color:var(--text2);font-weight:400">v4.0</div></div>
   <button class="s-item active" data-screen="Today" onclick="switchScreen('Today')"><span>⚔️</span>今日</button>
-  <button class="s-item" data-screen="Add" onclick="switchScreen('Add')"><span>📸</span>登録</button>
+  <button class="s-item" data-screen="Add" onclick="switchScreen('Add')"><span>📸</span>間違い登録</button>
   <button class="s-item" data-screen="List" onclick="switchScreen('List')"><span>📚</span>一覧</button>
   <button class="s-item" data-screen="Calendar" onclick="switchScreen('Calendar')"><span>📅</span>履歴</button>
   <button class="s-item" data-screen="Dash" onclick="switchScreen('Dash')"><span>📊</span>分析</button>
+  <button class="s-item" data-screen="Parent" onclick="switchScreen('Parent');renderParentDash()"><span>👨‍👩‍👧</span>保護者</button>
   <button class="s-item" data-screen="Settings" onclick="switchScreen('Settings')"><span>⚙️</span>設定</button>
   <div style="flex:1"></div>
   <button class="s-item" onclick="toggleTheme()" id="sideThemeBtn"><span>🌙</span>テーマ</button>
@@ -760,7 +762,36 @@ body {
   </div>
   <div class="form-group">
     <label>出典</label>
-    <input class="form-input" id="addSource" placeholder="例: 予習シリーズ 5年下 第12回 p.45">
+    <div style="display:flex;gap:4px;margin-bottom:4px">
+      <select class="form-input" id="addSourcePreset" style="flex:1;font-size:12px">
+        <option value="">テスト種類を選択</option>
+        <option value="組分けテスト">組分けテスト</option>
+        <option value="マンスリー">マンスリー</option>
+        <option value="カリテ">カリテ</option>
+        <option value="公開模試">公開模試</option>
+        <option value="週テスト">週テスト</option>
+        <option value="復習テスト">復習テスト</option>
+        <option value="宿題">宿題</option>
+        <option value="過去問">過去問</option>
+        <option value="予習シリーズ">予習シリーズ</option>
+        <option value="デイリーサピックス">デイリーサピックス</option>
+        <option value="栄冠への道">栄冠への道</option>
+        <option value="その他">その他</option>
+      </select>
+      <input class="form-input" id="addSourceDate" type="date" style="width:120px;font-size:12px">
+    </div>
+    <input class="form-input" id="addSource" placeholder="詳細 (例: 第12回 p.45 大問3)">
+  </div>
+  <div class="form-group">
+    <label>なぜ間違えた？</label>
+    <div style="display:flex;flex-wrap:wrap;gap:4px" id="addMistakeReasonBtns">
+      <button type="button" class="tag-chip" onclick="selectMistakeReason(this,'ケアレスミス')" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer">😅 ケアレスミス</button>
+      <button type="button" class="tag-chip" onclick="selectMistakeReason(this,'知識不足')" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer">📚 知識不足</button>
+      <button type="button" class="tag-chip" onclick="selectMistakeReason(this,'時間切れ')" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer">⏰ 時間切れ</button>
+      <button type="button" class="tag-chip" onclick="selectMistakeReason(this,'解法わからず')" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer">❓ 解法わからず</button>
+      <button type="button" class="tag-chip" onclick="selectMistakeReason(this,'問題の読み違い')" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer">👀 読み違い</button>
+    </div>
+    <input type="hidden" id="addMistakeReason" value="">
   </div>
 
   <!-- 問題 content: text or image -->
@@ -945,6 +976,47 @@ body {
 </div>
 
 <!-- === SCREEN: SETTINGS === -->
+
+<!-- PARENT DASHBOARD -->
+<div class="screen" id="screenParent" style="display:none">
+  <div style="padding:16px;max-width:800px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:18px;font-weight:800">👨‍👩‍👧 保護者ダッシュボード</div>
+      <button onclick="toggleParentChild()" style="font-size:12px;padding:6px 14px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-weight:700;cursor:pointer">👦 子ども画面へ</button>
+    </div>
+
+    <!-- Today's Activity Timeline -->
+    <div class="card" style="background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--border);margin-bottom:14px">
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">📋 今日の学習ログ</div>
+      <div id="parentTimeline"></div>
+    </div>
+
+    <!-- Weakness Heatmap -->
+    <div class="card" style="background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--border);margin-bottom:14px">
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">🎯 弱点分析（単元別）</div>
+      <div id="parentWeakness"></div>
+    </div>
+
+    <!-- Mistake Pattern -->
+    <div class="card" style="background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--border);margin-bottom:14px">
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">🔍 間違いパターン</div>
+      <div id="parentMistakePattern"></div>
+    </div>
+
+    <!-- Repeat Offenders -->
+    <div class="card" style="background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--border);margin-bottom:14px">
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">⚠️ 繰り返し間違える問題</div>
+      <div id="parentRepeatErrors"></div>
+    </div>
+
+    <!-- Weekly Stats -->
+    <div class="card" style="background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--border);margin-bottom:14px">
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">📊 週間サマリー</div>
+      <div id="parentWeekly"></div>
+    </div>
+  </div>
+</div>
+
 <div class="screen" id="screenSettings">
   <div class="header"><h1>設定</h1></div>
   <!-- Cloud Auth -->
@@ -1443,7 +1515,7 @@ function switchScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen' + name).classList.add('active');
   // Update bottom nav
-  var screens = ['Today','Add','List','Calendar','Dash','Settings'];
+  var screens = ['Today','Add','List','Calendar','Dash','Parent','Settings'];
   document.querySelectorAll('.nav-item').forEach((n, i) => {
     n.classList.toggle('active', screens[i] === name);
   });
@@ -1970,6 +2042,8 @@ function showCard() {
   // Reset scratchpad
   clearScratchpad();
   initScratchpad();
+  // Restore previous drawing if exists
+  setTimeout(function() { restoreProblemDrawing(p); }, 200);
 
   // Timer for think problems
   startProblemTimer(p);
@@ -2142,10 +2216,16 @@ function doRecordAnswer(quality, mistakeReason) {
     memo: memo || undefined
   };
   if (mistakeReason) entry.mistakeReason = mistakeReason;
+  // Save timestamp for parent timeline
+  entry.timestamp = new Date().toISOString();
   // Record time spent (from timer)
   if (_timerTotal > 0) entry.timeSpent = _timerTotal - Math.max(0, _timerSeconds);
   real.history.push(entry);
   if (memo) real.lastMemo = memo;
+  // Save scratchpad drawing data for this problem
+  if (window._spStrokes && window._spStrokes.length > 0) {
+    real.lastDrawing = JSON.parse(JSON.stringify(window._spStrokes));
+  }
 
   // XP rewards
   var xpGain = 0;
@@ -2979,6 +3059,24 @@ function renderAdd() {
 
 var addCount = 0; // session registration counter
 
+var _addMistakeReason = '';
+function selectMistakeReason(btn, reason) {
+  if (_addMistakeReason === reason) {
+    _addMistakeReason = '';
+    btn.style.background = 'var(--surface)';
+    btn.style.borderColor = 'var(--border)';
+  } else {
+    _addMistakeReason = reason;
+    document.querySelectorAll('#addMistakeReasonBtns button').forEach(function(b) {
+      b.style.background = 'var(--surface)';
+      b.style.borderColor = 'var(--border)';
+    });
+    btn.style.background = 'rgba(231,76,60,.15)';
+    btn.style.borderColor = 'var(--danger)';
+  }
+  document.getElementById('addMistakeReason').value = _addMistakeReason;
+}
+
 function addProblem() {
   // Build topic: use hand-input, or category, or "未分類" in quick mode
   var topic = document.getElementById('addTopic').value.trim();
@@ -3022,7 +3120,8 @@ function addProblem() {
     id: 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
     subject: document.getElementById('addSubject').value,
     topic,
-    source: document.getElementById('addSource').value.trim(),
+    source: ((document.getElementById('addSourcePreset').value || '') + ' ' + (document.getElementById('addSourceDate').value || '') + ' ' + document.getElementById('addSource').value.trim()).trim(),
+    mistakeReason: document.getElementById('addMistakeReason').value || null,
     content: contentIsImage ? '' : document.getElementById('addContent').value.trim(),
     contentImage: contentIsImage ? contentImageData : null,
     answer: answerIsImage ? '' : (document.getElementById('addAnswer').value || '').trim(),
@@ -3039,8 +3138,20 @@ function addProblem() {
     nextReviewDate: today(),
     frozen: false,
     history: [],
-    createdAt: today()
+    createdAt: today(),
+    createdTimestamp: new Date().toISOString()
   };
+  // Add initial mistake record so parent dashboard can see it
+  if (p.mistakeReason) {
+    p.history.push({
+      date: today(),
+      timestamp: new Date().toISOString(),
+      result: 'incorrect',
+      quality: 1,
+      mistakeReason: p.mistakeReason,
+      memo: '初回登録（間違えた問題）'
+    });
+  }
   DATA.problems.push(p);
   saveData(DATA);
   addCount++;
@@ -3055,6 +3166,13 @@ function addProblem() {
   contentImageData = null; answerImageData = null;
   document.getElementById('contentImgPreview').innerHTML = '📷 タップで選択 / ペーストも可';
   document.getElementById('answerImgPreview').innerHTML = '📷 タップで選択 / ペーストも可';
+  // Reset mistake reason
+  _addMistakeReason = '';
+  document.getElementById('addMistakeReason').value = '';
+  document.querySelectorAll('#addMistakeReasonBtns button').forEach(function(b) {
+    b.style.background = 'var(--surface)';
+    b.style.borderColor = 'var(--border)';
+  });
   if (addMode === 'normal') {
     switchContentTab('text'); switchAnswerTab('text');
   }
@@ -3794,6 +3912,290 @@ function filterByUnit(subj, topic) {
 
 
 // ================================================================
+// PARENT/CHILD MODE
+// ================================================================
+function toggleParentChild() {
+  DATA.settings.mode = (DATA.settings.mode === 'parent') ? 'child' : 'parent';
+  saveData(DATA);
+  applyMode();
+}
+
+function applyMode() {
+  var mode = DATA.settings.mode || 'child';
+  var btn = document.getElementById('modeToggleBtn');
+  if (btn) {
+    if (mode === 'parent') {
+      btn.innerHTML = '👨‍👩‍👧 保護者';
+      btn.style.background = 'var(--accent)';
+      btn.style.color = '#fff';
+      btn.style.border = 'none';
+    } else {
+      btn.innerHTML = '👦 子ども';
+      btn.style.background = 'var(--surface)';
+      btn.style.color = 'var(--text2)';
+      btn.style.border = '1px solid var(--border)';
+    }
+  }
+  // Show/hide parent dashboard
+  var parentScreen = document.getElementById('screenParent');
+  if (mode === 'parent' && parentScreen) {
+    switchScreen('Parent');
+    renderParentDash();
+  }
+}
+
+function renderParentDash() {
+  renderParentTimeline();
+  renderParentWeakness();
+  renderParentMistakePattern();
+  renderParentRepeatErrors();
+  renderParentWeekly();
+}
+
+function renderParentTimeline() {
+  var el = document.getElementById('parentTimeline');
+  if (!el) return;
+  var t = today();
+  var entries = [];
+  DATA.problems.forEach(function(p) {
+    (p.history || []).forEach(function(h) {
+      if (h.date === t) {
+        entries.push({
+          subject: p.subject,
+          topic: p.topic,
+          result: h.result,
+          quality: h.quality,
+          mistakeReason: h.mistakeReason,
+          timeSpent: h.timeSpent,
+          timestamp: h.timestamp || (t + 'T12:00:00'),
+          memo: h.memo
+        });
+      }
+    });
+  });
+  entries.sort(function(a, b) { return a.timestamp > b.timestamp ? 1 : -1; });
+
+  if (entries.length === 0) {
+    el.innerHTML = '<div style="color:var(--text2);font-size:13px;text-align:center;padding:20px">今日はまだ学習記録がありません</div>';
+    return;
+  }
+
+  var html = '<div style="display:flex;flex-direction:column;gap:6px">';
+  entries.forEach(function(e) {
+    var icon = e.result === 'correct' ? '✅' : e.result === 'hard' ? '△' : '❌';
+    var color = e.result === 'correct' ? 'var(--success)' : e.result === 'hard' ? 'var(--warning)' : 'var(--danger)';
+    var time = e.timestamp ? new Date(e.timestamp).toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'}) : '';
+    var spent = e.timeSpent ? Math.round(e.timeSpent / 60) + '分' : '';
+    var reason = e.mistakeReason ? ' (' + e.mistakeReason + ')' : '';
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface2);border-radius:8px;font-size:12px">';
+    html += '<span style="color:var(--text2);min-width:40px">' + time + '</span>';
+    html += '<span style="font-size:16px">' + icon + '</span>';
+    html += '<span style="font-weight:600">' + (e.subject || '') + '</span>';
+    html += '<span style="color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (e.topic || '') + '</span>';
+    if (spent) html += '<span style="color:var(--accent);font-size:10px">' + spent + '</span>';
+    if (reason) html += '<span style="color:var(--danger);font-size:10px">' + reason + '</span>';
+    html += '</div>';
+  });
+  html += '</div>';
+  html += '<div style="margin-top:8px;font-size:11px;color:var(--text2)">合計 ' + entries.length + '問 / ';
+  var correct = entries.filter(function(e){return e.result==='correct'}).length;
+  html += '正解 ' + correct + '問 (' + (entries.length > 0 ? Math.round(correct/entries.length*100) : 0) + '%)</div>';
+  el.innerHTML = html;
+}
+
+function renderParentWeakness() {
+  var el = document.getElementById('parentWeakness');
+  if (!el) return;
+  // Group by subject + topic
+  var topics = {};
+  DATA.problems.forEach(function(p) {
+    var key = (p.subject || '?') + '：' + (p.topic || '未分類');
+    if (!topics[key]) topics[key] = { total: 0, correct: 0, subject: p.subject };
+    (p.history || []).forEach(function(h) {
+      topics[key].total++;
+      if (h.result === 'correct') topics[key].correct++;
+    });
+  });
+
+  var sorted = Object.entries(topics)
+    .filter(function(e) { return e[1].total >= 2; })
+    .sort(function(a, b) {
+      var rateA = a[1].total > 0 ? a[1].correct / a[1].total : 1;
+      var rateB = b[1].total > 0 ? b[1].correct / b[1].total : 1;
+      return rateA - rateB;
+    });
+
+  if (sorted.length === 0) {
+    el.innerHTML = '<div style="color:var(--text2);font-size:13px;text-align:center;padding:20px">学習データが蓄積されると弱点が表示されます</div>';
+    return;
+  }
+
+  var html = '<div style="display:flex;flex-direction:column;gap:4px">';
+  sorted.slice(0, 15).forEach(function(item) {
+    var name = item[0];
+    var d = item[1];
+    var rate = d.total > 0 ? Math.round(d.correct / d.total * 100) : 0;
+    var color = rate >= 70 ? 'var(--success)' : rate >= 40 ? 'var(--warning)' : 'var(--danger)';
+    html += '<div style="display:flex;align-items:center;gap:6px;font-size:12px">';
+    html += '<span style="min-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + name + '</span>';
+    html += '<div style="flex:1;height:14px;background:var(--surface2);border-radius:4px;overflow:hidden;position:relative">';
+    html += '<div style="height:100%;width:' + rate + '%;background:' + color + ';border-radius:4px;transition:width .3s"></div>';
+    html += '</div>';
+    html += '<span style="min-width:55px;text-align:right;font-weight:600;color:' + color + '">' + rate + '% <span style="color:var(--text2);font-weight:400">(' + d.correct + '/' + d.total + ')</span></span>';
+    html += '</div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function renderParentMistakePattern() {
+  var el = document.getElementById('parentMistakePattern');
+  if (!el) return;
+  var reasons = {};
+  DATA.problems.forEach(function(p) {
+    (p.history || []).forEach(function(h) {
+      if (h.result === 'incorrect' && h.mistakeReason) {
+        reasons[h.mistakeReason] = (reasons[h.mistakeReason] || 0) + 1;
+      }
+    });
+  });
+
+  var total = Object.values(reasons).reduce(function(s, v) { return s + v; }, 0);
+  if (total === 0) {
+    el.innerHTML = '<div style="color:var(--text2);font-size:13px;text-align:center;padding:20px">間違い理由が記録されると分析が表示されます</div>';
+    return;
+  }
+
+  var sorted = Object.entries(reasons).sort(function(a, b) { return b[1] - a[1]; });
+  var colors = {'ケアレスミス':'#f39c12','知識不足':'#e74c3c','時間切れ':'#3498db','解法わからず':'#9b59b6','問題の読み違い':'#e67e22'};
+  var html = '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+  sorted.forEach(function(item) {
+    var pct = Math.round(item[1] / total * 100);
+    var c = colors[item[0]] || 'var(--text2)';
+    html += '<div style="background:' + c + '22;border:1px solid ' + c + '44;border-radius:8px;padding:8px 12px;text-align:center;min-width:80px">';
+    html += '<div style="font-size:20px;font-weight:900;color:' + c + '">' + pct + '%</div>';
+    html += '<div style="font-size:10px;color:var(--text1);font-weight:600">' + item[0] + '</div>';
+    html += '<div style="font-size:9px;color:var(--text2)">' + item[1] + '回</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function renderParentRepeatErrors() {
+  var el = document.getElementById('parentRepeatErrors');
+  if (!el) return;
+  var repeats = DATA.problems.filter(function(p) {
+    var fails = (p.history || []).filter(function(h) { return h.result === 'incorrect'; }).length;
+    return fails >= 2;
+  }).sort(function(a, b) {
+    var af = (a.history || []).filter(function(h) { return h.result === 'incorrect'; }).length;
+    var bf = (b.history || []).filter(function(h) { return h.result === 'incorrect'; }).length;
+    return bf - af;
+  });
+
+  if (repeats.length === 0) {
+    el.innerHTML = '<div style="color:var(--text2);font-size:13px;text-align:center;padding:20px">繰り返し間違える問題はまだありません 👍</div>';
+    return;
+  }
+
+  var html = '<div style="display:flex;flex-direction:column;gap:4px">';
+  repeats.slice(0, 10).forEach(function(p) {
+    var fails = (p.history || []).filter(function(h) { return h.result === 'incorrect'; }).length;
+    var total = (p.history || []).length;
+    html += '<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(231,76,60,.08);border-radius:8px;font-size:12px">';
+    html += '<span style="color:var(--danger);font-weight:800;min-width:28px">×' + fails + '</span>';
+    html += '<span style="font-weight:600">' + (p.subject || '') + '</span>';
+    html += '<span style="color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (p.topic || '') + '</span>';
+    html += '<span style="font-size:10px;color:var(--text2)">' + total + '回中</span>';
+    html += '</div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function renderParentWeekly() {
+  var el = document.getElementById('parentWeekly');
+  if (!el) return;
+  // Last 7 days
+  var days = [];
+  for (var i = 6; i >= 0; i--) {
+    var d = new Date(); d.setDate(d.getDate() - i);
+    var ds = d.toISOString().split('T')[0];
+    var count = 0, correct = 0, totalTime = 0;
+    DATA.problems.forEach(function(p) {
+      (p.history || []).forEach(function(h) {
+        if (h.date === ds) {
+          count++;
+          if (h.result === 'correct') correct++;
+          if (h.timeSpent) totalTime += h.timeSpent;
+        }
+      });
+    });
+    days.push({
+      label: (d.getMonth()+1) + '/' + d.getDate(),
+      dow: ['日','月','火','水','木','金','土'][d.getDay()],
+      count: count,
+      correct: correct,
+      minutes: Math.round(totalTime / 60)
+    });
+  }
+
+  var html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center">';
+  days.forEach(function(d) {
+    var bg = d.count === 0 ? 'var(--surface2)' : d.count >= 10 ? 'rgba(108,99,255,.2)' : 'rgba(108,99,255,.08)';
+    var rate = d.count > 0 ? Math.round(d.correct / d.count * 100) : 0;
+    var rateColor = rate >= 70 ? 'var(--success)' : rate >= 40 ? 'var(--warning)' : d.count > 0 ? 'var(--danger)' : 'var(--text2)';
+    html += '<div style="background:' + bg + ';border-radius:8px;padding:8px 4px">';
+    html += '<div style="font-size:9px;color:var(--text2)">' + d.label + '(' + d.dow + ')</div>';
+    html += '<div style="font-size:18px;font-weight:900;color:var(--text1)">' + d.count + '</div>';
+    html += '<div style="font-size:9px;color:var(--text2)">問</div>';
+    if (d.count > 0) {
+      html += '<div style="font-size:10px;font-weight:700;color:' + rateColor + '">' + rate + '%</div>';
+      if (d.minutes > 0) html += '<div style="font-size:8px;color:var(--text2)">' + d.minutes + '分</div>';
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // Weekly total
+  var wTotal = days.reduce(function(s,d){return s+d.count},0);
+  var wCorrect = days.reduce(function(s,d){return s+d.correct},0);
+  var wMin = days.reduce(function(s,d){return s+d.minutes},0);
+  html += '<div style="margin-top:8px;font-size:12px;color:var(--text2);text-align:center">';
+  html += '週計: ' + wTotal + '問 / 正答率 ' + (wTotal>0?Math.round(wCorrect/wTotal*100):0) + '% / 学習時間 ' + wMin + '分';
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ================================================================
+// RESTORE DRAWING on card show
+// ================================================================
+function restoreProblemDrawing(problem) {
+  if (problem && problem.lastDrawing && problem.lastDrawing.length > 0) {
+    window._spStrokes = JSON.parse(JSON.stringify(problem.lastDrawing));
+    var c = document.getElementById('scratchpadCanvas');
+    if (c && c.getContext) {
+      var ctx = c.getContext('2d');
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim() || '#f5f5f5';
+      ctx.fillRect(0, 0, c.width, c.height);
+      drawProblemImageOnCanvas();
+      _spStrokes.forEach(function(stroke) {
+        ctx.globalCompositeOperation = stroke.erasing ? 'destination-out' : 'source-over';
+        ctx.strokeStyle = stroke.erasing ? 'rgba(0,0,0,1)' : stroke.color;
+        ctx.lineWidth = stroke.erasing ? stroke.width * 3 : stroke.width;
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        stroke.points.forEach(function(p, i) { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+        ctx.stroke();
+      });
+      ctx.globalCompositeOperation = 'source-over';
+    }
+  }
+}
+
+// ================================================================
 // CALENDAR PAGE (full screen)
 // ================================================================
 var calPageYear = new Date().getFullYear();
@@ -4004,6 +4406,7 @@ function saveExamGoal(){
     }else{mtEl.style.display='none'}
   }else if(mtEl){mtEl.style.display='none'}
   renderExamCountdown();
+applyMode();
 }
 
 // ================================================================
