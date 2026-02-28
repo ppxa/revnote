@@ -1,0 +1,2120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>revnote</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #232736;
+  --border: #2e3347;
+  --text: #e8eaf0;
+  --text2: #8b8fa8;
+  --accent: #6c63ff;
+  --accent2: #4ecdc4;
+  --danger: #ff6b6b;
+  --warning: #ffd93d;
+  --success: #51cf66;
+  --frozen: #74c0fc;
+  --grad1: linear-gradient(135deg, #6c63ff 0%, #4ecdc4 100%);
+  --grad2: linear-gradient(135deg, #ff6b6b 0%, #ffd93d 100%);
+  --radius: 14px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* === NAV === */
+.nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex; z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  padding: 10px 4px 6px; gap: 3px;
+  color: var(--text2); font-size: 10px; font-weight: 500;
+  cursor: pointer; transition: color .2s;
+  border: none; background: none;
+}
+.nav-item.active { color: var(--accent); }
+.nav-item svg { width: 22px; height: 22px; }
+
+/* === SCREENS === */
+.screen { display: none; padding: 16px 16px 90px; max-width: 480px; margin: 0 auto; }
+.screen.active { display: block; }
+
+/* === HEADER === */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; padding-top: 8px;
+}
+.header h1 { font-size: 22px; font-weight: 900; }
+.header-sub { font-size: 12px; color: var(--text2); }
+
+/* === STREAK === */
+.streak-bar {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 16px; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 14px;
+  border: 1px solid var(--border);
+}
+.streak-fire { font-size: 32px; line-height: 1; }
+.streak-num { font-size: 28px; font-weight: 900; }
+.streak-label { font-size: 12px; color: var(--text2); }
+.streak-days {
+  display: flex; gap: 4px; margin-left: auto;
+}
+.streak-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--border);
+}
+.streak-dot.done { background: var(--accent); }
+.streak-dot.today { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
+
+/* === DAILY QUEUE === */
+.queue-summary {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 20px; margin-bottom: 16px;
+  border: 1px solid var(--border); text-align: center;
+}
+.queue-count { font-size: 48px; font-weight: 900; background: var(--grad1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.queue-label { font-size: 13px; color: var(--text2); margin-top: 2px; }
+.queue-progress {
+  height: 6px; background: var(--border); border-radius: 3px;
+  margin-top: 14px; overflow: hidden;
+}
+.queue-progress-fill {
+  height: 100%; border-radius: 3px;
+  background: var(--grad1); transition: width .5s ease;
+}
+.btn-start {
+  width: 100%; padding: 16px; border: none; border-radius: var(--radius);
+  background: var(--grad1); color: #fff; font-size: 16px; font-weight: 700;
+  cursor: pointer; margin-top: 16px; transition: transform .15s, box-shadow .15s;
+  font-family: inherit;
+}
+.btn-start:active { transform: scale(0.97); }
+.btn-start:disabled { opacity: .4; cursor: default; }
+
+/* === PROBLEM CARD === */
+.card-wrap {
+  display: none; flex-direction: column; gap: 12px;
+}
+.card-wrap.active { display: flex; }
+.problem-card {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 20px; border: 1px solid var(--border);
+  position: relative; overflow: hidden;
+}
+.card-badge {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; margin-bottom: 10px;
+}
+.badge-math { background: rgba(108,99,255,.15); color: var(--accent); }
+.badge-science { background: rgba(78,205,196,.15); color: var(--accent2); }
+.badge-social { background: rgba(255,217,61,.15); color: var(--warning); }
+.badge-english { background: rgba(54,160,255,.15); color: #54a0ff; }
+.badge-japanese { background: rgba(255,107,107,.15); color: var(--danger); }
+.badge-english { background: rgba(116,192,252,.15); color: var(--frozen); }
+.card-source { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
+.card-topic { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+.card-content { font-size: 14px; color: var(--text2); line-height: 1.6; }
+.card-content img { max-width: 100%; border-radius: 8px; margin-top: 8px; }
+.card-meta {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;
+}
+.meta-tag {
+  font-size: 10px; padding: 3px 8px; border-radius: 6px;
+  background: var(--surface2); color: var(--text2);
+}
+.meta-freq-high { color: var(--danger); border: 1px solid rgba(255,107,107,.3); }
+.meta-diff-hard { color: var(--warning); border: 1px solid rgba(255,217,61,.3); }
+
+/* answer buttons */
+.answer-btns {
+  display: flex; gap: 10px;
+}
+.btn-reveal {
+  width: 100%; padding: 14px; border: none; border-radius: var(--radius);
+  background: var(--surface2); color: var(--text); font-size: 15px; font-weight: 700;
+  cursor: pointer; font-family: inherit; border: 1px solid var(--border);
+  transition: transform .15s;
+}
+.btn-reveal:active { transform: scale(0.97); }
+.answer-section { display: none; margin-top: 12px; padding: 14px; background: var(--surface2); border-radius: 10px; }
+.answer-section.show { display: block; }
+.answer-section strong { font-size: 12px; color: var(--text2); }
+/* scratchpad */
+.scratchpad-wrap { margin-top: 10px; position: relative; }
+.scratchpad-canvas {
+  width: 100%; border-radius: 10px; background: #f5f5f5;
+  border: 1px solid var(--border); touch-action: none;
+}
+.scratchpad-toolbar {
+  display: flex; gap: 6px; margin-top: 6px; align-items: center;
+}
+.sp-btn {
+  padding: 4px 10px; border-radius: 6px; font-size: 11px;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--text2); cursor: pointer; font-family: inherit;
+}
+.sp-btn.active { border-color: var(--accent); color: var(--accent); }
+.sp-color { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; }
+.sp-color.active { border-color: #fff; box-shadow: 0 0 4px rgba(255,255,255,.4); }
+/* memo after answer */
+.review-memo { margin-top: 10px; }
+.review-memo textarea {
+  width: 100%; padding: 10px 12px; border-radius: 8px; min-height: 50px; resize: vertical;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  font-size: 13px; font-family: inherit; outline: none;
+}
+.review-memo textarea:focus { border-color: var(--accent); }
+.btn-ans {
+  flex: 1; padding: 16px 12px; border: none; border-radius: var(--radius);
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  font-family: inherit; transition: transform .15s;
+}
+.btn-ans:active { transform: scale(0.95); }
+.btn-correct { background: rgba(81,207,102,.15); color: var(--success); border: 1px solid rgba(81,207,102,.3); }
+.btn-wrong { background: rgba(255,107,107,.15); color: var(--danger); border: 1px solid rgba(255,107,107,.3); }
+.btn-hard { background: rgba(255,217,61,.12); color: var(--warning); border: 1px solid rgba(255,217,61,.25); }
+
+/* === COMPLETION === */
+.completion {
+  text-align: center; padding: 40px 20px;
+}
+.completion-icon { font-size: 64px; margin-bottom: 16px; }
+.completion h2 { font-size: 24px; font-weight: 900; margin-bottom: 8px; }
+.completion p { color: var(--text2); font-size: 14px; }
+.completion-stats {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+  margin-top: 24px;
+}
+.comp-stat {
+  background: var(--surface); border-radius: 12px; padding: 16px 8px;
+  border: 1px solid var(--border);
+}
+.comp-stat-num { font-size: 24px; font-weight: 900; }
+.comp-stat-label { font-size: 10px; color: var(--text2); margin-top: 2px; }
+.graduated-flash {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(81,207,102,.12); display: flex; align-items: center;
+  justify-content: center; z-index: 200; opacity: 0;
+  pointer-events: none; transition: opacity .4s;
+}
+.graduated-flash.show { opacity: 1; pointer-events: auto; }
+.graduated-inner { text-align: center; }
+.graduated-inner .icon { font-size: 80px; animation: bounce .6s ease; }
+@keyframes bounce { 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
+
+/* === ADD PROBLEM === */
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+.form-input, .form-select, .form-textarea {
+  width: 100%; padding: 12px 14px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--text); font-size: 14px; font-family: inherit;
+  outline: none; transition: border-color .2s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--accent);
+}
+.form-textarea { min-height: 80px; resize: vertical; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-select { appearance: none; cursor: pointer; }
+.btn-add {
+  width: 100%; padding: 14px; border: none; border-radius: var(--radius);
+  background: var(--accent); color: #fff; font-size: 15px; font-weight: 700;
+  cursor: pointer; font-family: inherit; margin-top: 8px;
+}
+.queue-warning {
+  background: rgba(255,217,61,.1); border: 1px solid rgba(255,217,61,.25);
+  border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;
+  font-size: 12px; color: var(--warning);
+}
+
+/* === ZONE MAP (parent dashboard) === */
+.zone-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin-bottom: 16px;
+}
+.zone-card {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 16px; border: 1px solid var(--border);
+  position: relative;
+}
+.zone-card .num { font-size: 28px; font-weight: 900; }
+.zone-card .label { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.zone-priority { border-color: rgba(255,107,107,.3); }
+.zone-priority .num { color: var(--danger); }
+.zone-graduated { border-color: rgba(81,207,102,.3); }
+.zone-graduated .num { color: var(--success); }
+.zone-frozen { border-color: rgba(116,192,252,.3); }
+.zone-frozen .num { color: var(--frozen); }
+.zone-review { border-color: rgba(255,217,61,.3); }
+.zone-review .num { color: var(--warning); }
+
+.subject-breakdown {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 16px; margin-bottom: 16px;
+  border: 1px solid var(--border);
+}
+.subject-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
+.subject-row:last-child { margin-bottom: 0; }
+.subject-name { font-size: 12px; width: 40px; color: var(--text2); }
+.subject-bar-bg {
+  flex: 1; height: 8px; background: var(--border); border-radius: 4px;
+  overflow: hidden;
+}
+.subject-bar { height: 100%; border-radius: 4px; transition: width .5s; }
+.subject-pct { font-size: 11px; width: 36px; text-align: right; color: var(--text2); }
+
+/* === PROBLEM LIST === */
+.filter-row {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.filter-chip {
+  padding: 6px 14px; border-radius: 20px; font-size: 12px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--text2); cursor: pointer; font-family: inherit;
+}
+.filter-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.problem-list-item {
+  background: var(--surface); border-radius: 12px;
+  padding: 14px; margin-bottom: 8px;
+  border: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer; transition: border-color .2s;
+}
+.problem-list-item:hover { border-color: var(--accent); }
+.pli-status {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.pli-info { flex: 1; min-width: 0; }
+.pli-topic { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pli-sub { font-size: 11px; color: var(--text2); }
+.pli-next { font-size: 10px; color: var(--text2); text-align: right; }
+.pli-actions { display: flex; gap: 6px; }
+.btn-freeze {
+  padding: 4px 10px; border-radius: 6px; font-size: 10px;
+  border: 1px solid var(--frozen); background: rgba(116,192,252,.1);
+  color: var(--frozen); cursor: pointer; font-family: inherit;
+}
+.btn-delete-p {
+  padding: 4px 10px; border-radius: 6px; font-size: 10px;
+  border: 1px solid var(--danger); background: rgba(255,107,107,.08);
+  color: var(--danger); cursor: pointer; font-family: inherit;
+}
+
+/* === SETTINGS === */
+.setting-card {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 16px; margin-bottom: 12px;
+  border: 1px solid var(--border);
+}
+.setting-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+.setting-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.setting-row:last-child { margin-bottom: 0; }
+.setting-label { font-size: 13px; color: var(--text2); }
+.setting-val { font-size: 13px; font-weight: 700; }
+.range-input { width: 120px; accent-color: var(--accent); }
+.btn-export, .btn-import-label {
+  display: inline-block; padding: 10px 20px; border-radius: 10px;
+  background: var(--surface2); color: var(--text); font-size: 13px;
+  font-weight: 500; border: 1px solid var(--border);
+  cursor: pointer; font-family: inherit; text-align: center;
+}
+.btn-danger {
+  background: rgba(255,107,107,.1); border-color: rgba(255,107,107,.3);
+  color: var(--danger);
+}
+#importFile { display: none; }
+
+/* === IMAGE UPLOAD === */
+.img-drop {
+  border: 2px dashed var(--border); border-radius: 10px;
+  padding: 20px; text-align: center; cursor: pointer;
+  transition: border-color .2s, background .2s;
+  color: var(--text2); font-size: 12px; position: relative;
+  min-height: 60px; display: flex; align-items: center;
+  justify-content: center; flex-direction: column; gap: 6px;
+}
+.img-drop:hover, .img-drop.dragover {
+  border-color: var(--accent); background: rgba(108,99,255,.05);
+}
+.img-drop input[type="file"] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer;
+}
+.img-drop img {
+  max-width: 100%; max-height: 200px; border-radius: 6px;
+}
+.img-drop .remove-img {
+  position: absolute; top: 6px; right: 6px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--danger); color: #fff; border: none;
+  font-size: 14px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; line-height: 1;
+}
+.form-group-rel { position: relative; }
+.form-tab-row {
+  display: flex; gap: 0; margin-bottom: 8px;
+}
+.form-tab {
+  flex: 1; padding: 8px; border: 1px solid var(--border);
+  background: transparent; color: var(--text2); font-size: 12px;
+  cursor: pointer; font-family: inherit; transition: all .2s;
+}
+.form-tab:first-child { border-radius: 8px 0 0 8px; }
+.form-tab:last-child { border-radius: 0 8px 8px 0; }
+.form-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* === EMPTY STATE === */
+.empty-state {
+  text-align: center; padding: 60px 20px;
+}
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: .5; }
+.empty-state p { color: var(--text2); font-size: 14px; }
+
+/* scroll top padding */
+.screen { padding-top: env(safe-area-inset-top, 16px); }
+
+/* === iPad landscape 2-column layout === */
+@media (min-width: 900px) {
+  .screen { max-width: 1200px; padding-left: 24px; padding-right: 24px; }
+  .card-wrap.active {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px; align-items: start;
+  }
+  .card-wrap.active > #cardProgress { grid-column: 1 / -1; }
+  .card-wrap.active > .problem-card { grid-column: 1; grid-row: 2 / 20; align-self: start; max-height: 80vh; overflow-y: auto; }
+  .card-wrap.active > .scratchpad-wrap { grid-column: 2; }
+  .card-wrap.active > #btnReveal { grid-column: 2; }
+  .card-wrap.active > .answer-section { grid-column: 2; }
+  .card-wrap.active > .review-memo { grid-column: 2; }
+  .card-wrap.active > .answer-btns { grid-column: 2; }
+  .nav { max-width: 600px; margin: 0 auto; border-radius: 16px 16px 0 0; }
+  /* List items wider */
+  .problem-list-item { padding: 16px 20px; }
+}
+
+/* Image canvas overlay for drawing on problem image */
+.img-canvas-wrap {
+  position: relative; width: 100%; background: #fff; border-radius: 8px; overflow: hidden;
+}
+.img-canvas-wrap img { display: block; width: 100%; }
+.img-canvas-wrap canvas {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  touch-action: none; cursor: crosshair; z-index: 2;
+}
+.img-draw-hint {
+  font-size: 10px; color: var(--accent); text-align: center; margin-top: 4px;
+}
+
+/* freeze candidate notification */
+.freeze-alert {
+  background: rgba(116,192,252,.1); border: 1px solid rgba(116,192,252,.25);
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;
+  font-size: 12px; color: var(--frozen); display: flex; align-items: center; gap: 10px;
+}
+.freeze-alert button {
+  padding: 5px 12px; border-radius: 6px; font-size: 11px;
+  border: 1px solid var(--frozen); background: rgba(116,192,252,.15);
+  color: var(--frozen); cursor: pointer; font-family: inherit; white-space: nowrap;
+}
+@keyframes fadeInOut { 0%{opacity:0;transform:translateY(-8px)} 15%{opacity:1;transform:translateY(0)} 85%{opacity:1} 100%{opacity:0} }
+.quick-mode .normal-only { display: none !important; }
+.quick-mode #contentImageArea { display: block !important; }
+.quick-mode #contentTextArea { display: none !important; }
+.quick-mode #answerTextArea { display: none !important; }
+.quick-mode #answerImageArea { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- === GRADUATED FLASH === -->
+<div class="graduated-flash" id="graduatedFlash">
+  <div class="graduated-inner">
+    <div class="icon">🎉</div>
+    <h2 style="font-size:22px;font-weight:900;margin-top:12px">定着おめでとう！</h2>
+    <p id="graduatedMsg" style="color:var(--text2);font-size:14px;margin-top:6px"></p>
+  </div>
+</div>
+
+<!-- === SCREEN: TODAY === -->
+<div class="screen active" id="screenToday">
+  <div class="header">
+    <div>
+      <h1>📓 revnote</h1>
+      <div class="header-sub" id="todayDate"></div>
+    </div>
+  </div>
+  <div class="streak-bar">
+    <div class="streak-fire">🔥</div>
+    <div>
+      <div class="streak-num" id="streakCount">0</div>
+      <div class="streak-label">日連続</div>
+    </div>
+    <div class="streak-days" id="streakDots"></div>
+  </div>
+  <div id="freezeAlerts"></div>
+  <div class="queue-summary" id="queueSummary">
+    <div class="queue-count" id="queueCount">0</div>
+    <div class="queue-label">問 やるべき問題</div>
+    <div class="queue-progress"><div class="queue-progress-fill" id="queueProgress" style="width:0%"></div></div>
+    <div id="queueBreakdown" style="font-size:11px;color:var(--text2);margin-top:8px"></div>
+    <button class="btn-start" id="btnStart" onclick="startSession()">復習をはじめる</button>
+  </div>
+  <div class="card-wrap" id="cardWrap">
+    <div id="cardProgress" style="font-size:12px;color:var(--text2);text-align:center"></div>
+    <div class="problem-card" id="problemCard"></div>
+    <div class="scratchpad-wrap" id="scratchpadWrap">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:4px">✏️ 計算スペース（画像にも直接書き込めます↑）</div>
+      <canvas class="scratchpad-canvas" id="scratchpadCanvas" width="400" height="250"></canvas>
+      <div class="scratchpad-toolbar">
+        <button class="sp-btn" onclick="clearScratchpad()">消す</button>
+        <button class="sp-btn" id="spEraser" onclick="toggleEraser()">消しゴム</button>
+        <span style="font-size:10px;color:var(--text2);margin-left:4px">太さ</span>
+        <input type="range" min="1" max="8" value="3" id="spLineWidth" style="width:60px;accent-color:var(--accent)">
+        <div class="sp-color active" style="background:#333" onclick="setScratchColor('#333',this)"></div>
+        <div class="sp-color" style="background:#6c63ff" onclick="setScratchColor('#6c63ff',this)"></div>
+        <div class="sp-color" style="background:#ff6b6b" onclick="setScratchColor('#ff6b6b',this)"></div>
+        <div class="sp-color" style="background:#51cf66" onclick="setScratchColor('#51cf66',this)"></div>
+      </div>
+    </div>
+    <button class="btn-reveal" id="btnReveal" onclick="revealAnswer()">👁 答えを見る</button>
+    <div class="answer-section" id="answerSection"></div>
+    <div class="review-memo" id="reviewMemo" style="display:none">
+      <textarea id="reviewMemoText" placeholder="メモ（気づいたこと、間違えたポイントなど）"></textarea>
+    </div>
+    <div class="answer-btns" id="answerBtns" style="display:none">
+      <button class="btn-ans btn-wrong" onclick="recordAnswer(0)">❌ できなかった</button>
+      <button class="btn-ans btn-hard" onclick="recordAnswer(3)">🤔 あやしい</button>
+      <button class="btn-ans btn-correct" onclick="recordAnswer(5)">✅ できた！</button>
+    </div>
+  </div>
+  <div class="completion" id="completionView" style="display:none">
+    <div class="completion-icon">🏆</div>
+    <h2>今日のリベンジ完了！</h2>
+    <p id="completionMsg"></p>
+    <div class="completion-stats" id="completionStats"></div>
+  </div>
+</div>
+
+<!-- === SCREEN: ADD === -->
+<div class="screen" id="screenAdd">
+  <div class="header"><h1>問題を登録</h1></div>
+  <div id="addQueueWarning"></div>
+
+  <!-- Mode toggle -->
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <button class="filter-chip active" id="modeNormal" onclick="setAddMode('normal')">通常登録</button>
+    <button class="filter-chip" id="modeQuick" onclick="setAddMode('quick')">📷 かんたん登録</button>
+  </div>
+
+  <!-- Quick mode hint -->
+  <div id="quickModeHint" style="display:none;background:var(--surface2);padding:10px 14px;border-radius:10px;margin-bottom:12px;font-size:12px;color:var(--text2)">
+    📷 教科を選んで写真を撮るだけ。単元や答えは後から追加できます。
+  </div>
+
+  <div class="form-group">
+    <label>教科</label>
+    <select class="form-select" id="addSubject" onchange="onSubjectChange()">
+      <option value="算数">算数</option>
+      <option value="国語">国語</option>
+      <option value="理科">理科</option>
+      <option value="社会">社会</option>
+    </select>
+  </div>
+  <div class="form-group normal-only">
+    <label>単元カテゴリ</label>
+    <select class="form-select" id="addTopicCategory" onchange="onCategoryChange()">
+      <option value="">-- カテゴリ --</option>
+    </select>
+  </div>
+  <div class="form-group normal-only">
+    <label>詳細（任意）</label>
+    <select class="form-select" id="addTopicDetail" onchange="onDetailChange()">
+      <option value="">-- 詳細（任意） --</option>
+    </select>
+  </div>
+  <div class="form-group normal-only">
+    <label>単元（手入力・補足）</label>
+    <input class="form-input" id="addTopic" placeholder="カテゴリ選択で自動入力 / 手入力OK">
+  </div>
+  <div class="form-group">
+    <label>出典</label>
+    <input class="form-input" id="addSource" placeholder="例: 予習シリーズ 5年下 第12回 p.45">
+  </div>
+
+  <!-- 問題 content: text or image -->
+  <div class="form-group">
+    <label>問題の内容</label>
+    <div class="form-tab-row normal-only">
+      <button class="form-tab active" onclick="switchContentTab('text')" id="contentTabText">テキスト</button>
+      <button class="form-tab" onclick="switchContentTab('image')" id="contentTabImage">画像</button>
+    </div>
+    <div id="contentTextArea" class="normal-only">
+      <textarea class="form-textarea" id="addContent" placeholder="問題の要約やメモ"></textarea>
+    </div>
+    <div id="contentImageArea" style="display:none">
+      <div class="img-drop" id="contentImgDrop">
+        <input type="file" accept="image/*" onchange="handleImgUpload(event,'content')">
+        <div id="contentImgPreview">📷 タップで選択 / ペーストも可</div>
+      </div>
+      <button class="sp-btn" style="margin-top:6px;width:100%;padding:10px" onclick="pasteFromClipboard('content')">📋 クリップボードから貼り付け</button>
+    </div>
+  </div>
+
+  <!-- 答え・解説: text or image -->
+  <div class="form-group normal-only">
+    <label>答え・解説</label>
+    <div class="form-tab-row">
+      <button class="form-tab active" onclick="switchAnswerTab('text')" id="answerTabText">テキスト</button>
+      <button class="form-tab" onclick="switchAnswerTab('image')" id="answerTabImage">画像</button>
+    </div>
+    <div id="answerTextArea">
+      <input class="form-input" id="addAnswer" placeholder="例: 3:5">
+    </div>
+    <div id="answerImageArea" style="display:none">
+      <div class="img-drop" id="answerImgDrop">
+        <input type="file" accept="image/*" onchange="handleImgUpload(event,'answer')">
+        <div id="answerImgPreview">📷 タップで選択 / ペーストも可</div>
+      </div>
+      <button class="sp-btn" style="margin-top:6px;width:100%;padding:10px" onclick="pasteFromClipboard('answer')">📋 クリップボードから貼り付け</button>
+    </div>
+  </div>
+
+  <div class="form-row normal-only">
+    <div class="form-group">
+      <label><input type="checkbox" id="addRateCheck" onchange="toggleRateSlider()"> 正答率を入力する（テストで判明していれば）</label>
+      <div id="rateSliderWrap" style="display:none;margin-top:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="range" class="range-input" id="addCorrectRate" min="0" max="100" value="50" style="flex:1;width:auto" oninput="updateRateLabel()">
+          <span class="setting-val" id="rateLabel" style="min-width:44px;text-align:right">50%</span>
+        </div>
+        <div id="rateHint" style="font-size:11px;color:var(--text2);margin-top:4px"></div>
+      </div>
+    </div>
+  </div>
+  <div class="form-row normal-only">
+    <div class="form-group">
+      <label>頻出度</label>
+      <select class="form-select" id="addFreq">
+        <option value="high">高（よく出る）</option>
+        <option value="medium" selected>中</option>
+        <option value="low">低（めったに出ない）</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>難易度</label>
+      <select class="form-select" id="addDiff">
+        <option value="basic">基本</option>
+        <option value="standard" selected>標準</option>
+        <option value="hard">応用</option>
+      </select>
+    </div>
+  </div>
+  <!-- Tags -->
+  <div class="form-group">
+    <label>タグ（スペース区切り）</label>
+    <input class="form-input" id="addTags" placeholder="例: テスト直し 苦手 要復習">
+    <div id="tagSuggestions" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
+  </div>
+  <button class="btn-add" onclick="addProblem()">登録する</button>
+  <div id="addSuccessToast" style="display:none;background:var(--success);color:#fff;padding:10px 16px;border-radius:10px;margin-top:10px;font-size:14px;font-weight:600;text-align:center"></div>
+  <div id="addContinueHint" style="display:none;text-align:center;margin-top:8px;font-size:12px;color:var(--text2)">
+    出典・教科・単元はそのまま。続けて登録できます。
+  </div>
+</div>
+
+<!-- === SCREEN: LIST === -->
+<div class="screen" id="screenList">
+  <div class="header"><h1>問題一覧</h1></div>
+  <div class="filter-row" id="filterRow"></div>
+  <div class="filter-row" id="subjectFilterRow" style="margin-top:-6px"></div>
+  <div class="filter-row" id="tagFilterRow" style="margin-top:-6px"></div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+    <span style="font-size:11px;color:var(--text2)">並替:</span>
+    <select class="form-select" id="listSort" onchange="renderList()" style="width:auto;padding:6px 10px;font-size:11px">
+      <option value="next">復習日順</option>
+      <option value="created">登録日順</option>
+      <option value="topic">単元順</option>
+      <option value="failures">苦手順</option>
+    </select>
+  </div>
+  <div id="problemListContainer"></div>
+</div>
+
+<!-- === SCREEN: DASHBOARD === -->
+<div class="screen" id="screenDash">
+  <div class="header"><h1>ダッシュボード</h1></div>
+  <div class="zone-grid" id="zoneGrid"></div>
+  <div class="subject-breakdown" id="subjectBreakdown">
+    <h3 style="font-size:13px;font-weight:700;margin-bottom:12px">教科別 定着率</h3>
+    <div id="subjectBars"></div>
+  </div>
+  <div id="weeklyReport" style="background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--border)">
+    <h3 style="font-size:13px;font-weight:700;margin-bottom:10px">今週のまとめ</h3>
+    <div id="weeklyContent" style="font-size:13px;color:var(--text2);line-height:1.7"></div>
+  </div>
+</div>
+
+<!-- === SCREEN: SETTINGS === -->
+<div class="screen" id="screenSettings">
+  <div class="header"><h1>設定</h1></div>
+  <div class="setting-card">
+    <h3>学校段階</h3>
+    <div class="setting-row">
+      <span class="setting-label">対象</span>
+      <select class="form-select" id="settingSchoolLevel" onchange="onSchoolLevelChange()" style="width:auto;padding:8px 14px">
+        <option value="elementary">小学生（中学受験）</option>
+        <option value="secondary">中学・高校生</option>
+      </select>
+    </div>
+  </div>
+  <div class="setting-card">
+    <h3>復習設定</h3>
+    <div class="setting-row">
+      <span class="setting-label">1日の上限</span>
+      <span><input type="range" class="range-input" id="settingCap" min="5" max="30" value="15" oninput="updateCapLabel()"> <span class="setting-val" id="capLabel">15問</span></span>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">自動凍結（連続不正解）</span>
+      <span><input type="range" class="range-input" id="settingFreeze" min="3" max="10" value="5" oninput="updateFreezeLabel()"> <span class="setting-val" id="freezeLabel">5回</span></span>
+    </div>
+  </div>
+  <div class="setting-card">
+    <h3>データ管理</h3>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn-export" onclick="exportData()">📤 エクスポート</button>
+      <label class="btn-import-label">📥 インポート<input type="file" id="importFile" accept=".json" onchange="importData(event)"></label>
+    </div>
+    <div style="margin-top:12px">
+      <button class="btn-export btn-danger" onclick="if(confirm('全データを削除しますか？'))resetAll()">🗑 全データ削除</button>
+    </div>
+    <div style="margin-top:12px">
+      <button class="btn-export" onclick="loadSampleData()">📋 サンプルデータを読み込む（4・5・6年 全教科）</button>
+    </div>
+  </div>
+  <div class="setting-card">
+    <h3>忘却曲線アルゴリズム</h3>
+    <div style="font-size:12px;color:var(--text2);line-height:1.8">
+      SM-2ベースの間隔反復を使用。<br>
+      正解のたびに復習間隔が伸びます（1日→3日→7日→14日→30日→…）。<br>
+      不正解で間隔リセット。「あやしい」は間隔を半分に。<br>
+      <strong style="color:var(--text)">EaseFactor</strong>が回答の質で動的に変化し、得意な問題は間隔が加速度的に伸びます。<br>
+      <strong style="color:var(--danger)">連続不正解<span id="algoFreezeN">5</span>回</strong>で自動凍結候補に。
+    </div>
+  </div>
+</div>
+
+<!-- === NAV === -->
+<nav class="nav">
+  <button class="nav-item active" onclick="switchScreen('Today')">
+    <span style="font-size:20px">⚔️</span>
+    今日
+  </button>
+  <button class="nav-item" onclick="switchScreen('Add')">
+    <span style="font-size:20px">📸</span>
+    登録
+  </button>
+  <button class="nav-item" onclick="switchScreen('List')">
+    <span style="font-size:20px">📚</span>
+    一覧
+  </button>
+  <button class="nav-item" onclick="switchScreen('Dash')">
+    <span style="font-size:20px">📊</span>
+    分析
+  </button>
+  <button class="nav-item" onclick="switchScreen('Settings')">
+    <span style="font-size:20px">⚙️</span>
+    設定
+  </button>
+</nav>
+
+<script>
+// ================================================================
+// DATA LAYER
+// ================================================================
+const STORAGE_KEY = 'revengeNote_v1';
+const today = () => new Date().toISOString().split('T')[0];
+
+function loadData() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return defaultData();
+  try { return JSON.parse(raw); } catch { return defaultData(); }
+}
+function saveData(d) { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
+function defaultData() {
+  return {
+    version: '1.0',
+    problems: [],
+    settings: { dailyCap: 15, freezeThreshold: 5 },
+    streak: { count: 0, lastDate: null, history: [] },
+    sessionLog: [] // {date, correct, wrong, hard, graduated}
+  };
+}
+let DATA = loadData();
+
+// ================================================================
+// SM-2 SPACED REPETITION ENGINE
+// ================================================================
+function calcNextReview(problem, quality) {
+  // quality: 0=wrong, 3=hard, 5=correct
+  let ef = problem.easeFactor || 2.5;
+  let interval = problem.interval || 0;
+  let reps = problem.repetitions || 0;
+  let consFailures = problem.consecutiveFailures || 0;
+
+  if (quality >= 3) { // correct or hard
+    if (reps === 0) interval = 1;
+    else if (reps === 1) interval = 3;
+    else interval = Math.round(interval * ef);
+    reps++;
+    consFailures = 0;
+  } else { // wrong
+    reps = 0;
+    interval = 1;
+    consFailures++;
+  }
+  // update ease factor
+  ef = ef + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+  if (ef < 1.3) ef = 1.3;
+  // "hard" halves the interval
+  if (quality === 3) interval = Math.max(1, Math.round(interval / 2));
+
+  const nextDate = new Date();
+  nextDate.setDate(nextDate.getDate() + interval);
+
+  return {
+    easeFactor: ef,
+    interval: interval,
+    repetitions: reps,
+    consecutiveFailures: consFailures,
+    nextReviewDate: nextDate.toISOString().split('T')[0],
+    masteryLevel: calcMastery(reps, consFailures)
+  };
+}
+
+function calcMastery(reps, failures) {
+  if (failures >= 3) return 0;
+  if (reps >= 5) return 4; // graduated
+  if (reps >= 3) return 3;
+  if (reps >= 1) return 2;
+  return 1;
+}
+
+// ================================================================
+// ZONE CLASSIFICATION
+// ================================================================
+function classifyZone(p) {
+  if (p.frozen) return 'frozen';
+  if (p.masteryLevel >= 4) return 'graduated';
+  const isHighFreq = p.frequency === 'high' || p.frequency === 'medium';
+  const isStruggling = (p.consecutiveFailures || 0) >= 3;
+  if (isStruggling && !isHighFreq) return 'discard'; // 捨て問候補
+  if (p.masteryLevel < 3 && isHighFreq) return 'priority'; // 最優先
+  return 'review'; // 後回し or 通常復習
+}
+
+// ================================================================
+// DAILY QUEUE GENERATION
+// ================================================================
+function generateQueue() {
+  const cap = DATA.settings.dailyCap || 15;
+  const t = today();
+  const eligible = DATA.problems.filter(p =>
+    !p.frozen && p.masteryLevel < 4 && p.nextReviewDate <= t
+  );
+  // sort by priority
+  eligible.sort((a, b) => {
+    const pa = calcPriority(a, t);
+    const pb = calcPriority(b, t);
+    return pb - pa;
+  });
+  return eligible.slice(0, cap);
+}
+
+function calcPriority(p, t) {
+  const daysOverdue = Math.floor((new Date(t) - new Date(p.nextReviewDate)) / 86400000);
+  const urgency = Math.max(0, daysOverdue) + 1;
+  const freqMult = { high: 2, medium: 1, low: 0.5 }[p.frequency] || 1;
+  const failPenalty = (p.consecutiveFailures || 0) >= 3 ? 0.3 : 1.0;
+  // 正答率ブースト: 正答率が高い問題ほど「落としちゃいけない」→優先度UP
+  // 正答率70%以上=みんな取れる→×1.5, 40-69%=差がつく→×1.3, 20-39%=難問→×1.0, <20%=捨て問→×0.7
+  let rateMult = 1.0;
+  if (p.correctRate != null) {
+    if (p.correctRate >= 70) rateMult = 1.5;
+    else if (p.correctRate >= 40) rateMult = 1.3;
+    else if (p.correctRate >= 20) rateMult = 1.0;
+    else rateMult = 0.7;
+  }
+  return urgency * freqMult * failPenalty * rateMult;
+}
+
+// ================================================================
+// UI RENDERING
+// ================================================================
+let currentQueue = [];
+let currentIndex = 0;
+let sessionStats = { correct: 0, wrong: 0, hard: 0, graduated: 0 };
+
+function switchScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach((n, i) => {
+    n.classList.toggle('active', ['Today','Add','List','Dash','Settings'][i] === name);
+  });
+  if (name !== 'Add') { addCount = 0; document.getElementById('addContinueHint').style.display = 'none'; }
+  if (name === 'Today') renderToday();
+  if (name === 'List') renderList();
+  if (name === 'Dash') renderDashboard();
+  if (name === 'Add') renderAdd();
+  if (name === 'Settings') renderSettings();
+}
+
+function renderToday() {
+  document.getElementById('todayDate').textContent = formatDate(today());
+  renderStreak();
+  renderFreezeAlerts();
+  currentQueue = generateQueue();
+  const total = DATA.problems.filter(p => !p.frozen && p.masteryLevel < 4 && p.nextReviewDate <= today()).length;
+  const count = currentQueue.length;
+  document.getElementById('queueCount').textContent = count;
+  const overdue = total - count;
+  let breakdown = '';
+  if (overdue > 0) breakdown = `（他に ${overdue} 問が待機中・明日以降に繰り越し）`;
+  document.getElementById('queueBreakdown').textContent = breakdown;
+  // subject breakdown
+  const bySubj = {};
+  currentQueue.forEach(p => { bySubj[p.subject] = (bySubj[p.subject]||0)+1; });
+  const parts = Object.entries(bySubj).map(([s,n]) => `${s}${n}問`);
+  if (parts.length) breakdown = parts.join(' / ') + (overdue > 0 ? ` ＋繰越${overdue}問` : '');
+  document.getElementById('queueBreakdown').textContent = breakdown;
+
+  document.getElementById('btnStart').disabled = count === 0;
+  document.getElementById('queueProgress').style.width = '0%';
+  document.getElementById('cardWrap').classList.remove('active');
+  document.getElementById('completionView').style.display = 'none';
+  document.getElementById('queueSummary').style.display = '';
+}
+
+function renderStreak() {
+  updateStreak();
+  document.getElementById('streakCount').textContent = DATA.streak.count;
+  const dots = document.getElementById('streakDots');
+  dots.innerHTML = '';
+  const hist = DATA.streak.history.slice(-7);
+  for (let i = 0; i < 7; i++) {
+    const d = document.createElement('div');
+    d.className = 'streak-dot';
+    if (hist[i]) d.classList.add('done');
+    if (i === hist.length - 1 && hist[i] === today()) d.classList.add('today');
+    dots.appendChild(d);
+  }
+}
+
+function updateStreak() {
+  const t = today();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const y = yesterday.toISOString().split('T')[0];
+  if (DATA.streak.lastDate === t) return; // already recorded today
+  if (DATA.streak.lastDate === y) {
+    // streak continues — don't increment yet, wait for session
+  } else if (DATA.streak.lastDate !== t) {
+    // broken or first time
+    if (DATA.streak.lastDate && DATA.streak.lastDate !== y) {
+      DATA.streak.count = 0;
+      DATA.streak.history = [];
+    }
+  }
+}
+
+function recordStreakToday() {
+  const t = today();
+  if (DATA.streak.lastDate !== t) {
+    DATA.streak.count++;
+    DATA.streak.lastDate = t;
+    if (!DATA.streak.history.includes(t)) DATA.streak.history.push(t);
+    if (DATA.streak.history.length > 30) DATA.streak.history.shift();
+    saveData(DATA);
+  }
+}
+
+function renderFreezeAlerts() {
+  const container = document.getElementById('freezeAlerts');
+  container.innerHTML = '';
+  const threshold = DATA.settings.freezeThreshold || 5;
+  const candidates = DATA.problems.filter(p =>
+    !p.frozen && (p.consecutiveFailures || 0) >= threshold
+  );
+  candidates.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'freeze-alert';
+    div.innerHTML = `
+      <span>❄️ 「${p.topic}」が${p.consecutiveFailures}回連続不正解</span>
+      <button onclick="freezeProblem('${p.id}')">凍結する</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function startSession() {
+  if (currentQueue.length === 0) return;
+  isSingleProblemMode = false;
+  currentIndex = 0;
+  sessionStats = { correct: 0, wrong: 0, hard: 0, graduated: 0 };
+  document.getElementById('queueSummary').style.display = 'none';
+  document.getElementById('completionView').style.display = 'none';
+  document.getElementById('cardWrap').classList.add('active');
+  showCard();
+  recordStreakToday();
+}
+
+function showCard() {
+  if (currentIndex >= currentQueue.length) {
+    finishSession();
+    return;
+  }
+  const p = currentQueue[currentIndex];
+  const total = currentQueue.length;
+  document.getElementById('cardProgress').textContent = `${currentIndex + 1} / ${total}`;
+  document.getElementById('queueProgress').style.width = ((currentIndex) / total * 100) + '%';
+
+  const badgeClass = {
+    '算数': 'badge-math', '数学': 'badge-math', '国語': 'badge-japanese',
+    '理科': 'badge-science', '社会': 'badge-social', '英語': 'badge-english'
+  }[p.subject] || 'badge-math';
+
+  const freqLabel = { high: '高頻出', medium: '中頻出', low: '低頻出' }[p.frequency] || '';
+  const diffLabel = { basic: '基本', standard: '標準', hard: '応用' }[p.difficulty] || '';
+
+  // Show problem ONLY (no answer)
+  const hasImage = !!p.contentImage;
+  document.getElementById('problemCard').innerHTML = `
+    <span class="card-badge ${badgeClass}">${p.subject}</span>
+    <div class="card-source">${p.source || ''}</div>
+    <div class="card-topic">${p.topic}</div>
+    ${p.lastMemo ? `<div style="font-size:11px;color:var(--accent);margin-bottom:4px">📝 ${p.lastMemo}</div>` : ''}
+    <div class="card-content" id="cardContentArea">
+      ${hasImage ? `<div class="img-canvas-wrap" id="imgCanvasWrap"><img id="problemImg" src="${p.contentImage}" alt="問題画像" crossorigin="anonymous" onload="initImageCanvas()"><canvas id="imgOverlayCanvas"></canvas></div><div class="img-draw-hint">✏️ 画像の上に直接書き込めます</div>` : (p.content || '')}
+    </div>
+    <div class="card-meta">
+      <span class="meta-tag ${p.frequency === 'high' ? 'meta-freq-high' : ''}">${freqLabel}</span>
+      <span class="meta-tag ${p.difficulty === 'hard' ? 'meta-diff-hard' : ''}">${diffLabel}</span>
+      ${p.correctRate != null ? `<span class="meta-tag" style="color:${p.correctRate >= 70 ? 'var(--success)' : p.correctRate >= 40 ? 'var(--warning)' : 'var(--danger)'}">正答率${p.correctRate}%</span>` : ''}
+      ${(p.tags||[]).length ? `<span class="meta-tag">${p.tags.map(t=>'#'+t).join(' ')}</span>` : ''}
+    </div>
+  `;
+
+  // Prepare answer section (hidden)
+  const answerHTML = p.answerImage
+    ? `<strong>答え:</strong><br><img src="${p.answerImage}" alt="解説画像" style="max-width:100%;border-radius:6px;margin-top:6px">`
+    : (p.answer ? `<strong>答え:</strong> ${p.answer}` : '<span style="color:var(--text2)">答え未登録</span>');
+  document.getElementById('answerSection').innerHTML = answerHTML;
+  document.getElementById('answerSection').classList.remove('show');
+  document.getElementById('btnReveal').style.display = '';
+  document.getElementById('answerBtns').style.display = 'none';
+  document.getElementById('reviewMemo').style.display = 'none';
+  document.getElementById('reviewMemoText').value = '';
+
+  // Reset scratchpad
+  clearScratchpad();
+  initScratchpad();
+}
+
+function revealAnswer() {
+  document.getElementById('answerSection').classList.add('show');
+  document.getElementById('btnReveal').style.display = 'none';
+  document.getElementById('answerBtns').style.display = 'flex';
+  document.getElementById('reviewMemo').style.display = 'block';
+}
+
+// ================================================================
+// SCRATCHPAD (drawing canvas)
+// ================================================================
+let spCtx = null;
+let spDrawing = false;
+let spErasing = false;
+let spColor = '#333';
+
+function initScratchpad() {
+  const canvas = document.getElementById('scratchpadCanvas');
+  // Responsive width
+  const w = canvas.parentElement.offsetWidth;
+  canvas.width = w * 2; // retina
+  canvas.height = Math.round(w * 0.5) * 2;
+  canvas.style.width = w + 'px';
+  canvas.style.height = Math.round(w * 0.5) + 'px';
+  spCtx = canvas.getContext('2d');
+  spCtx.lineCap = 'round';
+  spCtx.lineJoin = 'round';
+  // Fill white bg
+  spCtx.fillStyle = '#f5f5f5';
+  spCtx.fillRect(0, 0, canvas.width, canvas.height);
+  spDrawing = false;
+  spErasing = false;
+  document.getElementById('spEraser').classList.remove('active');
+
+  // Touch / mouse events
+  canvas.onpointerdown = (e) => { spDrawing = true; spCtx.beginPath(); const p = spPos(e); spCtx.moveTo(p.x, p.y); };
+  canvas.onpointermove = (e) => { if (!spDrawing) return; const p = spPos(e); const lw = parseInt(document.getElementById('spLineWidth').value); spCtx.lineWidth = lw * 2; if (spErasing) { spCtx.globalCompositeOperation = 'destination-out'; spCtx.strokeStyle = 'rgba(0,0,0,1)'; } else { spCtx.globalCompositeOperation = 'source-over'; spCtx.strokeStyle = spColor; } spCtx.lineTo(p.x, p.y); spCtx.stroke(); };
+  canvas.onpointerup = () => { spDrawing = false; };
+  canvas.onpointerleave = () => { spDrawing = false; };
+}
+
+function spPos(e) {
+  const c = document.getElementById('scratchpadCanvas');
+  const r = c.getBoundingClientRect();
+  return { x: (e.clientX - r.left) * (c.width / r.width), y: (e.clientY - r.top) * (c.height / r.height) };
+}
+
+function clearScratchpad() {
+  const c = document.getElementById('scratchpadCanvas');
+  if (c && c.getContext) { const ctx = c.getContext('2d'); ctx.fillStyle = '#f5f5f5'; ctx.fillRect(0, 0, c.width, c.height); }
+}
+
+function toggleEraser() {
+  spErasing = !spErasing;
+  document.getElementById('spEraser').classList.toggle('active', spErasing);
+}
+
+function setScratchColor(color, el) {
+  spColor = color;
+  spErasing = false;
+  document.getElementById('spEraser').classList.remove('active');
+  document.querySelectorAll('.sp-color').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ================================================================
+// IMAGE OVERLAY CANVAS (draw on problem image with padding)
+// ================================================================
+let imgOvCtx = null;
+let imgOvDrawing = false;
+
+function initImageCanvas() {
+  const img = document.getElementById('problemImg');
+  const canvas = document.getElementById('imgOverlayCanvas');
+  if (!img || !canvas) return;
+  const wrap = document.getElementById('imgCanvasWrap');
+
+  // Wait for layout
+  requestAnimationFrame(() => {
+    const displayW = wrap.offsetWidth;
+    const padPx = 80; // white padding for writing
+    const imgW = img.naturalWidth;
+    const imgH = img.naturalHeight;
+    // Scale: image + padding to fit display width
+    const totalW = imgW + padPx * 2;
+    const scale = displayW / totalW;
+    const totalH = imgH + padPx * 2;
+    const displayH = totalH * scale;
+
+    // Set canvas size (2x for retina)
+    canvas.width = totalW * 2;
+    canvas.height = totalH * 2;
+    canvas.style.width = displayW + 'px';
+    canvas.style.height = displayH + 'px';
+    wrap.style.height = displayH + 'px';
+
+    // Draw white bg + image onto canvas
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, padPx * 2, padPx * 2, imgW * 2, imgH * 2);
+
+    // Hide original image (canvas replaces it)
+    img.style.display = 'none';
+
+    imgOvCtx = ctx;
+    imgOvCtx.lineCap = 'round';
+    imgOvCtx.lineJoin = 'round';
+    imgOvDrawing = false;
+
+    canvas.onpointerdown = (e) => {
+      e.preventDefault();
+      imgOvDrawing = true;
+      imgOvCtx.beginPath();
+      const p = imgOvPos(e);
+      imgOvCtx.moveTo(p.x, p.y);
+    };
+    canvas.onpointermove = (e) => {
+      e.preventDefault();
+      if (!imgOvDrawing) return;
+      const p = imgOvPos(e);
+      const lw = parseInt(document.getElementById('spLineWidth').value);
+      imgOvCtx.lineWidth = lw * 2;
+      imgOvCtx.globalCompositeOperation = spErasing ? 'destination-out' : 'source-over';
+      imgOvCtx.strokeStyle = spErasing ? 'rgba(0,0,0,1)' : (spColor === '#333' ? '#333' : spColor);
+      imgOvCtx.lineTo(p.x, p.y);
+      imgOvCtx.stroke();
+    };
+    canvas.onpointerup = () => { imgOvDrawing = false; };
+    canvas.onpointerleave = () => { imgOvDrawing = false; };
+  });
+}
+
+function imgOvPos(e) {
+  const c = document.getElementById('imgOverlayCanvas');
+  const r = c.getBoundingClientRect();
+  return { x: (e.clientX - r.left) * (c.width / r.width), y: (e.clientY - r.top) * (c.height / r.height) };
+}
+
+function recordAnswer(quality) {
+  const p = currentQueue[currentIndex];
+  const real = DATA.problems.find(x => x.id === p.id);
+  if (!real) { currentIndex++; showCard(); return; }
+
+  const result = calcNextReview(real, quality);
+  Object.assign(real, result);
+  real.history = real.history || [];
+  const memo = (document.getElementById('reviewMemoText').value || '').trim();
+  real.history.push({
+    date: today(),
+    result: quality >= 4 ? 'correct' : quality >= 3 ? 'hard' : 'incorrect',
+    quality,
+    memo: memo || undefined
+  });
+  if (memo) real.lastMemo = memo;
+
+  if (quality >= 4) { sessionStats.correct++; fireConfetti(); }
+  else if (quality >= 3) sessionStats.hard++;
+  else sessionStats.wrong++;
+
+  // check graduated
+  if (real.masteryLevel >= 4) {
+    sessionStats.graduated++;
+    showGraduated(real);
+  }
+
+  saveData(DATA);
+  currentIndex++;
+  showCard();
+}
+
+function showGraduated(p) {
+  const flash = document.getElementById('graduatedFlash');
+  document.getElementById('graduatedMsg').textContent = `「${p.topic}」が定着済みになりました！`;
+  flash.classList.add('show');
+  setTimeout(() => flash.classList.remove('show'), 2000);
+}
+
+function finishSession() {
+  document.getElementById('cardWrap').classList.remove('active');
+  document.getElementById('queueProgress').style.width = '100%';
+  const cv = document.getElementById('completionView');
+  cv.style.display = '';
+  const total = sessionStats.correct + sessionStats.wrong + sessionStats.hard;
+
+  if (isSingleProblemMode) {
+    const result = sessionStats.correct > 0 ? '✅ できた！' : sessionStats.hard > 0 ? '🤔 あやしい' : '❌ できなかった';
+    document.getElementById('completionMsg').textContent = result;
+    const pid = currentQueue[0]?.id || '';
+    document.getElementById('completionStats').innerHTML = `
+      <div style="grid-column:1/-1;display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap">
+        <button class="btn-start" onclick="isSingleProblemMode=false;openProblemDetail('${pid}')" style="max-width:180px;background:var(--accent)">🔄 もう一度</button>
+        <button class="btn-start" onclick="isSingleProblemMode=false;switchScreen('List')" style="max-width:180px;background:var(--surface2);border:1px solid var(--border)">📚 一覧に戻る</button>
+      </div>
+    `;
+  } else {
+    document.getElementById('completionMsg').textContent =
+      sessionStats.graduated > 0
+        ? `${sessionStats.graduated}問が新たに定着済みに！`
+        : 'おつかれさま！';
+    document.getElementById('completionStats').innerHTML = `
+      <div class="comp-stat"><div class="comp-stat-num" style="color:var(--success)">${sessionStats.correct}</div><div class="comp-stat-label">できた</div></div>
+      <div class="comp-stat"><div class="comp-stat-num" style="color:var(--warning)">${sessionStats.hard}</div><div class="comp-stat-label">あやしい</div></div>
+      <div class="comp-stat"><div class="comp-stat-num" style="color:var(--danger)">${sessionStats.wrong}</div><div class="comp-stat-label">できなかった</div></div>
+    `;
+  }
+  // log session
+  DATA.sessionLog.push({ date: today(), ...sessionStats });
+  saveData(DATA);
+}
+
+// ================================================================
+// TOPIC PRESETS (中学受験カリキュラム準拠)
+// ================================================================
+const TOPIC_PRESETS = {
+  '算数': {
+    '計算': ['計算の工夫','逆算','分数・小数'],
+    '文章題': ['和差算・つるかめ算','過不足算・消去算','年齢算・平均算'],
+    '割合と比': ['割合の基本','百分率・歩合','比の文章題','濃度（食塩水）','損益算'],
+    '速さ': ['速さの基本','旅人算','通過算','流水算','時計算'],
+    '数の性質': ['倍数と約数','規則性','N進法'],
+    '場合の数': ['並べ方','組み合わせ','カード・サイコロ'],
+    '平面図形': ['角度','面積','円','相似・面積比','図形の移動'],
+    '立体図形': ['体積・表面積','展開図','回転体','水量変化'],
+    '特殊算': ['仕事算','ニュートン算','推理と論証'],
+    'グラフ': ['比例と反比例','グラフの読み取り','点の移動']
+  },
+  '国語': {
+    '読解': ['物語文','説明文・論説文','随筆','詩・韻文'],
+    '読解テクニック': ['心情の読み取り','主題・要旨','指示語・接続語','記述の書き方'],
+    '語彙': ['慣用句','ことわざ','四字熟語','同音異義語','類義語・対義語'],
+    '漢字・文法': ['漢字の読み書き','敬語','文法','送り仮名・部首'],
+    '古典': ['古典の基礎','俳句・短歌']
+  },
+  '理科': {
+    '生物': ['植物','昆虫・動物','人体','季節と生物'],
+    '物理': ['てこ・ばね・滑車','浮力','振り子','電流・電磁石','光・音'],
+    '化学': ['水溶液','気体','燃焼','状態変化'],
+    '地学': ['天気','太陽','月','星座・惑星','地層・火山・地震'],
+    '環境': ['環境問題','流水のはたらき']
+  },
+  '社会': {
+    '地理': ['国土と地形','気候','都道府県','農業','水産業','工業','貿易','資源・環境'],
+    '歴史（古代〜中世）': ['旧石器〜弥生','古墳〜飛鳥','奈良・平安','鎌倉・室町'],
+    '歴史（近世〜現代）': ['安土桃山・江戸','明治維新','日清・日露〜大正','昭和〜戦後'],
+    '公民': ['憲法・人権','国会・内閣・裁判所','選挙・税金・社会保障'],
+    '国際': ['国際連合','世界の地理']
+  }
+};
+
+const TOPIC_PRESETS_SECONDARY = {
+  '数学': {
+    '数と式': ['正負の数','文字式','方程式','連立方程式','平方根','多項式'],
+    '関数': ['比例・反比例','一次関数','二次関数','三角関数'],
+    '図形': ['平面図形','空間図形','合同','相似','三平方の定理','円'],
+    'データ・確率': ['確率','統計','標本調査'],
+    '数列': ['等差・等比','漸化式','数学的帰納法'],
+    'ベクトル・行列': ['ベクトル','行列']
+  },
+  '英語': {
+    '文法': ['時制','助動詞','不定詞・動名詞','関係代名詞','仮定法','受動態','比較'],
+    '読解': ['長文読解','内容一致','語句整序','空欄補充'],
+    '語彙': ['単語','熟語・イディオム','前置詞'],
+    'リスニング': ['リスニング問題'],
+    '英作文': ['和文英訳','自由英作文']
+  },
+  '国語': {
+    '現代文': ['評論','小説','随筆','詩'],
+    '古典': ['古文文法','古文読解','漢文句法','漢文読解'],
+    '語彙・知識': ['漢字','語句','文学史']
+  },
+  '理科': {
+    '物理': ['力学','波動','熱力学','電磁気','原子'],
+    '化学': ['理論化学','無機化学','有機化学'],
+    '生物': ['細胞・遺伝','進化・生態','人体'],
+    '地学': ['地球・地質','大気・海洋','天文']
+  },
+  '社会': {
+    '地理': ['自然環境','人口・都市','産業','地域研究'],
+    '歴史': ['古代','中世','近世','近代','現代'],
+    '公民': ['政治','経済','国際','倫理']
+  }
+};
+
+function getSchoolLevel() {
+  return (DATA.settings && DATA.settings.schoolLevel) || 'elementary';
+}
+
+function getTopicPresets() {
+  return getSchoolLevel() === 'secondary' ? TOPIC_PRESETS_SECONDARY : TOPIC_PRESETS;
+}
+
+function getSubjects() {
+  return getSchoolLevel() === 'secondary'
+    ? ['数学','英語','国語','理科','社会']
+    : ['算数','国語','理科','社会'];
+}
+
+function onSchoolLevelChange() {
+  const level = document.getElementById('settingSchoolLevel').value;
+  DATA.settings.schoolLevel = level;
+  saveData(DATA);
+  updateSubjectDropdown();
+}
+
+function updateSubjectDropdown() {
+  const sel = document.getElementById('addSubject');
+  const subjects = getSubjects();
+  const current = sel.value;
+  sel.innerHTML = subjects.map(s => `<option value="${s}">${s}</option>`).join('');
+  // Keep selection if still valid
+  if (subjects.includes(current)) sel.value = current;
+  onSubjectChange();
+}
+
+// Also update badge classes for new subjects
+function getBadgeClass(subject) {
+  return {
+    '算数': 'badge-math', '数学': 'badge-math',
+    '英語': 'badge-english',
+    '国語': 'badge-japanese',
+    '理科': 'badge-science', '社会': 'badge-social'
+  }[subject] || 'badge-math';
+}
+
+// ================================================================
+// IMAGE HANDLING
+// ================================================================
+let contentImageData = null;
+let answerImageData = null;
+
+function switchContentTab(type) {
+  document.getElementById('contentTabText').classList.toggle('active', type === 'text');
+  document.getElementById('contentTabImage').classList.toggle('active', type === 'image');
+  document.getElementById('contentTextArea').style.display = type === 'text' ? '' : 'none';
+  document.getElementById('contentImageArea').style.display = type === 'image' ? '' : 'none';
+}
+function switchAnswerTab(type) {
+  document.getElementById('answerTabText').classList.toggle('active', type === 'text');
+  document.getElementById('answerTabImage').classList.toggle('active', type === 'image');
+  document.getElementById('answerTextArea').style.display = type === 'text' ? '' : 'none';
+  document.getElementById('answerImageArea').style.display = type === 'image' ? '' : 'none';
+}
+
+function handleImgUpload(e, target) {
+  const file = e.target.files[0];
+  if (!file) return;
+  processImageFile(file, target);
+}
+
+function processImageFile(file, target) {
+  if (!file.type.startsWith('image/')) return;
+  // compress to max 800px wide for storage efficiency
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX = 800;
+      let w = img.width, h = img.height;
+      if (w > MAX) { h = h * MAX / w; w = MAX; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      if (target === 'content') {
+        contentImageData = dataUrl;
+        renderImgPreview('contentImgPreview', dataUrl, 'content');
+      } else {
+        answerImageData = dataUrl;
+        renderImgPreview('answerImgPreview', dataUrl, 'answer');
+      }
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderImgPreview(elemId, dataUrl, target) {
+  document.getElementById(elemId).innerHTML = `
+    <img src="${dataUrl}" alt="preview">
+    <button class="remove-img" onclick="event.stopPropagation();removeImg('${target}')" type="button">✕</button>
+  `;
+}
+function removeImg(target) {
+  if (target === 'content') {
+    contentImageData = null;
+    document.getElementById('contentImgPreview').innerHTML = '📷 タップで選択 / ペーストも可';
+    document.querySelector('#contentImgDrop input').value = '';
+  } else {
+    answerImageData = null;
+    document.getElementById('answerImgPreview').innerHTML = '📷 タップで選択 / ペーストも可';
+    document.querySelector('#answerImgDrop input').value = '';
+  }
+}
+
+// Clipboard paste support
+document.addEventListener('paste', (e) => {
+  const addScreen = document.getElementById('screenAdd');
+  if (!addScreen.classList.contains('active')) return;
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      const file = item.getAsFile();
+      if (addMode === 'quick') {
+        // In quick mode, always paste to content
+        processImageFile(file, 'content');
+      } else {
+        // In normal mode, determine target
+        const contentImgActive = document.getElementById('contentTabImage').classList.contains('active');
+        const answerImgActive = document.getElementById('answerTabImage').classList.contains('active');
+        if (!contentImageData) {
+          if (!contentImgActive) switchContentTab('image');
+          processImageFile(file, 'content');
+        } else if (!answerImageData) {
+          if (!answerImgActive) switchAnswerTab('image');
+          processImageFile(file, 'answer');
+        }
+      }
+      break;
+    }
+  }
+});
+
+// ================================================================
+// CORRECT RATE HELPER
+// ================================================================
+function toggleRateSlider() {
+  const checked = document.getElementById('addRateCheck').checked;
+  document.getElementById('rateSliderWrap').style.display = checked ? 'block' : 'none';
+  if (checked) updateRateLabel();
+}
+function updateRateLabel() {
+  const v = parseInt(document.getElementById('addCorrectRate').value);
+  const label = document.getElementById('rateLabel');
+  const hint = document.getElementById('rateHint');
+  label.textContent = v + '%';
+  if (v >= 70) {
+    hint.innerHTML = '<span style="color:var(--success)">🟢 基本問題 — 確実に取りたい</span>';
+  } else if (v >= 40) {
+    hint.innerHTML = '<span style="color:var(--warning)">🟡 差がつく問題 — 最優先で復習</span>';
+  } else if (v >= 20) {
+    hint.innerHTML = '<span style="color:var(--danger)">🔴 難問 — 志望校次第で取捨選択</span>';
+  } else {
+    hint.innerHTML = '<span style="color:var(--text2)">⚪ 超難問 — 捨て問候補</span>';
+  }
+}
+
+// ================================================================
+// SUBJECT → TOPIC 2-LEVEL DROPDOWN
+// ================================================================
+function onSubjectChange() {
+  const subject = document.getElementById('addSubject').value;
+  const catSelect = document.getElementById('addTopicCategory');
+  const categories = getTopicPresets()[subject] || {};
+  catSelect.innerHTML = '<option value="">-- カテゴリ --</option>' +
+    Object.keys(categories).map(c => `<option value="${c}">${c}</option>`).join('');
+  document.getElementById('addTopicDetail').innerHTML = '<option value="">-- 詳細（任意） --</option>';
+}
+function onCategoryChange() {
+  const subject = document.getElementById('addSubject').value;
+  const cat = document.getElementById('addTopicCategory').value;
+  const detailSelect = document.getElementById('addTopicDetail');
+  const details = (getTopicPresets()[subject] || {})[cat] || [];
+  detailSelect.innerHTML = '<option value="">-- 詳細（任意） --</option>' +
+    details.map(d => `<option value="${d}">${d}</option>`).join('');
+  document.getElementById('addTopic').value = cat;
+}
+function onDetailChange() {
+  const cat = document.getElementById('addTopicCategory').value;
+  const detail = document.getElementById('addTopicDetail').value;
+  if (detail) {
+    document.getElementById('addTopic').value = cat + ' - ' + detail;
+  } else if (cat) {
+    document.getElementById('addTopic').value = cat;
+  }
+}
+
+// ================================================================
+// ADD MODE (normal / quick)
+// ================================================================
+let addMode = 'normal';
+function setAddMode(mode) {
+  addMode = mode;
+  const screen = document.getElementById('screenAdd');
+  screen.classList.toggle('quick-mode', mode === 'quick');
+  document.getElementById('modeNormal').classList.toggle('active', mode === 'normal');
+  document.getElementById('modeQuick').classList.toggle('active', mode === 'quick');
+  document.getElementById('quickModeHint').style.display = mode === 'quick' ? 'block' : 'none';
+  if (mode === 'quick') {
+    // In quick mode, force content to image tab
+    switchContentTab('image');
+  }
+}
+
+// ================================================================
+// ADD PROBLEM
+// ================================================================
+function renderAdd() {
+  // Only populate categories if dropdown is empty (first load)
+  const catSelect = document.getElementById('addTopicCategory');
+  if (catSelect.options.length <= 1) onSubjectChange();
+  updateTagSuggestions();
+  const pending = DATA.problems.filter(p => !p.frozen && p.masteryLevel < 4 && p.nextReviewDate <= today()).length;
+  const warn = document.getElementById('addQueueWarning');
+  if (pending > 20) {
+    warn.innerHTML = `<div class="queue-warning">⚠️ キューに${pending}問溜まっています。登録すると明日以降に追加されます。</div>`;
+  } else {
+    warn.innerHTML = '';
+  }
+}
+
+let addCount = 0; // session registration counter
+
+function addProblem() {
+  // Build topic: use hand-input, or category, or "未分類" in quick mode
+  let topic = document.getElementById('addTopic').value.trim();
+  if (!topic && addMode === 'normal') {
+    const cat = document.getElementById('addTopicCategory').value;
+    if (cat) {
+      topic = cat;
+      document.getElementById('addTopic').value = cat;
+    }
+  }
+  if (!topic) topic = addMode === 'quick' ? '未分類' : '';
+  if (!topic && addMode === 'normal') { 
+    alert('単元カテゴリを選択してください'); return; 
+  }
+  
+  // In quick mode, require at least a photo
+  if (addMode === 'quick' && !contentImageData) {
+    alert('📷 問題の画像を撮影してください'); return;
+  }
+
+  // Determine content type
+  const contentIsImage = (addMode === 'quick') || 
+    (document.getElementById('contentTabImage').classList.contains('active') && contentImageData);
+  const answerIsImage = document.getElementById('answerTabImage') && 
+    document.getElementById('answerTabImage').classList.contains('active') && answerImageData;
+
+  const rateChecked = document.getElementById('addRateCheck').checked;
+  const correctRate = rateChecked ? parseInt(document.getElementById('addCorrectRate').value) : null;
+
+  let freq = document.getElementById('addFreq').value;
+  if (correctRate !== null && freq === 'medium') {
+    if (correctRate >= 40 && correctRate < 70) freq = 'high';
+    else if (correctRate < 20) freq = 'low';
+  }
+
+  // Parse tags
+  const tagsRaw = (document.getElementById('addTags').value || '').trim();
+  const tags = tagsRaw ? tagsRaw.split(/[\s,]+/).filter(t => t) : [];
+
+  const p = {
+    id: 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+    subject: document.getElementById('addSubject').value,
+    topic,
+    source: document.getElementById('addSource').value.trim(),
+    content: contentIsImage ? '' : document.getElementById('addContent').value.trim(),
+    contentImage: contentIsImage ? contentImageData : null,
+    answer: answerIsImage ? '' : (document.getElementById('addAnswer').value || '').trim(),
+    answerImage: answerIsImage ? answerImageData : null,
+    correctRate: correctRate,
+    frequency: freq,
+    difficulty: document.getElementById('addDiff').value,
+    tags: tags,
+    easeFactor: 2.5,
+    interval: 0,
+    repetitions: 0,
+    consecutiveFailures: 0,
+    masteryLevel: 0,
+    nextReviewDate: today(),
+    frozen: false,
+    history: [],
+    createdAt: today()
+  };
+  DATA.problems.push(p);
+  saveData(DATA);
+  addCount++;
+
+  // Update tag suggestions
+  updateTagSuggestions();
+
+  // ① Keep: subject, source, freq, difficulty, correctRate, topic, category, detail, tags
+  // Clear only: content, answer, images
+  document.getElementById('addContent').value = '';
+  document.getElementById('addAnswer').value = '';
+  contentImageData = null; answerImageData = null;
+  document.getElementById('contentImgPreview').innerHTML = '📷 タップで選択 / ペーストも可';
+  document.getElementById('answerImgPreview').innerHTML = '📷 タップで選択 / ペーストも可';
+  if (addMode === 'normal') {
+    switchContentTab('text'); switchAnswerTab('text');
+  }
+
+  // ② Toast near button
+  const toast = document.getElementById('addSuccessToast');
+  toast.textContent = `✅「${topic}」を登録しました（${addCount}問目）`;
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 2500);
+  document.getElementById('addContinueHint').style.display = 'block';
+}
+
+// ================================================================
+// CLIPBOARD PASTE BUTTON (for iPad)
+// ================================================================
+async function pasteFromClipboard(target) {
+  try {
+    const items = await navigator.clipboard.read();
+    for (const item of items) {
+      const imageType = item.types.find(t => t.startsWith('image/'));
+      if (imageType) {
+        const blob = await item.getType(imageType);
+        processImageFile(blob, target);
+        return;
+      }
+    }
+    alert('クリップボードに画像がありません');
+  } catch(e) {
+    alert('クリップボードへのアクセスが許可されていません。ブラウザの設定を確認してください。');
+  }
+}
+
+// ================================================================
+// TAG SUGGESTIONS
+// ================================================================
+function updateTagSuggestions() {
+  const allTags = {};
+  DATA.problems.forEach(p => (p.tags || []).forEach(t => { allTags[t] = (allTags[t] || 0) + 1; }));
+  const sorted = Object.entries(allTags).sort((a,b) => b[1] - a[1]).slice(0, 8);
+  const container = document.getElementById('tagSuggestions');
+  if (!container) return;
+  container.innerHTML = sorted.map(([tag]) => 
+    `<button class="sp-btn" style="font-size:11px" onclick="addTagFromSuggestion('${tag}')">#${tag}</button>`
+  ).join('');
+}
+function addTagFromSuggestion(tag) {
+  const input = document.getElementById('addTags');
+  const current = input.value.trim();
+  if (current.split(/[\s,]+/).includes(tag)) return;
+  input.value = current ? current + ' ' + tag : tag;
+}
+
+// ================================================================
+// CONFETTI EFFECT
+// ================================================================
+function fireConfetti() {
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999';
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const pieces = [];
+  const colors = ['#6c63ff','#4ecdc4','#ff6b6b','#ffd93d','#51cf66','#ff9ff3','#54a0ff'];
+  for (let i = 0; i < 80; i++) {
+    pieces.push({
+      x: canvas.width * 0.5 + (Math.random() - 0.5) * 200,
+      y: canvas.height * 0.5,
+      vx: (Math.random() - 0.5) * 16,
+      vy: -Math.random() * 18 - 4,
+      w: Math.random() * 8 + 4,
+      h: Math.random() * 6 + 2,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rot: Math.random() * 360,
+      rv: (Math.random() - 0.5) * 12,
+      gravity: 0.4 + Math.random() * 0.2
+    });
+  }
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.vy += p.gravity; p.rot += p.rv;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    });
+    frame++;
+    if (frame < 60) requestAnimationFrame(draw);
+    else document.body.removeChild(canvas);
+  }
+  draw();
+}
+
+// ================================================================
+// PROBLEM DETAIL VIEW (from list → solve/edit)
+// ================================================================
+let isSingleProblemMode = false;
+
+function openProblemDetail(id) {
+  const p = DATA.problems.find(x => x.id === id);
+  if (!p) return;
+  isSingleProblemMode = true;
+  currentQueue = [p];
+  currentIndex = 0;
+  sessionStats = { correct: 0, wrong: 0, hard: 0, graduated: 0 };
+  switchScreen('Today');
+  document.getElementById('queueSummary').style.display = 'none';
+  document.getElementById('completionView').style.display = 'none';
+  document.getElementById('cardWrap').classList.add('active');
+  showCard();
+}
+
+// ================================================================
+// PROBLEM LIST
+// ================================================================
+let listFilter = 'all';
+let listTagFilter = '';
+let listSubjectFilter = '';
+function renderList() {
+  const container = document.getElementById('problemListContainer');
+  const filterRow = document.getElementById('filterRow');
+  const subjectFilterRow = document.getElementById('subjectFilterRow');
+  const tagFilterRow = document.getElementById('tagFilterRow');
+  const filters = [
+    { key: 'all', label: 'すべて' },
+    { key: 'priority', label: '🔴 最優先' },
+    { key: 'review', label: '🟡 復習' },
+    { key: 'graduated', label: '🟢 定着済' },
+    { key: 'frozen', label: '❄️ 凍結' },
+  ];
+  filterRow.innerHTML = filters.map(f =>
+    `<button class="filter-chip ${listFilter === f.key ? 'active' : ''}" onclick="listFilter='${f.key}';renderList()">${f.label}</button>`
+  ).join('');
+
+  // Subject filter
+  const subjects = [...new Set(DATA.problems.map(p => p.subject))];
+  subjectFilterRow.innerHTML = `<button class="filter-chip ${!listSubjectFilter ? 'active' : ''}" onclick="listSubjectFilter='';renderList()">全教科</button>` +
+    subjects.map(s => `<button class="filter-chip ${listSubjectFilter === s ? 'active' : ''}" onclick="listSubjectFilter='${s}';renderList()">${s}</button>`).join('');
+
+  // Tag filter
+  const allTags = {};
+  DATA.problems.forEach(p => (p.tags || []).forEach(t => { allTags[t] = (allTags[t] || 0) + 1; }));
+  const tagList = Object.entries(allTags).sort((a,b) => b[1] - a[1]);
+  tagFilterRow.innerHTML = tagList.length ? (`<button class="filter-chip ${!listTagFilter ? 'active' : ''}" onclick="listTagFilter='';renderList()">全タグ</button>` +
+    tagList.map(([tag]) => `<button class="filter-chip ${listTagFilter === tag ? 'active' : ''}" onclick="listTagFilter='${tag}';renderList()">#${tag}</button>`).join('')) : '';
+
+  let items = DATA.problems;
+  if (listFilter !== 'all') items = items.filter(p => classifyZone(p) === listFilter);
+  if (listSubjectFilter) items = items.filter(p => p.subject === listSubjectFilter);
+  if (listTagFilter) items = items.filter(p => (p.tags || []).includes(listTagFilter));
+
+  // Sort
+  const sortKey = document.getElementById('listSort') ? document.getElementById('listSort').value : 'next';
+  items = [...items].sort((a, b) => {
+    if (sortKey === 'next') return (a.nextReviewDate || '').localeCompare(b.nextReviewDate || '');
+    if (sortKey === 'created') return (b.createdAt || '').localeCompare(a.createdAt || '');
+    if (sortKey === 'topic') return (a.topic || '').localeCompare(b.topic || '');
+    if (sortKey === 'failures') return (b.consecutiveFailures || 0) - (a.consecutiveFailures || 0);
+    return 0;
+  });
+
+  if (items.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">📝</div><p>問題がありません</p></div>';
+    return;
+  }
+  container.innerHTML = items.map(p => {
+    const zone = classifyZone(p);
+    const color = {priority:'var(--danger)',review:'var(--warning)',graduated:'var(--success)',frozen:'var(--frozen)',discard:'var(--text2)'}[zone] || 'var(--text2)';
+    const hist = (p.history || []).slice(-5);
+    const dotsHtml = hist.map(h => h.result === 'correct' ? '⭕' : h.result === 'hard' ? '🔺' : '❌').join('');
+    const tagsHtml = (p.tags||[]).map(t => `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--surface2);color:var(--text2)">#${t}</span>`).join(' ');
+    return `
+      <div class="problem-list-item" style="flex-wrap:wrap">
+        <div class="pli-status" style="background:${color}"></div>
+        <div class="pli-info" style="min-width:0;flex:1">
+          <div class="pli-topic">${p.subject} / ${p.topic}</div>
+          <div class="pli-sub">${p.source || ''} ・ ${p.interval||0}日後</div>
+          <div style="display:flex;gap:4px;align-items:center;margin-top:2px;font-size:10px">
+            ${dotsHtml || '<span style="color:var(--text2)">履歴なし</span>'}
+            ${tagsHtml ? ' ' + tagsHtml : ''}
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="btn-freeze" onclick="event.stopPropagation();openProblemDetail('${p.id}')" style="background:rgba(108,99,255,.12);border-color:var(--accent);color:var(--accent)">▶解く</button>
+          <button class="btn-freeze" onclick="event.stopPropagation();${p.frozen ? "unfreezeProblem('" + p.id + "')" : "freezeProblem('" + p.id + "')"}">${p.frozen ? '解凍' : '凍結'}</button>
+          <button class="btn-delete-p" onclick="event.stopPropagation();deleteProblem('${p.id}')">削除</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+
+function freezeProblem(id) {
+  const p = DATA.problems.find(x => x.id === id);
+  if (p) { p.frozen = true; saveData(DATA); renderList(); renderToday(); }
+}
+function unfreezeProblem(id) {
+  const p = DATA.problems.find(x => x.id === id);
+  if (p) { p.frozen = false; p.nextReviewDate = today(); saveData(DATA); renderList(); }
+}
+function deleteProblem(id) {
+  if (!confirm('この問題を削除しますか？')) return;
+  DATA.problems = DATA.problems.filter(x => x.id !== id);
+  saveData(DATA); renderList();
+}
+
+// ================================================================
+// DASHBOARD
+// ================================================================
+function renderDashboard() {
+  const zones = { priority: 0, review: 0, graduated: 0, frozen: 0, discard: 0 };
+  DATA.problems.forEach(p => { const z = classifyZone(p); zones[z] = (zones[z]||0) + 1; });
+  document.getElementById('zoneGrid').innerHTML = `
+    <div class="zone-card zone-priority"><div class="num">${zones.priority}</div><div class="label">🔴 最優先（できない×高頻出）</div></div>
+    <div class="zone-card zone-graduated"><div class="num">${zones.graduated}</div><div class="label">🟢 定着済み</div></div>
+    <div class="zone-card zone-frozen"><div class="num">${zones.frozen}</div><div class="label">❄️ 凍結中</div></div>
+    <div class="zone-card zone-review"><div class="num">${zones.review + zones.discard}</div><div class="label">🟡 復習待ち・後回し</div></div>
+  `;
+  // subject bars
+  const subjects = getSubjects();
+  const colors = ['var(--accent)', 'var(--danger)', 'var(--accent2)', 'var(--warning)', 'var(--frozen)'];
+  const bars = document.getElementById('subjectBars');
+  bars.innerHTML = subjects.map((s, i) => {
+    const all = DATA.problems.filter(p => p.subject === s);
+    const grad = all.filter(p => p.masteryLevel >= 4).length;
+    const pct = all.length > 0 ? Math.round(grad / all.length * 100) : 0;
+    return `
+      <div class="subject-row">
+        <span class="subject-name">${s}</span>
+        <div class="subject-bar-bg"><div class="subject-bar" style="width:${pct}%;background:${colors[i]}"></div></div>
+        <span class="subject-pct">${pct}%</span>
+      </div>
+    `;
+  }).join('');
+  // weekly report
+  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+  const weekStr = weekAgo.toISOString().split('T')[0];
+  const weekSessions = DATA.sessionLog.filter(s => s.date >= weekStr);
+  const weekCorrect = weekSessions.reduce((a, s) => a + s.correct, 0);
+  const weekWrong = weekSessions.reduce((a, s) => a + s.wrong, 0);
+  const weekGrad = weekSessions.reduce((a, s) => a + (s.graduated || 0), 0);
+  document.getElementById('weeklyContent').innerHTML = `
+    復習セッション: <strong>${weekSessions.length}回</strong><br>
+    正解: <strong style="color:var(--success)">${weekCorrect}</strong> ／
+    不正解: <strong style="color:var(--danger)">${weekWrong}</strong><br>
+    新たに定着: <strong style="color:var(--accent)">${weekGrad}問</strong><br>
+    全体の定着率: <strong>${DATA.problems.length > 0 ? Math.round(DATA.problems.filter(p=>p.masteryLevel>=4).length / DATA.problems.length * 100) : 0}%</strong>
+  `;
+}
+
+// ================================================================
+// SETTINGS
+// ================================================================
+function renderSettings() {
+  const level = (DATA.settings && DATA.settings.schoolLevel) || 'elementary';
+  document.getElementById('settingSchoolLevel').value = level;
+  document.getElementById('settingCap').value = DATA.settings.dailyCap || 15;
+  document.getElementById('settingFreeze').value = DATA.settings.freezeThreshold || 5;
+  updateCapLabel();
+  updateFreezeLabel();
+}
+function updateCapLabel() {
+  const v = document.getElementById('settingCap').value;
+  document.getElementById('capLabel').textContent = v + '問';
+  DATA.settings.dailyCap = parseInt(v);
+  saveData(DATA);
+}
+function updateFreezeLabel() {
+  const v = document.getElementById('settingFreeze').value;
+  document.getElementById('freezeLabel').textContent = v + '回';
+  document.getElementById('algoFreezeN').textContent = v;
+  DATA.settings.freezeThreshold = parseInt(v);
+  saveData(DATA);
+}
+
+// ================================================================
+// IMPORT / EXPORT
+// ================================================================
+function exportData() {
+  const blob = new Blob([JSON.stringify(DATA, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `revenge-note-${today()}.json`;
+  a.click(); URL.revokeObjectURL(url);
+}
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const imported = JSON.parse(reader.result);
+      if (imported.problems) {
+        DATA = imported;
+        saveData(DATA);
+        alert('インポート完了');
+        switchScreen('Today');
+      }
+    } catch { alert('ファイルを読み込めませんでした'); }
+  };
+  reader.readAsText(file);
+}
+function resetAll() {
+  DATA = defaultData();
+  saveData(DATA);
+  switchScreen('Today');
+}
+
+// ================================================================
+// SAMPLE DATA
+// ================================================================
+function loadSampleData() {
+  if (DATA.problems.length > 0 && !confirm('既存データに追加されます。続けますか？')) return;
+  const samples = [
+    // ============ 4年生 ============
+    // 算数4年
+    { subject:'算数', topic:'計算 - 計算の工夫', source:'予習シリーズ 4年上 第3回', frequency:'high', difficulty:'basic', content:'25×36 を工夫して計算しなさい', answer:'25×4×9 = 900', correctRate:75, tags:['4年','計算'] },
+    { subject:'算数', topic:'計算 - 逆算', source:'予習シリーズ 4年上 第5回', frequency:'high', difficulty:'basic', content:'□×7＋15＝71 の□を求めなさい', answer:'□＝8', correctRate:68, tags:['4年','計算'] },
+    { subject:'算数', topic:'文章題 - 和差算', source:'予習シリーズ 4年上 第8回', frequency:'high', difficulty:'standard', content:'兄と弟の持っているお金の合計は3200円、差は400円。それぞれいくらか', answer:'兄1800円 弟1400円', correctRate:62, tags:['4年','特殊算'] },
+    { subject:'算数', topic:'文章題 - つるかめ算', source:'予習シリーズ 4年下 第2回', frequency:'high', difficulty:'standard', content:'ツルとカメが合わせて10匹、足の合計が28本。それぞれ何匹か', answer:'ツル6匹 カメ4匹', correctRate:55, tags:['4年','特殊算'] },
+    { subject:'算数', topic:'平面図形 - 角度', source:'予習シリーズ 4年下 第6回', frequency:'high', difficulty:'basic', content:'三角形の内角の和は？ 四角形は？', answer:'三角形180° 四角形360°', correctRate:85, tags:['4年','図形'] },
+    { subject:'算数', topic:'数の性質 - 倍数と約数', source:'予習シリーズ 4年下 第10回', frequency:'high', difficulty:'standard', content:'36の約数をすべて求めなさい', answer:'1,2,3,4,6,9,12,18,36（9個）', correctRate:58, tags:['4年','数の性質'] },
+    // 国語4年
+    { subject:'国語', topic:'漢字・文法 - 漢字の読み書き', source:'漢字の要 4年', frequency:'high', difficulty:'basic', content:'「努力」「競争」「積極」の読みと書き', answer:'どりょく・きょうそう・せっきょく', correctRate:72, tags:['4年','漢字'] },
+    { subject:'国語', topic:'語彙 - 慣用句', source:'予習シリーズ 4年上 第6回', frequency:'medium', difficulty:'standard', content:'「腕をふるう」「目を丸くする」の意味', answer:'腕をふるう＝実力を発揮する　目を丸くする＝驚く', correctRate:60, tags:['4年','語彙'] },
+    { subject:'国語', topic:'読解テクニック - 心情の読み取り', source:'予習シリーズ 4年上 第12回', frequency:'high', difficulty:'standard', content:'物語文で登場人物の気持ちが変わるきっかけを探す方法', answer:'「しかし」「ところが」などの逆接＋行動・表情の変化に注目', correctRate:45, tags:['4年','読解'] },
+    // 理科4年
+    { subject:'理科', topic:'生物 - 季節と生物', source:'予習シリーズ 4年上 第4回', frequency:'high', difficulty:'basic', content:'春に咲く花を3つ答えなさい', answer:'サクラ・チューリップ・タンポポ', correctRate:80, tags:['4年','生物'] },
+    { subject:'理科', topic:'物理 - てこ', source:'予習シリーズ 4年下 第7回', frequency:'high', difficulty:'standard', content:'てこがつり合う条件（式で表す）', answer:'支点からの距離×おもりの重さ が左右等しい', correctRate:52, tags:['4年','物理'] },
+    { subject:'理科', topic:'地学 - 天気', source:'予習シリーズ 4年上 第10回', frequency:'medium', difficulty:'basic', content:'雲の種類で雨を降らすものは？', answer:'乱層雲（あまぐも）・積乱雲（にゅうどうぐも）', correctRate:65, tags:['4年','地学'] },
+    // 社会4年
+    { subject:'社会', topic:'地理 - 都道府県', source:'予習シリーズ 4年上 第1回', frequency:'high', difficulty:'basic', content:'関東地方の1都6県をすべて答えなさい', answer:'東京・神奈川・千葉・埼玉・茨城・栃木・群馬', correctRate:70, tags:['4年','地理'] },
+    { subject:'社会', topic:'地理 - 国土と地形', source:'予習シリーズ 4年上 第3回', frequency:'high', difficulty:'basic', content:'日本で一番長い川と一番広い湖', answer:'信濃川（367km）・琵琶湖（670km²）', correctRate:75, tags:['4年','地理'] },
+    { subject:'社会', topic:'地理 - 気候', source:'予習シリーズ 4年上 第5回', frequency:'medium', difficulty:'standard', content:'日本海側の冬の気候の特徴とその理由', answer:'雪が多い。季節風が日本海の水分を含み山脈にぶつかるため', correctRate:50, tags:['4年','地理'] },
+
+    // ============ 5年生 ============
+    // 算数5年
+    { subject:'算数', topic:'割合と比 - 百分率・歩合', source:'予習シリーズ 5年上 第14回', frequency:'high', difficulty:'basic', content:'定価2000円の品物を2割引きで買った。支払った金額は？', answer:'2000×0.8＝1600円', correctRate:72, tags:['5年','割合'] },
+    { subject:'算数', topic:'割合と比 - 濃度（食塩水）', source:'予習シリーズ 5年下 第12回', frequency:'high', difficulty:'hard', content:'8%の食塩水200gに水を何g混ぜると5%になるか', answer:'120g', correctRate:35, tags:['5年','割合','頻出'] },
+    { subject:'算数', topic:'速さ - 旅人算', source:'予習シリーズ 5年下 第15回', frequency:'high', difficulty:'standard', content:'兄は毎分80m、弟は毎分60mで同じ方向に歩く。600m離れて追いかけると何分で追いつくか', answer:'600÷(80-60)＝30分', correctRate:48, tags:['5年','速さ','頻出'] },
+    { subject:'算数', topic:'速さ - 通過算', source:'予習シリーズ 5年下 第16回', frequency:'high', difficulty:'hard', content:'長さ150mの列車が秒速25mで400mの鉄橋を渡り始めてから渡り終わるまで何秒か', answer:'(150+400)÷25＝22秒', correctRate:42, tags:['5年','速さ'] },
+    { subject:'算数', topic:'場合の数 - 並べ方', source:'予習シリーズ 5年上 第18回', frequency:'medium', difficulty:'standard', content:'1,2,3,4 の4枚のカードから3枚選んで3桁の整数を作る。何通りあるか', answer:'4×3×2＝24通り', correctRate:55, tags:['5年','場合の数'] },
+    { subject:'算数', topic:'平面図形 - 相似・面積比', source:'予習シリーズ 5年下 第20回', frequency:'high', difficulty:'hard', content:'相似比が2:3の三角形の面積比は？', answer:'4:9（相似比の2乗）', correctRate:40, tags:['5年','図形','頻出'] },
+    { subject:'算数', topic:'平面図形 - 円', source:'予習シリーズ 5年上 第20回', frequency:'high', difficulty:'basic', content:'半径5cmの円の面積と円周を求めなさい', answer:'面積: 25π≒78.5cm²  円周: 10π≒31.4cm', correctRate:82, tags:['5年','図形'] },
+    { subject:'算数', topic:'割合と比 - 損益算', source:'予習シリーズ 5年下 第13回', frequency:'high', difficulty:'standard', content:'原価800円の品に3割の利益を見込んで定価をつけた。定価は？', answer:'800×1.3＝1040円', correctRate:65, tags:['5年','割合'] },
+    // 国語5年
+    { subject:'国語', topic:'読解 - 説明文・論説文', source:'予習シリーズ 5年上 第8回', frequency:'high', difficulty:'standard', content:'筆者の主張を見つけるコツ', answer:'「〜べきだ」「〜と考える」「〜ではないか」など意見を表す表現に注目', correctRate:50, tags:['5年','読解'] },
+    { subject:'国語', topic:'語彙 - 四字熟語', source:'四科のまとめ p.22', frequency:'high', difficulty:'standard', content:'「一石二鳥」「臨機応変」「自画自賛」の意味', answer:'一つの行動で二つの利益/その場に応じて適切に対応/自分で自分をほめる', correctRate:60, tags:['5年','語彙'] },
+    { subject:'国語', topic:'漢字・文法 - 敬語', source:'予習シリーズ 5年下 第5回', frequency:'high', difficulty:'standard', content:'「食べる」の尊敬語・謙譲語・丁寧語', answer:'召し上がる・いただく・食べます', correctRate:55, tags:['5年','文法'] },
+    { subject:'国語', topic:'読解テクニック - 記述の書き方', source:'予習シリーズ 5年下 第10回', frequency:'high', difficulty:'hard', content:'理由を聞かれた時の記述のフレームワーク', answer:'「〜なので（原因）、〜から（根拠）」で答える。主語を明確に', correctRate:35, tags:['5年','読解','頻出'] },
+    // 理科5年
+    { subject:'理科', topic:'地学 - 月', source:'予習シリーズ 5年上 第8回', frequency:'high', difficulty:'basic', content:'上弦の月が南中する時刻は？', answer:'午後6時ごろ（18時）', correctRate:68, tags:['5年','地学'] },
+    { subject:'理科', topic:'化学 - 水溶液', source:'予習シリーズ 5年下 第3回', frequency:'high', difficulty:'standard', content:'リトマス紙・BTB液の色の変化', answer:'酸性: 青→赤, BTB黄 / アルカリ性: 赤→青, BTB青 / 中性: 変化なし, BTB緑', correctRate:52, tags:['5年','化学','頻出'] },
+    { subject:'理科', topic:'物理 - 電流・電磁石', source:'予習シリーズ 5年上 第12回', frequency:'high', difficulty:'standard', content:'電磁石を強くする方法（2つ）', answer:'①コイルの巻き数を増やす ②電流を大きくする', correctRate:70, tags:['5年','物理'] },
+    { subject:'理科', topic:'地学 - 星座・惑星', source:'予習シリーズ 5年上 第6回', frequency:'medium', difficulty:'standard', content:'夏の大三角を構成する3つの星', answer:'ベガ（こと座）・アルタイル（わし座）・デネブ（はくちょう座）', correctRate:62, tags:['5年','地学'] },
+    { subject:'理科', topic:'生物 - 人体', source:'予習シリーズ 5年下 第8回', frequency:'high', difficulty:'standard', content:'食べ物の消化の流れ（口→胃→…）', answer:'口（だ液）→胃（胃液）→十二指腸（すい液・胆汁）→小腸で吸収→大腸', correctRate:45, tags:['5年','生物','頻出'] },
+    // 社会5年
+    { subject:'社会', topic:'歴史（古代〜中世） - 古墳〜飛鳥', source:'予習シリーズ 5年上 第3回', frequency:'high', difficulty:'basic', content:'聖徳太子が行った政治改革（3つ）', answer:'冠位十二階・十七条の憲法・遣隋使の派遣', correctRate:65, tags:['5年','歴史'] },
+    { subject:'社会', topic:'歴史（古代〜中世） - 鎌倉・室町', source:'予習シリーズ 5年下 第4回', frequency:'high', difficulty:'standard', content:'鎌倉幕府と室町幕府を開いた人物と場所', answer:'鎌倉: 源頼朝/鎌倉  室町: 足利尊氏/京都', correctRate:72, tags:['5年','歴史'] },
+    { subject:'社会', topic:'地理 - 農業', source:'予習シリーズ 5年上 第7回', frequency:'high', difficulty:'standard', content:'米の生産量ベスト3の都道府県', answer:'新潟県・北海道・秋田県', correctRate:58, tags:['5年','地理'] },
+    { subject:'社会', topic:'地理 - 工業', source:'予習シリーズ 5年上 第12回', frequency:'medium', difficulty:'standard', content:'太平洋ベルトとは何か', answer:'東京〜北九州の太平洋側に帯状に広がる工業地帯・工業地域の連なり', correctRate:55, tags:['5年','地理'] },
+
+    // ============ 6年生 ============
+    // 算数6年
+    { subject:'算数', topic:'速さ - 流水算', source:'予習シリーズ 6年上 第5回', frequency:'high', difficulty:'hard', content:'静水時の速さが時速12km。川の流れが時速3km。上りで24km進むのにかかる時間', answer:'24÷(12-3)＝24/9≒2時間40分', correctRate:38, tags:['6年','速さ','頻出'] },
+    { subject:'算数', topic:'立体図形 - 体積・表面積', source:'予習シリーズ 6年上 第8回', frequency:'high', difficulty:'standard', content:'底面の半径3cm、高さ10cmの円柱の体積と表面積', answer:'体積: 90π≒282.6cm³  表面積: 78π≒244.9cm²', correctRate:52, tags:['6年','図形'] },
+    { subject:'算数', topic:'立体図形 - 水量変化', source:'予習シリーズ 6年上 第10回', frequency:'high', difficulty:'hard', content:'底面積100cm²の水そうに高さ20cmまで水が入っている。底面積25cm²の棒を沈めると水面は何cm上がるか', answer:'棒の体積分だけ上がる。底面積(100-25)に分散 → 上がる高さは問題による', correctRate:30, tags:['6年','図形','頻出'] },
+    { subject:'算数', topic:'速さ - 時計算', source:'四科のまとめ p.67', frequency:'medium', difficulty:'hard', content:'3時から3時と4時の間で長針と短針が重なるのは3時何分か', answer:'3時16分と4/11分（≒3時16.4分）', correctRate:25, tags:['6年','速さ'] },
+    { subject:'算数', topic:'特殊算 - 仕事算', source:'予習シリーズ 6年上 第3回', frequency:'high', difficulty:'standard', content:'Aは12日、Bは18日で終わる仕事。2人で一緒にやると何日か', answer:'1/12+1/18＝5/36  36/5＝7.2日', correctRate:45, tags:['6年','特殊算'] },
+    { subject:'算数', topic:'特殊算 - ニュートン算', source:'予習シリーズ 6年下 第2回', frequency:'medium', difficulty:'hard', content:'牧場に毎日一定量の草が生える。牛5頭で10日、牛8頭で5日で食べ尽くす。牛10頭では何日か', answer:'4日', correctRate:20, tags:['6年','特殊算'] },
+    { subject:'算数', topic:'数の性質 - 規則性', source:'予習シリーズ 6年上 第12回', frequency:'high', difficulty:'standard', content:'1,1,2,3,5,8,13,… 10番目の数は？', answer:'55（フィボナッチ数列: 前の2つの和）', correctRate:50, tags:['6年','数の性質'] },
+    { subject:'算数', topic:'グラフ - 点の移動', source:'予習シリーズ 6年上 第15回', frequency:'high', difficulty:'hard', content:'1辺10cmの正方形ABCDで点PがAから毎秒2cmでB→C→Dと移動。三角形APDの面積が25cm²になるのは何秒後か', answer:'5秒後（PがBC上）と12.5秒後（PがCD上）', correctRate:32, tags:['6年','図形','頻出'] },
+    // 国語6年
+    { subject:'国語', topic:'読解 - 物語文', source:'予習シリーズ 6年上 第4回', frequency:'high', difficulty:'standard', content:'物語文の記述で「気持ちの変化」を問われた時の解き方', answer:'①きっかけとなる出来事を特定 ②Before→Afterの気持ちを対比で書く', correctRate:40, tags:['6年','読解','頻出'] },
+    { subject:'国語', topic:'読解 - 説明文・論説文', source:'予習シリーズ 6年下 第2回', frequency:'high', difficulty:'hard', content:'「筆者の意見」と「事実・具体例」を区別する方法', answer:'事実: 数字・固有名詞・「〜である」 意見: 「〜べきだ」「〜と考える」「〜ではないか」', correctRate:45, tags:['6年','読解'] },
+    { subject:'国語', topic:'語彙 - 同音異義語', source:'四科のまとめ p.28', frequency:'high', difficulty:'standard', content:'「きかん」の同音異義語を3つ', answer:'期間・機関・気管・帰還・器官', correctRate:50, tags:['6年','語彙'] },
+    { subject:'国語', topic:'読解テクニック - 指示語・接続語', source:'予習シリーズ 6年上 第6回', frequency:'high', difficulty:'basic', content:'「それ」「この」などの指示語が指す内容の見つけ方', answer:'直前の文、または直前の段落の内容を確認。「これ」は近く、「あれ」は遠く', correctRate:65, tags:['6年','読解'] },
+    { subject:'国語', topic:'古典 - 古典の基礎', source:'予習シリーズ 6年下 第8回', frequency:'medium', difficulty:'standard', content:'「いとをかし」「あはれなり」の意味', answer:'いとをかし＝とても趣がある  あはれなり＝しみじみと感じる', correctRate:55, tags:['6年','古典'] },
+    // 理科6年
+    { subject:'理科', topic:'化学 - 気体', source:'予習シリーズ 6年上 第2回', frequency:'high', difficulty:'standard', content:'酸素・二酸化炭素・水素の発生方法と集め方', answer:'酸素: 過酸化水素+二酸化マンガン/水上置換  CO2: 石灰石+塩酸/下方置換  水素: 亜鉛+塩酸/水上置換', correctRate:48, tags:['6年','化学','頻出'] },
+    { subject:'理科', topic:'物理 - 浮力', source:'予習シリーズ 6年上 第6回', frequency:'high', difficulty:'hard', content:'水中の物体にかかる浮力は何で決まるか', answer:'物体が押しのけた水の重さ（体積×水の密度）= アルキメデスの原理', correctRate:35, tags:['6年','物理'] },
+    { subject:'理科', topic:'物理 - 振り子', source:'予習シリーズ 6年上 第4回', frequency:'high', difficulty:'standard', content:'振り子の周期を変える要素は？ おもりの重さ・振れ幅・糸の長さ', answer:'糸の長さだけ（長いほど遅い）。重さと振れ幅は関係なし', correctRate:62, tags:['6年','物理'] },
+    { subject:'理科', topic:'地学 - 地層・火山・地震', source:'予習シリーズ 6年下 第3回', frequency:'high', difficulty:'standard', content:'火成岩の分類（深成岩と火山岩の違い）', answer:'深成岩: ゆっくり冷える→大きな結晶（花崗岩） 火山岩: 急に冷える→細かい結晶（安山岩・玄武岩）', correctRate:45, tags:['6年','地学'] },
+    { subject:'理科', topic:'生物 - 植物', source:'予習シリーズ 6年上 第9回', frequency:'medium', difficulty:'standard', content:'光合成に必要なもの3つと作られるもの', answer:'必要: 光・水・二酸化炭素  作る: デンプン（栄養）と酸素', correctRate:70, tags:['6年','生物'] },
+    { subject:'理科', topic:'化学 - 燃焼', source:'予習シリーズ 6年上 第1回', frequency:'high', difficulty:'basic', content:'ものが燃えるための3条件', answer:'①燃えるもの ②酸素 ③発火点以上の温度', correctRate:78, tags:['6年','化学'] },
+    // 社会6年
+    { subject:'社会', topic:'歴史（近世〜現代） - 明治維新', source:'予習シリーズ 6年上 第8回', frequency:'high', difficulty:'standard', content:'明治維新の三大改革', answer:'版籍奉還・廃藩置県・地租改正（＋徴兵令・学制）', correctRate:55, tags:['6年','歴史','頻出'] },
+    { subject:'社会', topic:'歴史（近世〜現代） - 安土桃山・江戸', source:'予習シリーズ 6年上 第5回', frequency:'high', difficulty:'standard', content:'織田信長・豊臣秀吉・徳川家康 それぞれの統一事業', answer:'信長: 楽市楽座・長篠の戦い 秀吉: 太閤検地・刀狩 家康: 関ヶ原→江戸幕府', correctRate:60, tags:['6年','歴史'] },
+    { subject:'社会', topic:'公民 - 憲法・人権', source:'予習シリーズ 6年下 第1回', frequency:'high', difficulty:'standard', content:'日本国憲法の三大原則', answer:'国民主権・基本的人権の尊重・平和主義', correctRate:80, tags:['6年','公民'] },
+    { subject:'社会', topic:'公民 - 国会・内閣・裁判所', source:'予習シリーズ 6年下 第3回', frequency:'high', difficulty:'hard', content:'三権分立の仕組み（それぞれの抑制関係）', answer:'国会→内閣（内閣不信任） 内閣→国会（衆議院解散） 裁判所→国会（違憲立法審査） 等', correctRate:38, tags:['6年','公民','頻出'] },
+    { subject:'社会', topic:'歴史（近世〜現代） - 昭和〜戦後', source:'予習シリーズ 6年上 第12回', frequency:'high', difficulty:'standard', content:'戦後の日本の出来事を年代順に', answer:'日本国憲法(1946)→サンフランシスコ講和(1951)→高度経済成長(1960s)→沖縄返還(1972)', correctRate:42, tags:['6年','歴史'] },
+    { subject:'社会', topic:'国際 - 国際連合', source:'予習シリーズ 6年下 第6回', frequency:'medium', difficulty:'standard', content:'国連の主な機関と安全保障理事会の常任理事国', answer:'総会・安保理・経社理・事務局。常任理事国: 米英仏露中（拒否権あり）', correctRate:50, tags:['6年','公民'] },
+  ];
+
+  // Generate varied review states for demo
+  samples.forEach((s, i) => {
+    const d = new Date();
+    // Vary next review dates
+    const offsets = [-7,-3,-1,0,0,1,2,3,5,7,14];
+    const offset = offsets[i % offsets.length];
+    d.setDate(d.getDate() + offset);
+
+    // Simulate history for some problems
+    const history = [];
+    const histCount = Math.floor(Math.random() * 5);
+    const results = ['correct','hard','incorrect'];
+    for (let h = 0; h < histCount; h++) {
+      const hDate = new Date();
+      hDate.setDate(hDate.getDate() - (histCount - h) * 3);
+      history.push({
+        date: hDate.toISOString().split('T')[0],
+        result: results[Math.floor(Math.random() * (h > 1 ? 2 : 3))],
+        quality: Math.floor(Math.random() * 6)
+      });
+    }
+
+    // Vary mastery levels
+    let masteryLevel, reps, consFailures, ef, interval;
+    const rand = Math.random();
+    if (rand < 0.12) {
+      // Graduated
+      masteryLevel = 4; reps = 5; consFailures = 0; ef = 2.8; interval = 30;
+    } else if (rand < 0.2) {
+      // Frozen (struggling)
+      masteryLevel = 0; reps = 0; consFailures = 5; ef = 1.5; interval = 1;
+    } else if (rand < 0.5) {
+      // Priority (low mastery)
+      masteryLevel = 1; reps = Math.floor(Math.random()*2); consFailures = Math.floor(Math.random()*2); ef = 2.1 + Math.random()*0.4; interval = Math.max(1, Math.abs(offset));
+    } else {
+      // In progress
+      masteryLevel = 2 + Math.floor(Math.random()*2); reps = 2 + Math.floor(Math.random()*2); consFailures = 0; ef = 2.3 + Math.random()*0.5; interval = 3 + Math.floor(Math.random()*10);
+    }
+
+    const p = {
+      id: 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2,5) + '_' + i,
+      subject: s.subject,
+      topic: s.topic,
+      source: s.source,
+      content: s.content,
+      contentImage: null,
+      answer: s.answer,
+      answerImage: null,
+      correctRate: s.correctRate != null ? s.correctRate : null,
+      frequency: s.frequency,
+      difficulty: s.difficulty,
+      tags: s.tags || [],
+      easeFactor: ef,
+      interval: interval,
+      repetitions: reps,
+      consecutiveFailures: consFailures,
+      masteryLevel: masteryLevel,
+      nextReviewDate: d.toISOString().split('T')[0],
+      frozen: consFailures >= 5,
+      history: history,
+      createdAt: today()
+    };
+    DATA.problems.push(p);
+  });
+  saveData(DATA);
+  alert(`サンプル${samples.length}問を追加しました！`);
+  switchScreen('Today');
+}
+
+// ================================================================
+// UTILS
+// ================================================================
+function formatDate(d) {
+  const dt = new Date(d + 'T00:00:00');
+  const days = ['日','月','火','水','木','金','土'];
+  return `${dt.getMonth()+1}月${dt.getDate()}日（${days[dt.getDay()]}）`;
+}
+
+// ================================================================
+// INIT
+// ================================================================
+// Initialize school level
+const initLevel = (DATA.settings && DATA.settings.schoolLevel) || 'elementary';
+document.getElementById('settingSchoolLevel').value = initLevel;
+updateSubjectDropdown();
+
+renderToday();
+</script>
+</body>
+</html>
