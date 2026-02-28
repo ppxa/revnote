@@ -2249,6 +2249,23 @@ function revealAnswer() {
   document.getElementById('btnSkip').style.display = 'none';
   document.getElementById('swipeHint').style.display = 'none';
   clearInterval(_problemTimer);
+  // Show past attempt history
+  var p = currentQueue[currentIndex];
+  if (p) {
+    var hist = (p.history || []);
+    if (hist.length > 0) {
+      var dots = hist.slice(-8).map(function(h) {
+        if (h.result === 'correct') return '<span style="color:var(--success);font-size:14px" title="正解">◎</span>';
+        if (h.result === 'hard') return '<span style="color:var(--warning);font-size:14px" title="惜しい">△</span>';
+        return '<span style="color:var(--danger);font-size:14px" title="不正解">✕</span>';
+      }).join(' ');
+      var existing = document.getElementById('historyDotsDisplay');
+      if (existing) existing.remove();
+      document.getElementById('answerSection').insertAdjacentHTML('afterend',
+        '<div id="historyDotsDisplay" style="text-align:center;padding:6px;font-size:12px;color:var(--text2)">' +
+        '過去: ' + dots + ' <span style="font-size:10px">（' + (hist.length+1) + '回目の挑戦）</span></div>');
+    }
+  }
 }
 
 function doRecordAnswer(quality, mistakeReason) {
