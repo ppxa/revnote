@@ -658,6 +658,8 @@ body {
         <div class="problem-card" id="problemCard"></div>
         <!-- Hint button (before reveal) -->
         <button class="btn-reveal" id="btnHint" onclick="showHint()" style="display:none;background:var(--surface2);border-color:var(--border);color:var(--text2)">💡 ヒントを見る</button>
+        <button class="btn-reveal" id="btnAIHint" onclick="showAIHint()" style="background:linear-gradient(135deg,#9b59b6,#3498db);border:none;color:#fff;font-weight:700">🤖 AI解説</button>
+        <div id="aiHintSection" style="display:none;padding:12px 14px;background:linear-gradient(135deg,rgba(155,89,182,.06),rgba(52,152,219,.06));border:1px solid rgba(155,89,182,.2);border-radius:10px;margin:6px 0;font-size:13px;line-height:1.8;color:var(--text1);white-space:pre-wrap"></div>
         <div id="hintSection" style="display:none;padding:10px 14px;background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.2);border-radius:8px;margin:6px 0;font-size:13px;color:var(--warning)"></div>
         <button class="btn-reveal" id="btnReveal" onclick="revealAnswer()">👁 答えを見る</button>
         <div class="answer-section" id="answerSection"></div>
@@ -1087,7 +1089,25 @@ body {
     <div class="setting-row" style="margin-top:8px"><span class="setting-label">目標校</span><input class="form-input" id="settingExamName" onchange="saveExamGoal()" placeholder="例: 開成中学" style="width:180px"></div>
   </div>
   <div class="setting-card">
-    <h3>🎨 テーマ</h3>
+    <h3>🤖 AI解説（Claude API）</h3>
+    <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px">
+      Anthropic APIキーを設定すると、問題の解説・ヒント・類題提案をAIが生成します。<br>
+      <a href="https://console.anthropic.com/" target="_blank" style="color:var(--accent)">console.anthropic.com</a> でキーを取得できます。
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input class="form-input" id="settingAPIKey" type="password" placeholder="sk-ant-api03-..." style="flex:1;font-size:12px" onchange="saveAPIKey()">
+      <button class="btn-export" onclick="testAIConnection()" style="white-space:nowrap;border-color:var(--accent);color:var(--accent)">接続テスト</button>
+    </div>
+    <div style="margin-top:6px;display:flex;gap:8px;align-items:center">
+      <span style="font-size:11px;color:var(--text2)">モデル:</span>
+      <select class="form-select" id="settingAIModel" onchange="saveAPIKey()" style="font-size:11px;padding:4px 8px;width:auto">
+        <option value="claude-haiku-4-5-20251001">Haiku 4.5（安い・速い）</option>
+        <option value="claude-sonnet-4-5-20250929">Sonnet 4.5（賢い）</option>
+      </select>
+    </div>
+    <div id="aiTestResult" style="font-size:11px;margin-top:6px;min-height:16px"></div>
+  </div>
+  <div class="setting-card"><h3>🎨 テーマ</h3>
     <div class="setting-row">
       <span class="setting-label">表示モード</span>
       <button class="btn-export" id="settingThemeBtn" onclick="toggleTheme()" style="min-width:100px">🌙 ダーク</button>
@@ -2091,6 +2111,14 @@ function showCard() {
   document.getElementById('reviewMemoText').value = '';
   document.getElementById('btnSkip').style.display = '';
 
+  // Reset AI hint
+  document.getElementById('aiHintSection').style.display = 'none';
+  document.getElementById('btnAIHint').textContent = '🤖 AI解説';
+  document.getElementById('btnAIHint').disabled = false;
+  document.getElementById('btnAIHint').style.display = getAPIKey() ? '' : 'none';
+  var aiExplain = document.getElementById('btnAIExplain');
+  if (aiExplain) aiExplain.remove();
+
   // Reset scratchpad
   clearScratchpad();
   initScratchpad();
@@ -2217,6 +2245,157 @@ function showHint() {
   document.getElementById('hintSection').style.display = '';
   document.getElementById('btnHint').style.display = 'none';
 }
+
+// ================================================================
+// AI HINT (Claude API)
+// ================================================================
+function saveAPIKey() {
+  DATA.settings.apiKey = document.getElementById('settingAPIKey').value.trim();
+  DATA.settings.aiModel = document.getElementById('settingAIModel').value;
+  saveData(DATA);
+}
+
+function getAPIKey() { return (DATA.settings && DATA.settings.apiKey) || ''; }
+function getAIModel() { return (DATA.settings && DATA.settings.aiModel) || 'claude-haiku-4-5-20251001'; }
+
+async function testAIConnection() {
+  var el = document.getElementById('aiTestResult');
+  var key = getAPIKey();
+  if (!key) { el.textContent = '❌ APIキーを入力してください'; el.style.color = 'var(--danger)'; return; }
+  el.textContent = '接続中...'; el.style.color = 'var(--text2)';
+  try {
+    var res = await callClaude('「テスト成功」とだけ返してください。');
+    el.textContent = '✅ 接続成功: ' + res.slice(0, 30);
+    el.style.color = 'var(--success)';
+  } catch(e) {
+    el.textContent = '❌ ' + (e.message || e);
+    el.style.color = 'var(--danger)';
+  }
+}
+
+async function callClaude(userMessage, imageBase64) {
+  var key = getAPIKey();
+  if (!key) throw new Error('APIキーが設定されていません（設定画面で入力）');
+
+  var content = [];
+  if (imageBase64) {
+    var mediaType = 'image/jpeg';
+    if (imageBase64.startsWith('data:image/png')) mediaType = 'image/png';
+    var base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+    content.push({ type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } });
+  }
+  content.push({ type: 'text', text: userMessage });
+
+  var res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: getAIModel(),
+      max_tokens: 1024,
+      system: 'あなたは中学受験の家庭教師です。小学4〜6年生にわかりやすく、簡潔に教えてください。\n\nルール:\n- 答えをそのまま教えず、考え方のヒントを段階的に出す\n- 図や式を使って説明する（テキストで表現）\n- 「なぜそうなるか」を重視する\n- 励ましの言葉を添える\n- 200文字以内で簡潔に',
+      messages: [{ role: 'user', content: content }]
+    })
+  });
+
+  if (!res.ok) {
+    var err = await res.json().catch(function() { return {}; });
+    throw new Error(err.error ? err.error.message : 'API Error ' + res.status);
+  }
+  var data = await res.json();
+  return data.content.map(function(c) { return c.text || ''; }).join('');
+}
+
+async function showAIHint() {
+  var p = currentQueue[currentIndex];
+  if (!p) return;
+
+  var btn = document.getElementById('btnAIHint');
+  var section = document.getElementById('aiHintSection');
+  btn.textContent = '🤖 考え中...';
+  btn.disabled = true;
+  section.style.display = '';
+  section.textContent = '🤖 AIが考えています...';
+
+  try {
+    var prompt = buildAIPrompt(p, 'hint');
+    var imageData = p.contentImage || null;
+    var response = await callClaude(prompt, imageData);
+    section.textContent = response;
+  } catch(e) {
+    section.textContent = '⚠️ ' + e.message;
+    section.style.borderColor = 'var(--danger)';
+  }
+  btn.textContent = '🤖 AI解説';
+  btn.disabled = false;
+}
+
+function buildAIPrompt(problem, mode) {
+  var parts = [];
+  parts.push('【教科】' + (problem.subject || '不明'));
+  parts.push('【単元】' + (problem.topic || '不明'));
+  if (problem.content) parts.push('【問題文】' + problem.content);
+  if (problem.contentImage) parts.push('（問題の画像を添付しています）');
+
+  // Add history context
+  var hist = (problem.history || []);
+  if (hist.length > 0) {
+    var fails = hist.filter(function(h) { return h.result === 'incorrect'; }).length;
+    var total = hist.length;
+    parts.push('【学習履歴】' + total + '回挑戦、' + fails + '回間違い');
+    var lastMistake = hist.slice().reverse().find(function(h) { return h.mistakeReason; });
+    if (lastMistake) parts.push('【前回の間違い理由】' + lastMistake.mistakeReason);
+  }
+
+  if (mode === 'hint') {
+    parts.push('\nこの問題の解き方のヒントを、答えは言わずに段階的に教えてください。');
+    if (problem.answer) parts.push('（正解は「' + problem.answer + '」ですが、答えは言わないで）');
+  } else if (mode === 'explain') {
+    parts.push('\nこの問題の解説をしてください。');
+    if (problem.answer) parts.push('【正解】' + problem.answer);
+  }
+
+  return parts.join('\n');
+}
+
+// Also add AI explain button after answer is revealed
+var _origRevealAnswer = revealAnswer;
+revealAnswer = function() {
+  _origRevealAnswer();
+  // Show AI explain button after reveal
+  var existing = document.getElementById('btnAIExplain');
+  if (existing) existing.remove();
+  var answerSection = document.getElementById('answerSection');
+  if (answerSection) {
+    var btn = document.createElement('button');
+    btn.id = 'btnAIExplain';
+    btn.className = 'btn-reveal';
+    btn.style.cssText = 'background:linear-gradient(135deg,#9b59b6,#3498db);border:none;color:#fff;font-weight:700;font-size:12px;padding:8px 16px;margin-top:8px;width:100%';
+    btn.textContent = '🤖 AIに解説してもらう';
+    btn.onclick = async function() {
+      var p = currentQueue[currentIndex];
+      if (!p) return;
+      btn.textContent = '🤖 考え中...';
+      btn.disabled = true;
+      try {
+        var prompt = buildAIPrompt(p, 'explain');
+        var response = await callClaude(prompt, p.contentImage || null);
+        var div = document.createElement('div');
+        div.style.cssText = 'padding:12px 14px;background:linear-gradient(135deg,rgba(155,89,182,.06),rgba(52,152,219,.06));border:1px solid rgba(155,89,182,.2);border-radius:10px;margin-top:8px;font-size:13px;line-height:1.8;white-space:pre-wrap';
+        div.textContent = response;
+        btn.after(div);
+        btn.style.display = 'none';
+      } catch(e) {
+        btn.textContent = '⚠️ ' + e.message;
+      }
+    };
+    answerSection.after(btn);
+  }
+};
 
 // ================================================================
 // MISTAKE REASON TAG
@@ -3591,6 +3770,11 @@ function renderSettings() {
   updateCapLabel();
   updateFreezeLabel();
   updateDataCountInfo();
+  // AI settings
+  if (document.getElementById('settingAPIKey')) {
+    document.getElementById('settingAPIKey').value = DATA.settings.apiKey || '';
+    document.getElementById('settingAIModel').value = DATA.settings.aiModel || 'claude-haiku-4-5-20251001';
+  }
 }
 function updateCapLabel() {
   var v = document.getElementById('settingCap').value;
