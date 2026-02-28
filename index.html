@@ -80,6 +80,7 @@
 .cal-header{font-size:10px;color:var(--text2);padding:4px}
 .cal-day{font-size:11px;padding:6px 2px;border-radius:6px;position:relative}
 .cal-day.today{font-weight:900;color:var(--accent)}
+.cal-day.cal-selected{background:var(--accent);color:#fff;border-radius:8px;font-weight:700}
 .cal-day.has-data::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--success)}
 .cal-day.has-data-many::after{background:var(--accent);width:6px;height:6px}
 .cal-day.other-month{opacity:.3}
@@ -549,10 +550,11 @@ body {
 
 <!-- SIDEBAR NAV (landscape) -->
 <nav class="nav-side" id="navSide">
-  <div class="s-logo">rn<div style="font-size:8px;color:var(--text2);font-weight:400">v2.5</div></div>
+  <div class="s-logo">rn<div style="font-size:8px;color:var(--text2);font-weight:400">v3.5</div></div>
   <button class="s-item active" data-screen="Today" onclick="switchScreen('Today')"><span>⚔️</span>今日</button>
   <button class="s-item" data-screen="Add" onclick="switchScreen('Add')"><span>📸</span>登録</button>
   <button class="s-item" data-screen="List" onclick="switchScreen('List')"><span>📚</span>一覧</button>
+  <button class="s-item" data-screen="Calendar" onclick="switchScreen('Calendar')"><span>📅</span>履歴</button>
   <button class="s-item" data-screen="Dash" onclick="switchScreen('Dash')"><span>📊</span>分析</button>
   <button class="s-item" data-screen="Settings" onclick="switchScreen('Settings')"><span>⚙️</span>設定</button>
   <div style="flex:1"></div>
@@ -854,6 +856,43 @@ body {
   <div id="problemListContainer"></div>
 </div>
 
+<!-- === SCREEN: CALENDAR (履歴) === -->
+<div class="screen" id="screenCalendar">
+  <div class="header"><h1>📅 学習履歴</h1></div>
+  <!-- Streak summary -->
+  <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;flex:1;min-width:100px;text-align:center">
+      <div style="font-size:24px;font-weight:800;color:var(--danger)" id="calStreakNum">0</div>
+      <div style="font-size:10px;color:var(--text2)">🔥 連続日数</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;flex:1;min-width:100px;text-align:center">
+      <div style="font-size:24px;font-weight:800;color:var(--success)" id="calTotalDays">0</div>
+      <div style="font-size:10px;color:var(--text2)">📆 学習した日数</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;flex:1;min-width:100px;text-align:center">
+      <div style="font-size:24px;font-weight:800;color:var(--accent)" id="calTotalProblems">0</div>
+      <div style="font-size:10px;color:var(--text2)">📝 累計問題数</div>
+    </div>
+  </div>
+  <!-- Full Calendar -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <button class="sp-btn" onclick="calPageNav(-1)">◀</button>
+      <h3 id="calPageTitle" style="font-size:14px;font-weight:700"></h3>
+      <button class="sp-btn" onclick="calPageNav(1)">▶</button>
+    </div>
+    <div class="cal-grid" id="calPageGrid"></div>
+  </div>
+  <!-- Day detail -->
+  <div id="calDayDetail" style="margin-top:12px;display:none">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px">
+      <h3 id="calDayTitle" style="font-size:14px;font-weight:700;margin-bottom:8px"></h3>
+      <div id="calDaySummary" style="display:flex;gap:12px;margin-bottom:10px;font-size:13px"></div>
+      <div id="calDayList"></div>
+    </div>
+  </div>
+</div>
+
 <!-- === SCREEN: DASHBOARD === -->
 <div class="screen" id="screenDash">
   <div class="header"><h1>ダッシュボード</h1></div>
@@ -1003,6 +1042,10 @@ body {
   <button class="nav-item" onclick="switchScreen('List')">
     <span style="font-size:20px">📚</span>
     一覧
+  </button>
+  <button class="nav-item" onclick="switchScreen('Calendar')">
+    <span style="font-size:20px">📅</span>
+    履歴
   </button>
   <button class="nav-item" onclick="switchScreen('Dash')">
     <span style="font-size:20px">📊</span>
@@ -1374,7 +1417,7 @@ function switchScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen' + name).classList.add('active');
   // Update bottom nav
-  var screens = ['Today','Add','List','Dash','Settings'];
+  var screens = ['Today','Add','List','Calendar','Dash','Settings'];
   document.querySelectorAll('.nav-item').forEach((n, i) => {
     n.classList.toggle('active', screens[i] === name);
   });
@@ -1385,6 +1428,7 @@ function switchScreen(name) {
   if (name !== 'Add') { addCount = 0; document.getElementById('addContinueHint').style.display = 'none'; }
   if (name === 'Today') renderToday();
   if (name === 'List') renderList();
+  if (name === 'Calendar') renderCalendarPage();
   if (name === 'Dash') renderDashboard();
   if (name === 'Add') renderAdd();
   if (name === 'Settings') renderSettings();
@@ -3080,7 +3124,7 @@ function openProblemDetail(id) {
 // PROBLEM LIST
 // ================================================================
 var listFilter = 'all';
-var listTagFilter = '';
+var listTagFilters = []; // multi-select tags
 var listSubjectFilter = '';
 function renderList() {
   // Curriculum filter
@@ -3113,13 +3157,15 @@ function renderList() {
   var allTags = {};
   DATA.problems.forEach(p => (p.tags || []).forEach(t => { allTags[t] = (allTags[t] || 0) + 1; }));
   var tagList = Object.entries(allTags).sort((a,b) => b[1] - a[1]);
-  tagFilterRow.innerHTML = tagList.length ? (`<button class="filter-chip ${!listTagFilter ? 'active' : ''}" onclick="listTagFilter='';renderList()">全タグ</button>` +
-    tagList.map(([tag]) => `<button class="filter-chip ${listTagFilter === tag ? 'active' : ''}" onclick="listTagFilter='${tag}';renderList()">#${tag}</button>`).join('')) : '';
+  tagFilterRow.innerHTML = tagList.length ? (
+    tagList.map(([tag]) => `<button class="filter-chip ${listTagFilters.includes(tag) ? 'active' : ''}" onclick="toggleTagFilter('${tag}')">#${tag}</button>`).join('') +
+    (listTagFilters.length ? `<button class="filter-chip" onclick="listTagFilters=[];renderList()" style="color:var(--danger)">✕ クリア</button>` : '')
+  ) : '';
 
   var items = DATA.problems;
   if (listFilter !== 'all') items = items.filter(p => classifyZone(p) === listFilter);
   if (listSubjectFilter) items = items.filter(p => p.subject === listSubjectFilter);
-  if (listTagFilter) items = items.filter(p => (p.tags || []).includes(listTagFilter));
+  if (listTagFilters.length) items = items.filter(p => listTagFilters.every(t => (p.tags || []).includes(t)));
 
   // Sort
   var sortKey = document.getElementById('listSort') ? document.getElementById('listSort').value : 'next';
@@ -3617,6 +3663,174 @@ function showDayDetail(dateStr) {
   alert(summary);
 }
 function calNav(dir){calMonth+=dir;if(calMonth<0){calMonth=11;calYear--}if(calMonth>11){calMonth=0;calYear++}renderCalendar()}
+
+// ================================================================
+// TAG MULTI-FILTER TOGGLE
+// ================================================================
+function toggleTagFilter(tag) {
+  var idx = listTagFilters.indexOf(tag);
+  if (idx >= 0) listTagFilters.splice(idx, 1);
+  else listTagFilters.push(tag);
+  renderList();
+}
+
+// ================================================================
+// CALENDAR PAGE (full screen)
+// ================================================================
+var calPageYear = new Date().getFullYear();
+var calPageMonth = new Date().getMonth();
+var calSelectedDate = null;
+
+function calPageNav(dir) {
+  calPageMonth += dir;
+  if (calPageMonth < 0) { calPageMonth = 11; calPageYear--; }
+  if (calPageMonth > 11) { calPageMonth = 0; calPageYear++; }
+  renderCalendarPage();
+}
+
+function renderCalendarPage() {
+  // Summary stats
+  var allDays = {};
+  var totalProblems = 0;
+  DATA.problems.forEach(function(p) {
+    (p.history || []).forEach(function(h) {
+      if (!allDays[h.date]) allDays[h.date] = { correct: 0, hard: 0, incorrect: 0, total: 0 };
+      allDays[h.date][h.result] = (allDays[h.date][h.result] || 0) + 1;
+      allDays[h.date].total++;
+      totalProblems++;
+    });
+  });
+  document.getElementById('calStreakNum').textContent = DATA.streak.count;
+  document.getElementById('calTotalDays').textContent = Object.keys(allDays).length;
+  document.getElementById('calTotalProblems').textContent = totalProblems;
+
+  // Render calendar grid
+  var el = document.getElementById('calPageTitle');
+  el.textContent = calPageYear + '年' + (calPageMonth + 1) + '月';
+  var grid = document.getElementById('calPageGrid');
+  var headers = ['日','月','火','水','木','金','土'];
+  var h = headers.map(function(x) { return '<div class="cal-header">' + x + '</div>'; }).join('');
+  var first = new Date(calPageYear, calPageMonth, 1);
+  var startDay = first.getDay();
+  var daysInMonth = new Date(calPageYear, calPageMonth + 1, 0).getDate();
+  var daysInPrev = new Date(calPageYear, calPageMonth, 0).getDate();
+  var todayStr = today();
+
+  for (var i = 0; i < startDay; i++) {
+    h += '<div class="cal-day other-month">' + (daysInPrev - startDay + i + 1) + '</div>';
+  }
+  for (var d = 1; d <= daysInMonth; d++) {
+    var ds = calPageYear + '-' + String(calPageMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    var dayData = allDays[ds];
+    var cls = 'cal-day';
+    if (ds === todayStr) cls += ' today';
+    if (ds === calSelectedDate) cls += ' cal-selected';
+    if (dayData && dayData.total >= 5) cls += ' has-data-many';
+    else if (dayData && dayData.total > 0) cls += ' has-data';
+    var dots = '';
+    if (dayData) {
+      if (dayData.correct) dots += '<span style="color:var(--success)">●</span>';
+      if (dayData.hard) dots += '<span style="color:var(--warning)">●</span>';
+      if (dayData.incorrect) dots += '<span style="color:var(--danger)">●</span>';
+    }
+    h += '<div class="' + cls + '" onclick="selectCalDay(\'' + ds + '\')" style="cursor:pointer" title="' + (dayData ? dayData.total : 0) + '問">' + d + (dots ? '<div style="font-size:6px;line-height:1;margin-top:-2px">' + dots + '</div>' : '') + '</div>';
+  }
+  var remain = 7 - (startDay + daysInMonth) % 7;
+  if (remain < 7) for (var j = 1; j <= remain; j++) h += '<div class="cal-day other-month">' + j + '</div>';
+  grid.innerHTML = h;
+
+  // Show day detail if selected
+  if (calSelectedDate) {
+    renderCalDayDetail(calSelectedDate);
+  }
+}
+
+function selectCalDay(ds) {
+  calSelectedDate = (calSelectedDate === ds) ? null : ds;
+  renderCalendarPage();
+}
+
+function renderCalDayDetail(dateStr) {
+  var detail = document.getElementById('calDayDetail');
+  // Collect entries for this day
+  var entries = [];
+  DATA.problems.forEach(function(p) {
+    (p.history || []).forEach(function(h) {
+      if (h.date === dateStr) {
+        entries.push({
+          id: p.id,
+          subject: p.subject,
+          topic: p.topic,
+          content: p.content || '',
+          contentImage: p.contentImage,
+          result: h.result,
+          quality: h.quality,
+          memo: h.memo || '',
+          mistakeReason: h.mistakeReason || '',
+          timeSpent: h.timeSpent || 0,
+          type: getProblemType(p),
+          stage: getStage(p)
+        });
+      }
+    });
+  });
+
+  if (entries.length === 0) {
+    detail.style.display = 'none';
+    return;
+  }
+  detail.style.display = '';
+
+  var correct = entries.filter(e => e.result === 'correct').length;
+  var hard = entries.filter(e => e.result === 'hard').length;
+  var wrong = entries.filter(e => e.result === 'incorrect').length;
+  var dateLabel = dateStr.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$1年$2月$3日');
+
+  document.getElementById('calDayTitle').textContent = dateLabel + ' の学習記録';
+  document.getElementById('calDaySummary').innerHTML =
+    '<span style="color:var(--success);font-weight:700">⭕ ' + correct + '</span>' +
+    '<span style="color:var(--warning);font-weight:700">🔺 ' + hard + '</span>' +
+    '<span style="color:var(--danger);font-weight:700">❌ ' + wrong + '</span>' +
+    '<span style="color:var(--text2)">計 ' + entries.length + '問</span>';
+
+  // Group by subject
+  var bySubj = {};
+  entries.forEach(function(e) {
+    if (!bySubj[e.subject]) bySubj[e.subject] = [];
+    bySubj[e.subject].push(e);
+  });
+
+  var listHtml = '';
+  Object.entries(bySubj).forEach(function([subj, items]) {
+    listHtml += '<div style="font-size:12px;font-weight:700;color:var(--accent);margin:10px 0 4px">' + subj + '（' + items.length + '問）</div>';
+    items.forEach(function(e) {
+      var icon = e.result === 'correct' ? '⭕' : e.result === 'hard' ? '🔺' : '❌';
+      var preview = '';
+      if (e.contentImage) {
+        preview = '<img src="' + e.contentImage + '" style="max-height:30px;border-radius:3px;vertical-align:middle;margin-left:6px">';
+      } else if (e.content) {
+        var txt = e.content.length > 30 ? e.content.substring(0, 30) + '…' : e.content;
+        preview = '<span style="color:var(--text2);margin-left:4px">' + txt + '</span>';
+      }
+      var extra = '';
+      if (e.mistakeReason) extra += ' <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(255,107,107,.12);color:var(--danger)">' + e.mistakeReason + '</span>';
+      if (e.timeSpent > 0) {
+        var m = Math.floor(e.timeSpent / 60), s = e.timeSpent % 60;
+        extra += ' <span style="font-size:9px;color:var(--text2)">⏱' + m + ':' + String(s).padStart(2,'0') + '</span>';
+      }
+      if (e.memo) extra += ' <span style="font-size:9px;color:var(--accent)">📝' + e.memo + '</span>';
+      listHtml += '<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">'
+        + '<span>' + icon + '</span>'
+        + '<span style="font-weight:600">' + e.topic + '</span>'
+        + '<span>' + getTypeBadge({problemType: e.type}) + '</span>'
+        + preview + extra
+        + '<span style="margin-left:auto;flex-shrink:0"><button class="btn-freeze" onclick="openProblemDetail(\'' + e.id + '\')" style="font-size:10px;padding:2px 8px">▶解く</button></span>'
+        + '</div>';
+    });
+  });
+
+  document.getElementById('calDayList').innerHTML = listHtml;
+}
 
 // ================================================================
 // EXAM COUNTDOWN
