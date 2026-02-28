@@ -838,25 +838,37 @@ body {
 <!-- === SCREEN: LIST === -->
 <div class="screen" id="screenList">
   <div class="header"><h1>問題一覧</h1></div>
-  <div style="margin-bottom:10px">
-    <input class="form-input" id="listSearch" type="search" placeholder="🔍 問題を検索（単元名・問題文・メモ・出典）" oninput="renderList()" style="width:100%;font-size:13px">
+  <!-- Tab: 一覧 / カリキュラム -->
+  <div style="display:flex;gap:0;margin-bottom:12px;border-bottom:2px solid var(--border)">
+    <button class="list-tab active" id="tabList" onclick="switchListTab('list')" style="flex:1;padding:8px;font-size:13px;font-weight:700;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--text1)">📚 一覧</button>
+    <button class="list-tab" id="tabCurriculum" onclick="switchListTab('curriculum')" style="flex:1;padding:8px;font-size:13px;font-weight:700;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text2)">📖 カリキュラム</button>
   </div>
-  <div class="filter-row" id="filterRow"></div>
-  <div class="filter-row" id="subjectFilterRow" style="margin-top:-6px"></div>
-  <div class="filter-row" id="tagFilterRow" style="margin-top:-6px"></div>
-  <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
-    <span style="font-size:11px;color:var(--text2)">並替:</span>
-    <select class="form-select" id="listSort" onchange="renderList()" style="width:auto;padding:6px 10px;font-size:11px">
-      <option value="next">復習日順</option>
-      <option value="created">登録日順</option>
-      <option value="topic">単元順</option>
-      <option value="failures">苦手順</option>
-      <option value="recentWrong">最近間違えた順</option>
-      <option value="almostMastered">もうすぐ定着</option>
-      <option value="longIdle">長期放置</option>
-    </select>
+  <!-- List view -->
+  <div id="listViewPane">
+    <div style="margin-bottom:10px">
+      <input class="form-input" id="listSearch" type="search" placeholder="🔍 問題を検索（単元名・問題文・メモ・出典）" oninput="renderList()" style="width:100%;font-size:13px">
+    </div>
+    <div class="filter-row" id="filterRow"></div>
+    <div class="filter-row" id="subjectFilterRow" style="margin-top:-6px"></div>
+    <div class="filter-row" id="tagFilterRow" style="margin-top:-6px"></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+      <span style="font-size:11px;color:var(--text2)">並替:</span>
+      <select class="form-select" id="listSort" onchange="renderList()" style="width:auto;padding:6px 10px;font-size:11px">
+        <option value="next">復習日順</option>
+        <option value="created">登録日順</option>
+        <option value="topic">単元順</option>
+        <option value="failures">苦手順</option>
+        <option value="recentWrong">最近間違えた順</option>
+        <option value="almostMastered">もうすぐ定着</option>
+        <option value="longIdle">長期放置</option>
+      </select>
+    </div>
+    <div id="problemListContainer"></div>
   </div>
-  <div id="problemListContainer"></div>
+  <!-- Curriculum view -->
+  <div id="curriculumViewPane" style="display:none">
+    <div id="curriculumContent"></div>
+  </div>
 </div>
 
 <!-- === SCREEN: CALENDAR (履歴) === -->
@@ -3581,6 +3593,284 @@ function toggleTagFilter(tag) {
   var idx = listTagFilters.indexOf(tag);
   if (idx >= 0) listTagFilters.splice(idx, 1);
   else listTagFilters.push(tag);
+  renderList();
+}
+
+// ================================================================
+// LIST TAB: 一覧 / カリキュラム
+// ================================================================
+var _listTab = 'list';
+function switchListTab(tab) {
+  _listTab = tab;
+  document.getElementById('tabList').style.borderBottomColor = tab === 'list' ? 'var(--accent)' : 'transparent';
+  document.getElementById('tabList').style.color = tab === 'list' ? 'var(--text1)' : 'var(--text2)';
+  document.getElementById('tabCurriculum').style.borderBottomColor = tab === 'curriculum' ? 'var(--accent)' : 'transparent';
+  document.getElementById('tabCurriculum').style.color = tab === 'curriculum' ? 'var(--text1)' : 'var(--text2)';
+  document.getElementById('listViewPane').style.display = tab === 'list' ? '' : 'none';
+  document.getElementById('curriculumViewPane').style.display = tab === 'curriculum' ? '' : 'none';
+  if (tab === 'curriculum') renderCurriculum();
+}
+
+// ================================================================
+// CURRICULUM DATA (塾カリキュラム)
+// ================================================================
+var CURRICULUM = {
+yotsuya: {
+  name: '四谷大塚（予習シリーズ）',
+  terms: [
+    {id:'4-1',label:'4年上',period:'4年2月〜7月',units:[
+      {n:1,subj:'算数',topic:'大きな数・整数の計算'},{n:2,subj:'算数',topic:'角と角度'},
+      {n:3,subj:'算数',topic:'計算の工夫'},{n:4,subj:'算数',topic:'平面図形（三角形・四角形）'},
+      {n:5,subj:'算数',topic:'約数・倍数'},{n:6,subj:'算数',topic:'小数の計算'},
+      {n:7,subj:'算数',topic:'分数の基本'},{n:8,subj:'算数',topic:'和差算'},
+      {n:9,subj:'算数',topic:'植木算'},{n:10,subj:'算数',topic:'つるかめ算'},
+      {n:1,subj:'国語',topic:'物語文の読解（心情理解）'},{n:2,subj:'国語',topic:'漢字の読み書き(4年)'},
+      {n:3,subj:'国語',topic:'説明文の読解'},{n:4,subj:'国語',topic:'ことわざ・慣用句'},
+      {n:1,subj:'理科',topic:'植物の成長'},{n:2,subj:'理科',topic:'天気の変化'},
+      {n:3,subj:'理科',topic:'昆虫の体'},{n:4,subj:'理科',topic:'磁石・電気'},
+      {n:1,subj:'社会',topic:'都道府県と地方区分'},{n:2,subj:'社会',topic:'地図の読み方'},
+      {n:3,subj:'社会',topic:'国土と地形'},{n:4,subj:'社会',topic:'気候と人々のくらし'},
+    ]},
+    {id:'4-2',label:'4年下',period:'4年9月〜1月',units:[
+      {n:1,subj:'算数',topic:'分数の計算'},{n:2,subj:'算数',topic:'円と正多角形'},
+      {n:3,subj:'算数',topic:'面積の求め方'},{n:4,subj:'算数',topic:'過不足算'},
+      {n:5,subj:'算数',topic:'消去算'},{n:6,subj:'算数',topic:'平均算'},
+      {n:7,subj:'算数',topic:'線分図と面積図'},{n:8,subj:'算数',topic:'規則性'},
+      {n:9,subj:'算数',topic:'推理と条件整理'},{n:10,subj:'算数',topic:'立体図形入門'},
+      {n:5,subj:'国語',topic:'物語文（場面転換）'},{n:6,subj:'国語',topic:'対義語・類義語'},
+      {n:7,subj:'国語',topic:'説明文（要旨把握）'},{n:8,subj:'国語',topic:'部首・画数・筆順'},
+      {n:5,subj:'理科',topic:'月と星'},{n:6,subj:'理科',topic:'ものの温度と変化'},
+      {n:7,subj:'理科',topic:'水溶液の基本'},{n:8,subj:'理科',topic:'電気回路'},
+      {n:5,subj:'社会',topic:'農業・水産業'},{n:6,subj:'社会',topic:'工業と工業地帯'},
+      {n:7,subj:'社会',topic:'交通と貿易'},{n:8,subj:'社会',topic:'地図記号と等高線'},
+    ]},
+    {id:'5-1',label:'5年上',period:'5年2月〜7月',units:[
+      {n:1,subj:'算数',topic:'割合の基本'},{n:2,subj:'算数',topic:'百分率・歩合'},
+      {n:3,subj:'算数',topic:'速さの基本'},{n:4,subj:'算数',topic:'旅人算（出会い）'},
+      {n:5,subj:'算数',topic:'年齢算'},{n:6,subj:'算数',topic:'比例と反比例'},
+      {n:7,subj:'算数',topic:'平面図形（面積応用）'},{n:8,subj:'算数',topic:'規則性（数列）'},
+      {n:9,subj:'国語',topic:'物語文（主題）'},{n:10,subj:'国語',topic:'四字熟語'},
+      {n:11,subj:'国語',topic:'同音異義語'},{n:12,subj:'国語',topic:'文法（品詞）'},
+      {n:5,subj:'理科',topic:'気象・天気'},{n:6,subj:'理科',topic:'光と音'},
+      {n:7,subj:'理科',topic:'燃焼と気体'},{n:8,subj:'理科',topic:'植物の分類'},
+      {n:5,subj:'社会',topic:'日本の歴史（古代〜奈良）'},{n:6,subj:'社会',topic:'世界の大陸と海洋'},
+      {n:7,subj:'社会',topic:'日本の歴史（平安〜鎌倉）'},{n:8,subj:'社会',topic:'産業と貿易'},
+    ]},
+    {id:'5-2',label:'5年下',period:'5年9月〜1月',units:[
+      {n:1,subj:'算数',topic:'比の基本'},{n:2,subj:'算数',topic:'比の文章題'},
+      {n:3,subj:'算数',topic:'濃度（食塩水）'},{n:4,subj:'算数',topic:'損益算'},
+      {n:5,subj:'算数',topic:'旅人算（追いかけ）'},{n:6,subj:'算数',topic:'通過算'},
+      {n:7,subj:'算数',topic:'場合の数'},{n:8,subj:'算数',topic:'体積と表面積'},
+      {n:9,subj:'国語',topic:'説明文・論説文'},{n:10,subj:'国語',topic:'敬語'},
+      {n:11,subj:'国語',topic:'読解テクニック（記述）'},{n:12,subj:'国語',topic:'古典の基礎'},
+      {n:9,subj:'理科',topic:'人体（消化・呼吸）'},{n:10,subj:'理科',topic:'水溶液の性質'},
+      {n:11,subj:'理科',topic:'天体（月・太陽系）'},{n:12,subj:'理科',topic:'力・てこ・ばね'},
+      {n:9,subj:'社会',topic:'歴史（室町〜安土桃山）'},{n:10,subj:'社会',topic:'歴史（江戸時代）'},
+      {n:11,subj:'社会',topic:'歴史（幕末〜明治維新）'},{n:12,subj:'社会',topic:'歴史文化史'},
+    ]},
+    {id:'6-1',label:'6年上',period:'6年2月〜7月',units:[
+      {n:1,subj:'算数',topic:'相似と面積比'},{n:2,subj:'算数',topic:'図形の移動・回転体'},
+      {n:3,subj:'算数',topic:'水量変化'},{n:4,subj:'算数',topic:'仕事算'},
+      {n:5,subj:'算数',topic:'流水算'},{n:6,subj:'算数',topic:'点の移動'},
+      {n:7,subj:'算数',topic:'時計算'},{n:8,subj:'算数',topic:'場合の数（応用）'},
+      {n:9,subj:'国語',topic:'入試読解（物語文総合）'},{n:10,subj:'国語',topic:'文学史'},
+      {n:5,subj:'理科',topic:'電気回路（応用）'},{n:6,subj:'理科',topic:'地層・岩石'},
+      {n:7,subj:'理科',topic:'人体（血液・神経）'},{n:8,subj:'理科',topic:'光・レンズ'},
+      {n:5,subj:'社会',topic:'公民（憲法・人権）'},{n:6,subj:'社会',topic:'公民（国会・内閣）'},
+      {n:7,subj:'社会',topic:'歴史（近現代）'},{n:8,subj:'社会',topic:'国際社会'},
+    ]},
+    {id:'6-2',label:'6年下',period:'6年9月〜入試',units:[
+      {n:1,subj:'算数',topic:'総合演習（計算・割合）'},{n:2,subj:'算数',topic:'総合演習（速さ・図形）'},
+      {n:3,subj:'算数',topic:'ニュートン算'},{n:4,subj:'算数',topic:'推理と論証'},
+      {n:9,subj:'国語',topic:'入試読解（論説文総合）'},{n:10,subj:'国語',topic:'総合演習'},
+      {n:9,subj:'理科',topic:'理科総合演習'},{n:10,subj:'理科',topic:'時事問題対策'},
+      {n:9,subj:'社会',topic:'社会総合演習'},{n:10,subj:'社会',topic:'時事問題対策'},
+    ]},
+  ]
+},
+sapix: {
+  name: 'SAPIX',
+  terms: [
+    {id:'4-1',label:'4年前期',period:'4年2月〜7月',units:[
+      {n:1,subj:'算数',topic:'大きな数と計算'},{n:2,subj:'算数',topic:'計算の工夫'},
+      {n:3,subj:'算数',topic:'角度と図形'},{n:4,subj:'算数',topic:'和差算・つるかめ算'},
+      {n:5,subj:'算数',topic:'植木算・周期算'},{n:6,subj:'算数',topic:'小数と分数'},
+      {n:1,subj:'国語',topic:'漢字（4年配当）'},{n:2,subj:'国語',topic:'物語文の読解'},
+      {n:1,subj:'理科',topic:'植物のつくり'},{n:2,subj:'理科',topic:'季節と生物'},
+      {n:3,subj:'理科',topic:'磁石と電気'},{n:4,subj:'理科',topic:'天気と気温'},
+      {n:1,subj:'社会',topic:'都道府県'},{n:2,subj:'社会',topic:'地図の見方'},
+      {n:3,subj:'社会',topic:'国土と地形'},{n:4,subj:'社会',topic:'気候'},
+    ]},
+    {id:'4-2',label:'4年後期',period:'4年9月〜1月',units:[
+      {n:7,subj:'算数',topic:'約数と倍数'},{n:8,subj:'算数',topic:'規則性'},
+      {n:9,subj:'算数',topic:'面積'},{n:10,subj:'算数',topic:'円と正多角形'},
+      {n:11,subj:'算数',topic:'過不足算'},{n:12,subj:'算数',topic:'立体図形基本'},
+      {n:3,subj:'国語',topic:'説明文の読解'},{n:4,subj:'国語',topic:'ことわざ・慣用句'},
+      {n:5,subj:'理科',topic:'ものの温度変化'},{n:6,subj:'理科',topic:'月と星'},
+      {n:7,subj:'理科',topic:'電気回路'},{n:8,subj:'理科',topic:'水溶液入門'},
+      {n:5,subj:'社会',topic:'農業・水産業'},{n:6,subj:'社会',topic:'工業地帯'},
+      {n:7,subj:'社会',topic:'交通・通信'},{n:8,subj:'社会',topic:'地図記号'},
+    ]},
+    {id:'5-1',label:'5年前期',period:'5年2月〜7月',units:[
+      {n:1,subj:'算数',topic:'割合'},{n:2,subj:'算数',topic:'百分率・歩合'},
+      {n:3,subj:'算数',topic:'年齢算'},{n:4,subj:'算数',topic:'速さの基本'},
+      {n:5,subj:'算数',topic:'比例・反比例'},{n:6,subj:'算数',topic:'面積応用'},
+      {n:3,subj:'国語',topic:'四字熟語'},{n:4,subj:'国語',topic:'同音異義語'},
+      {n:3,subj:'理科',topic:'気象'},{n:4,subj:'理科',topic:'光と音'},
+      {n:5,subj:'理科',topic:'燃焼と気体'},{n:6,subj:'理科',topic:'植物の分類'},
+      {n:3,subj:'社会',topic:'歴史（古代〜平安）'},{n:4,subj:'社会',topic:'世界地理'},
+    ]},
+    {id:'5-2',label:'5年後期',period:'5年9月〜1月',units:[
+      {n:7,subj:'算数',topic:'比'},{n:8,subj:'算数',topic:'損益算'},
+      {n:9,subj:'算数',topic:'濃度（食塩水）'},{n:10,subj:'算数',topic:'場合の数'},
+      {n:11,subj:'算数',topic:'旅人算・通過算'},{n:12,subj:'算数',topic:'体積・表面積'},
+      {n:5,subj:'国語',topic:'文法'},{n:6,subj:'国語',topic:'敬語'},
+      {n:7,subj:'理科',topic:'人体'},{n:8,subj:'理科',topic:'水溶液'},
+      {n:9,subj:'理科',topic:'天体'},{n:10,subj:'理科',topic:'力・てこ'},
+      {n:5,subj:'社会',topic:'歴史（鎌倉〜江戸）'},{n:6,subj:'社会',topic:'歴史（幕末〜近代）'},
+    ]},
+    {id:'6-1',label:'6年前期',period:'6年2月〜7月',units:[
+      {n:1,subj:'算数',topic:'相似・面積比'},{n:2,subj:'算数',topic:'図形の移動'},
+      {n:3,subj:'算数',topic:'仕事算'},{n:4,subj:'算数',topic:'水量変化'},
+      {n:5,subj:'算数',topic:'流水算・時計算'},{n:6,subj:'算数',topic:'場合の数応用'},
+      {n:7,subj:'国語',topic:'入試読解演習'},{n:8,subj:'国語',topic:'文学史'},
+      {n:5,subj:'理科',topic:'地層・岩石'},{n:6,subj:'理科',topic:'電気応用'},
+      {n:7,subj:'社会',topic:'公民（憲法）'},{n:8,subj:'社会',topic:'公民（三権分立）'},
+    ]},
+    {id:'6-2',label:'6年後期',period:'6年9月〜入試',units:[
+      {n:1,subj:'算数',topic:'入試総合演習'},{n:2,subj:'算数',topic:'ニュートン算・推理'},
+      {n:9,subj:'国語',topic:'総合演習'},{n:10,subj:'理科',topic:'総合演習'},
+      {n:9,subj:'社会',topic:'時事問題'},{n:10,subj:'社会',topic:'総合演習'},
+    ]},
+  ]
+},
+nichinoken: {
+  name: '日能研',
+  terms: [
+    {id:'4-1',label:'4年前期',period:'4年2月〜7月',units:[
+      {n:1,subj:'算数',topic:'大きな数・計算'},{n:2,subj:'算数',topic:'計算の工夫'},
+      {n:3,subj:'算数',topic:'角度'},{n:4,subj:'算数',topic:'和差算'},
+      {n:5,subj:'算数',topic:'つるかめ算'},{n:6,subj:'算数',topic:'植木算'},
+      {n:1,subj:'国語',topic:'漢字・語彙'},{n:2,subj:'国語',topic:'物語文の読解'},
+      {n:1,subj:'理科',topic:'植物の育ち方'},{n:2,subj:'理科',topic:'昆虫のからだ'},
+      {n:3,subj:'理科',topic:'季節と生物'},{n:4,subj:'理科',topic:'天気と温度'},
+      {n:1,subj:'社会',topic:'都道府県と県庁所在地'},{n:2,subj:'社会',topic:'日本の地形'},
+    ]},
+    {id:'4-2',label:'4年後期',period:'4年9月〜1月',units:[
+      {n:7,subj:'算数',topic:'分数・小数'},{n:8,subj:'算数',topic:'約数と倍数'},
+      {n:9,subj:'算数',topic:'面積'},{n:10,subj:'算数',topic:'過不足算'},
+      {n:11,subj:'算数',topic:'平均'},{n:12,subj:'算数',topic:'円と正多角形'},
+      {n:3,subj:'国語',topic:'ことわざ・慣用句'},{n:4,subj:'国語',topic:'説明文'},
+      {n:5,subj:'理科',topic:'月と星'},{n:6,subj:'理科',topic:'ものの温まり方'},
+      {n:7,subj:'理科',topic:'電気の回路'},{n:8,subj:'理科',topic:'磁石'},
+      {n:3,subj:'社会',topic:'農業と漁業'},{n:4,subj:'社会',topic:'工業'},
+    ]},
+    {id:'5-1',label:'5年前期',period:'5年2月〜7月',units:[
+      {n:1,subj:'算数',topic:'割合'},{n:2,subj:'算数',topic:'百分率と歩合'},
+      {n:3,subj:'算数',topic:'速さ'},{n:4,subj:'算数',topic:'比例・反比例'},
+      {n:5,subj:'算数',topic:'年齢算'},{n:6,subj:'算数',topic:'規則性'},
+      {n:3,subj:'国語',topic:'対義語・類義語'},{n:4,subj:'国語',topic:'四字熟語'},
+      {n:3,subj:'理科',topic:'燃焼・気体'},{n:4,subj:'理科',topic:'気象'},
+      {n:5,subj:'理科',topic:'光と音'},{n:6,subj:'理科',topic:'植物の分類'},
+      {n:3,subj:'社会',topic:'歴史（古代〜奈良）'},{n:4,subj:'社会',topic:'歴史（平安〜鎌倉）'},
+    ]},
+    {id:'5-2',label:'5年後期',period:'5年9月〜1月',units:[
+      {n:7,subj:'算数',topic:'比'},{n:8,subj:'算数',topic:'旅人算'},
+      {n:9,subj:'算数',topic:'濃度（食塩水）'},{n:10,subj:'算数',topic:'損益算'},
+      {n:11,subj:'算数',topic:'通過算'},{n:12,subj:'算数',topic:'場合の数'},
+      {n:5,subj:'国語',topic:'文法・敬語'},{n:6,subj:'国語',topic:'同音異義語'},
+      {n:7,subj:'理科',topic:'人体'},{n:8,subj:'理科',topic:'水溶液'},
+      {n:9,subj:'理科',topic:'天体'},{n:10,subj:'理科',topic:'てこ・ばね'},
+      {n:5,subj:'社会',topic:'歴史（室町〜江戸）'},{n:6,subj:'社会',topic:'歴史（幕末〜明治）'},
+    ]},
+    {id:'6-1',label:'6年前期',period:'6年2月〜7月',units:[
+      {n:1,subj:'算数',topic:'相似・面積比'},{n:2,subj:'算数',topic:'立体（体積・表面積）'},
+      {n:3,subj:'算数',topic:'水量変化'},{n:4,subj:'算数',topic:'仕事算'},
+      {n:5,subj:'算数',topic:'時計算・流水算'},{n:6,subj:'算数',topic:'図形の移動・回転体'},
+      {n:7,subj:'国語',topic:'入試読解'},{n:8,subj:'国語',topic:'文学史'},
+      {n:5,subj:'理科',topic:'地層・岩石'},{n:6,subj:'理科',topic:'電気応用'},
+      {n:5,subj:'社会',topic:'公民（憲法・人権）'},{n:6,subj:'社会',topic:'公民（三権分立）'},
+    ]},
+    {id:'6-2',label:'6年後期',period:'6年9月〜入試',units:[
+      {n:1,subj:'算数',topic:'ニュートン算・推理'},{n:2,subj:'算数',topic:'入試総合演習'},
+      {n:9,subj:'国語',topic:'総合演習'},{n:10,subj:'理科',topic:'総合演習'},
+      {n:9,subj:'社会',topic:'時事問題'},{n:10,subj:'社会',topic:'総合演習'},
+    ]},
+  ]
+}
+};
+
+// ================================================================
+// RENDER CURRICULUM VIEW
+// ================================================================
+var _currSubjFilter = '';
+
+function renderCurriculum() {
+  var juku = DATA.settings.jukuType || 'none';
+  var el = document.getElementById('curriculumContent');
+  if (juku === 'none' || !CURRICULUM[juku]) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">📖</div><p>設定画面で塾を選択してください</p><button class="btn-start" onclick="switchScreen(\'Settings\')" style="max-width:200px">⚙️ 設定へ</button></div>';
+    return;
+  }
+  var cur = CURRICULUM[juku];
+  var html = '<div style="font-size:15px;font-weight:800;margin-bottom:8px">' + cur.name + '</div>';
+  // Subject filter
+  var subjects = ['算数','国語','理科','社会'];
+  html += '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">';
+  html += '<button class="filter-chip ' + (!_currSubjFilter ? 'active' : '') + '" onclick="_currSubjFilter=\'\';renderCurriculum()">全教科</button>';
+  subjects.forEach(function(s) {
+    html += '<button class="filter-chip ' + (_currSubjFilter === s ? 'active' : '') + '" onclick="_currSubjFilter=\'' + s + '\';renderCurriculum()">' + s + '</button>';
+  });
+  html += '</div>';
+
+  cur.terms.forEach(function(term) {
+    var units = term.units;
+    if (_currSubjFilter) units = units.filter(function(u) { return u.subj === _currSubjFilter; });
+    if (units.length === 0) return;
+    html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+    html += '<span style="font-size:14px;font-weight:700">' + term.label + '</span>';
+    html += '<span style="font-size:10px;color:var(--text2)">' + term.period + '</span>';
+    html += '</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:4px">';
+    units.forEach(function(u) {
+      // Count matching problems
+      var matching = DATA.problems.filter(function(p) {
+        return p.topic && p.topic.indexOf(u.topic) >= 0 && p.subject === u.subj;
+      });
+      var total = matching.length;
+      var mastered = matching.filter(function(p) { return getStage(p) === 'mastered'; }).length;
+      var wrong = matching.filter(function(p) {
+        var h = p.history || [];
+        return h.length > 0 && h[h.length-1].result === 'incorrect';
+      }).length;
+      var pct = total > 0 ? Math.round(mastered / total * 100) : 0;
+      var barColor = pct >= 80 ? 'var(--success)' : pct >= 40 ? 'var(--warning)' : 'var(--accent)';
+      var subjBadge = {'算数':'badge-math','国語':'badge-japanese','理科':'badge-science','社会':'badge-social'}[u.subj] || '';
+      html += '<div onclick="filterByUnit(\'' + u.subj + '\',\'' + u.topic.replace(/'/g,"\\'") + '\')" style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border-radius:6px;cursor:pointer;transition:opacity .2s" onmouseenter="this.style.opacity=0.8" onmouseleave="this.style.opacity=1">';
+      html += '<span style="font-size:10px;color:var(--text2);min-width:20px">第' + u.n + '回</span>';
+      html += '<span class="card-badge ' + subjBadge + '" style="font-size:9px;padding:1px 6px">' + u.subj + '</span>';
+      html += '<span style="font-size:12px;font-weight:600;flex:1">' + u.topic + '</span>';
+      if (total > 0) {
+        html += '<span style="font-size:9px;color:var(--text2)">' + mastered + '/' + total + '</span>';
+        html += '<div style="width:40px;height:4px;background:var(--surface);border-radius:2px;overflow:hidden"><div style="width:' + pct + '%;height:100%;background:' + barColor + ';border-radius:2px"></div></div>';
+        if (wrong > 0) html += '<span style="font-size:9px;color:var(--danger)">❌' + wrong + '</span>';
+      } else {
+        html += '<span style="font-size:9px;color:var(--text2)">未登録</span>';
+      }
+      html += '</div>';
+    });
+    html += '</div></div>';
+  });
+  el.innerHTML = html;
+}
+
+function filterByUnit(subj, topic) {
+  // Switch to list tab with search pre-filled
+  _listTab = 'list';
+  switchListTab('list');
+  listSubjectFilter = subj;
+  document.getElementById('listSearch').value = topic;
   renderList();
 }
 
