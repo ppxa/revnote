@@ -1517,16 +1517,229 @@ function showBossDefeat(lv) {
   var bosses = ['スライムキング','ゴブリンロード','ドラゴンパピー','フロストギガント','ダークナイト','フェニックス','リヴァイアサン','ケルベロス','魔王ラスボスⅠ','魔王ラスボスⅡ'];
   var bossIdx = Math.floor(lv / 5) - 1;
   var bossName = bosses[Math.min(bossIdx, bosses.length - 1)];
-  // Full screen boss defeat overlay
   var overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;animation:fadeIn .3s';
   overlay.innerHTML = '<div style="font-size:60px;animation:xpPop .6s">⚔️</div>'
     + '<div style="font-size:24px;font-weight:900;color:#ffd700;margin:16px 0;text-shadow:0 0 20px rgba(255,215,0,.5)">BOSS DEFEATED!</div>'
     + '<div style="font-size:18px;color:#fff;font-weight:700">Lv.' + lv + ' 「' + bossName + '」を撃破！</div>'
     + '<div style="font-size:13px;color:var(--text2);margin-top:8px">定着した知識が武器になる💪</div>'
-    + '<button onclick="this.parentElement.remove()" style="margin-top:24px;padding:10px 32px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;border:none;font-size:15px;cursor:pointer">続ける</button>';
+    + '<div style="display:flex;gap:10px;margin-top:24px">'
+    + '<button onclick="shareCard({type:\'boss\',bossName:\'' + bossName + '\',bossLv:' + lv + '});this.parentElement.parentElement.remove()" style="padding:10px 28px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;border:none;font-size:15px;cursor:pointer">📱 シェアする</button>'
+    + '<button onclick="this.parentElement.parentElement.remove()" style="padding:10px 28px;border-radius:8px;background:var(--surface2);color:#fff;font-weight:700;border:1px solid var(--border);font-size:15px;cursor:pointer">続ける</button>'
+    + '</div>';
   document.body.appendChild(overlay);
   fireConfetti(); fireConfetti();
+}
+
+// ================================================================
+// SHARE CARD GENERATION
+// ================================================================
+function generateShareCard(opts) {
+  // opts: {type:'session'|'boss'|'streak'|'milestone', bossName, bossLv}
+  var canvas = document.createElement('canvas');
+  canvas.width = 600; canvas.height = 340;
+  var ctx = canvas.getContext('2d');
+  // Background gradient
+  var grad = ctx.createLinearGradient(0, 0, 600, 340);
+  grad.addColorStop(0, '#1a1d27'); grad.addColorStop(1, '#2a1f4e');
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, 600, 340);
+  // Accent strip top
+  var strip = ctx.createLinearGradient(0, 0, 600, 0);
+  strip.addColorStop(0, '#6c63ff'); strip.addColorStop(1, '#ff6b6b');
+  ctx.fillStyle = strip; ctx.fillRect(0, 0, 600, 4);
+  // Logo
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 20px "Noto Sans JP",sans-serif';
+  ctx.fillText('📓 revnote', 24, 36);
+  ctx.fillStyle = '#8b8fa8'; ctx.font = '11px sans-serif';
+  ctx.fillText('中学受験リベンジノート', 130, 36);
+  // Main content based on type
+  var lv = getLevel(), xp = getXP(), streak = DATA.streak.count;
+  var mastered = DATA.problems.filter(p => getStage(p) === 'mastered').length;
+  var total = DATA.problems.length;
+
+  if (opts.type === 'boss') {
+    ctx.fillStyle = '#ffd700'; ctx.font = 'bold 36px "Noto Sans JP",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('⚔️ BOSS DEFEATED!', 300, 100);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 22px "Noto Sans JP",sans-serif';
+    ctx.fillText('Lv.' + opts.bossLv + ' 「' + opts.bossName + '」撃破！', 300, 140);
+    ctx.textAlign = 'left';
+  } else if (opts.type === 'streak') {
+    ctx.fillStyle = '#ff6b6b'; ctx.font = 'bold 48px "Noto Sans JP",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🔥 ' + streak + '日連続！', 300, 110);
+    ctx.textAlign = 'left';
+  } else if (opts.type === 'milestone') {
+    ctx.fillStyle = '#4ecdc4'; ctx.font = 'bold 36px "Noto Sans JP",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✅ ' + mastered + '問 定着達成！', 300, 110);
+    ctx.textAlign = 'left';
+  } else {
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 28px "Noto Sans JP",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🏆 今日のリベンジ完了！', 300, 100);
+    ctx.textAlign = 'left';
+  }
+  // Stats row
+  var statsY = 180;
+  var stats = [
+    { emoji: '⚔️', val: 'Lv.' + lv, label: 'レベル' },
+    { emoji: '🔥', val: streak + '日', label: '連続' },
+    { emoji: '✅', val: mastered + '問', label: '定着' },
+    { emoji: '📚', val: total + '問', label: '全問題' }
+  ];
+  var colW = 140;
+  stats.forEach(function(s, i) {
+    var x = 24 + i * colW;
+    ctx.fillStyle = 'rgba(108,99,255,.15)';
+    roundRect(ctx, x, statsY, colW - 12, 70, 10); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 22px "Noto Sans JP",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(s.emoji + ' ' + s.val, x + (colW-12)/2, statsY + 32);
+    ctx.fillStyle = '#8b8fa8'; ctx.font = '11px sans-serif';
+    ctx.fillText(s.label, x + (colW-12)/2, statsY + 54);
+    ctx.textAlign = 'left';
+  });
+  // Exam countdown
+  if (DATA.settings.examDate) {
+    var diff = Math.ceil((new Date(DATA.settings.examDate) - new Date()) / 864e5);
+    if (diff > 0) {
+      ctx.fillStyle = '#ff6b6b'; ctx.font = 'bold 13px "Noto Sans JP",sans-serif';
+      ctx.fillText('📅 ' + (DATA.settings.examName || '入試') + 'まで あと' + diff + '日', 24, 288);
+    }
+  }
+  // Footer
+  ctx.fillStyle = '#555'; ctx.font = '11px sans-serif';
+  ctx.fillText('ppxa.github.io/revnote', 24, 322);
+  // Session detail for session type
+  if (opts.type === 'session' && sessionStats) {
+    ctx.fillStyle = '#8b8fa8'; ctx.font = '12px "Noto Sans JP",sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('⭕' + sessionStats.correct + ' 🔺' + sessionStats.hard + ' ❌' + sessionStats.wrong, 576, 322);
+    ctx.textAlign = 'left';
+  }
+  return canvas;
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+async function shareCard(opts) {
+  var canvas = generateShareCard(opts);
+  var blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+  var file = new File([blob], 'revnote-share.png', { type: 'image/png' });
+  // Build share text
+  var lv = getLevel(), streak = DATA.streak.count;
+  var mastered = DATA.problems.filter(p => getStage(p) === 'mastered').length;
+  var text = '';
+  if (opts.type === 'boss') text = '⚔️ Lv.' + opts.bossLv + '「' + opts.bossName + '」を撃破！';
+  else if (opts.type === 'streak') text = '🔥 ' + streak + '日連続リベンジ達成！';
+  else if (opts.type === 'milestone') text = '✅ ' + mastered + '問が定着！';
+  else text = '🏆 今日のリベンジ完了！⭕' + sessionStats.correct + ' 🔺' + sessionStats.hard + ' ❌' + sessionStats.wrong;
+  text += '\nLv.' + lv + ' | 🔥' + streak + '日連続 | ✅' + mastered + '問定着';
+  text += '\n\n#revnote #中学受験 #勉強垢\nhttps://ppxa.github.io/revnote/';
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ text: text, files: [file] });
+      return;
+    } catch (e) { /* user cancelled or error, fall through */ }
+  }
+  // Fallback: show card as download + copy text
+  showShareFallback(canvas, text);
+}
+
+function showShareFallback(canvas, text) {
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:20px';
+  overlay.innerHTML = '<div style="font-size:14px;color:#fff;font-weight:700;margin-bottom:12px">📱 シェアカード</div>';
+  var img = document.createElement('img');
+  img.src = canvas.toDataURL();
+  img.style.cssText = 'max-width:90%;max-height:40vh;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.5)';
+  overlay.appendChild(img);
+  // Share buttons
+  var btns = document.createElement('div');
+  btns.style.cssText = 'display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center';
+  // X (Twitter)
+  btns.innerHTML = '<a href="https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '" target="_blank" style="padding:10px 20px;background:#000;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px">𝕏 ポスト</a>'
+    + '<a href="https://line.me/R/share?text=' + encodeURIComponent(text) + '" target="_blank" style="padding:10px 20px;background:#06c755;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px">LINE</a>'
+    + '<button onclick="navigator.clipboard.writeText(\'' + text.replace(/'/g, "\\'").replace(/\n/g, "\\n") + '\');this.textContent=\'コピー済✓\'" style="padding:10px 20px;background:var(--surface2);color:#fff;border-radius:8px;border:1px solid var(--border);font-weight:700;font-size:13px;cursor:pointer">📋 コピー</button>';
+  overlay.appendChild(btns);
+  // Save image
+  var saveBtn = document.createElement('button');
+  saveBtn.textContent = '💾 画像を保存';
+  saveBtn.style.cssText = 'margin-top:12px;padding:8px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer';
+  saveBtn.onclick = function() {
+    var a = document.createElement('a');
+    a.href = canvas.toDataURL();
+    a.download = 'revnote-share.png';
+    a.click();
+  };
+  overlay.appendChild(saveBtn);
+  // Close
+  var closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕ 閉じる';
+  closeBtn.style.cssText = 'margin-top:12px;padding:8px 20px;background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer';
+  closeBtn.onclick = function() { overlay.remove(); };
+  overlay.appendChild(closeBtn);
+  document.body.appendChild(overlay);
+}
+
+// Check streak milestones (7, 14, 30, 50, 100...)
+function checkStreakMilestone() {
+  var s = DATA.streak.count;
+  var milestones = [7, 14, 30, 50, 100, 200, 365];
+  if (milestones.includes(s)) {
+    setTimeout(function() {
+      showStreakMilestone(s);
+    }, 500);
+  }
+}
+
+function showStreakMilestone(days) {
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999';
+  overlay.innerHTML = '<div style="font-size:60px">🔥</div>'
+    + '<div style="font-size:28px;font-weight:900;color:#ff6b6b;margin:12px 0">' + days + '日連続達成！</div>'
+    + '<div style="font-size:14px;color:var(--text2)">毎日の努力が力になる💪</div>'
+    + '<div style="display:flex;gap:10px;margin-top:20px">'
+    + '<button onclick="shareCard({type:\'streak\'});this.parentElement.parentElement.remove()" style="padding:10px 24px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;border:none;font-size:14px;cursor:pointer">📱 シェアする</button>'
+    + '<button onclick="this.parentElement.parentElement.remove()" style="padding:10px 24px;border-radius:8px;background:var(--surface2);color:#fff;font-weight:700;border:1px solid var(--border);font-size:14px;cursor:pointer">閉じる</button>'
+    + '</div>';
+  document.body.appendChild(overlay);
+  fireConfetti();
+}
+
+// Check mastered milestone (10, 25, 50, 100...)
+function checkMasteredMilestone() {
+  var m = DATA.problems.filter(p => getStage(p) === 'mastered').length;
+  var milestones = [10, 25, 50, 100, 200, 500];
+  if (milestones.includes(m)) {
+    setTimeout(function() {
+      var overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999';
+      overlay.innerHTML = '<div style="font-size:60px">✅</div>'
+        + '<div style="font-size:28px;font-weight:900;color:#4ecdc4;margin:12px 0">' + m + '問 定着達成！</div>'
+        + '<div style="font-size:14px;color:var(--text2)">着実に力がついてる📈</div>'
+        + '<div style="display:flex;gap:10px;margin-top:20px">'
+        + '<button onclick="shareCard({type:\'milestone\'});this.parentElement.parentElement.remove()" style="padding:10px 24px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;border:none;font-size:14px;cursor:pointer">📱 シェアする</button>'
+        + '<button onclick="this.parentElement.parentElement.remove()" style="padding:10px 24px;border-radius:8px;background:var(--surface2);color:#fff;font-weight:700;border:1px solid var(--border);font-size:14px;cursor:pointer">閉じる</button>'
+        + '</div>';
+      document.body.appendChild(overlay);
+      fireConfetti();
+    }, 800);
+  }
 }
 
 function renderStreak() {
@@ -2116,11 +2329,17 @@ function finishSession() {
       <div class="comp-stat"><div class="comp-stat-num" style="color:var(--success)">${sessionStats.correct}</div><div class="comp-stat-label">できた</div></div>
       <div class="comp-stat"><div class="comp-stat-num" style="color:var(--warning)">${sessionStats.hard}</div><div class="comp-stat-label">あやしい</div></div>
       <div class="comp-stat"><div class="comp-stat-num" style="color:var(--danger)">${sessionStats.wrong}</div><div class="comp-stat-label">できなかった</div></div>
+      <div style="grid-column:1/-1;text-align:center;margin-top:8px">
+        <button onclick="shareCard({type:'session'})" style="padding:8px 20px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;border:none;font-size:13px;cursor:pointer">📱 結果をシェア</button>
+      </div>
     `;
   }
   // log session
   DATA.sessionLog.push({ date: today(), ...sessionStats });
   saveData(DATA);
+  // Check milestones
+  checkStreakMilestone();
+  checkMasteredMilestone();
 }
 
 // ================================================================
