@@ -4755,7 +4755,6 @@ function saveExamGoal(){
     }else{mtEl.style.display='none'}
   }else if(mtEl){mtEl.style.display='none'}
   renderExamCountdown();
-applyMode();
 }
 
 // ================================================================
@@ -5135,6 +5134,8 @@ updateTimerDisplay();
 initTheme();
 initAuth();
 if(location.hash.startsWith("#sync="))importFromURL();
+renderExamCountdown();
+applyMode();
 renderToday();
 </script>
 </body>
