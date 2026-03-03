@@ -5,62 +5,64 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>revnote</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0f1117;
-  --surface: #1a1d27;
-  --surface2: #232736;
-  --border: #2e3347;
-  --text: #e8eaf0;
-  --text2: #8b8fa8;
-  --accent: #6c63ff;
-  --accent2: #4ecdc4;
-  --danger: #ff6b6b;
-  --warning: #ffd93d;
-  --success: #51cf66;
-  --frozen: #74c0fc;
-  --grad1: linear-gradient(135deg, #6c63ff 0%, #4ecdc4 100%);
-  --grad2: linear-gradient(135deg, #ff6b6b 0%, #ffd93d 100%);
-  --radius: 14px;
+  --bg: #1b1520;
+  --surface: #261e2d;
+  --surface2: #322839;
+  --border: #3d3348;
+  --text: #f0e8f4;
+  --text1: #f0e8f4;
+  --text2: #a898b4;
+  --accent: #f0896c;
+  --accent2: #7ecdb0;
+  --danger: #f07070;
+  --warning: #f5c842;
+  --success: #6dd08a;
+  --frozen: #7eb8e0;
+  --grad1: linear-gradient(135deg, #f0896c 0%, #f5c842 100%);
+  --grad2: linear-gradient(135deg, #f07070 0%, #f5c842 100%);
+  --radius: 16px;
   --shadow: 0 4px 24px rgba(0,0,0,0.3);
-  --canvas-bg: #f5f5f5;
+  --canvas-bg: #f8f5f0;
 }
 /* Light theme */
 :root.light {
-  --bg: #f4f5f7;
+  --bg: #faf6f1;
   --surface: #ffffff;
-  --surface2: #eef0f4;
-  --border: #d8dce6;
-  --text: #1a1d27;
-  --text2: #6b7085;
-  --shadow: 0 4px 24px rgba(0,0,0,0.08);
+  --surface2: #f2ede6;
+  --border: #e4ddd4;
+  --text: #3d2e24;
+  --text1: #3d2e24;
+  --text2: #9a8a7c;
+  --shadow: 0 4px 24px rgba(0,0,0,0.06);
   --canvas-bg: #ffffff;
 }
 
 /* STRETCH ZONE */
 .sz-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap}
 .stage-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 8px;border-radius:12px;white-space:nowrap}
-.stage-new{background:rgba(108,99,255,.15);color:var(--accent)}
-.stage-learning{background:rgba(255,193,7,.15);color:#f0ad4e}
-.stage-reviewing{background:rgba(78,205,196,.15);color:#4ecdc4}
-.stage-mastered{background:rgba(0,200,83,.15);color:var(--success)}
-.stage-frozen{background:rgba(120,144,180,.15);color:var(--frozen)}
+.stage-new{background:rgba(240,137,108,.15);color:var(--accent)}
+.stage-learning{background:rgba(245,200,66,.15);color:#e8b030}
+.stage-reviewing{background:rgba(126,205,176,.15);color:var(--accent2)}
+.stage-mastered{background:rgba(109,208,138,.15);color:var(--success)}
+.stage-frozen{background:rgba(126,184,224,.15);color:var(--frozen)}
 .type-badge{display:inline-flex;align-items:center;font-size:9px;font-weight:600;padding:1px 6px;border-radius:8px;white-space:nowrap}
-.type-flash{background:rgba(255,193,7,.12);color:#f0ad4e}
-.type-think{background:rgba(108,99,255,.12);color:var(--accent)}
+.type-flash{background:rgba(245,200,66,.12);color:#e8b030}
+.type-think{background:rgba(240,137,108,.12);color:var(--accent)}
 @keyframes xpPop{0%{opacity:1;transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-80%) scale(1.3)}100%{opacity:0;transform:translate(-50%,-120%) scale(0.8)}}
-.sz-comfort{background:rgba(78,205,196,.15);color:#4ecdc4}
-.sz-stretch{background:rgba(108,99,255,.15);color:var(--accent)}
-.sz-panic{background:rgba(255,107,107,.15);color:var(--danger)}
+.sz-comfort{background:rgba(126,205,176,.15);color:var(--accent2)}
+.sz-stretch{background:rgba(240,137,108,.15);color:var(--accent)}
+.sz-panic{background:rgba(240,112,112,.15);color:var(--danger)}
 .sz-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
 .sz-card{border-radius:var(--radius);padding:14px;text-align:center;cursor:pointer;border:1px solid var(--border);transition:transform .15s}
 .sz-card:active{transform:scale(.97)}
 .sz-card .sz-num{font-size:28px;font-weight:900}
 .sz-card .sz-label{font-size:11px;margin-top:2px}
-.sz-comfort-card{background:rgba(78,205,196,.08)}
-.sz-stretch-card{background:rgba(108,99,255,.08)}
-.sz-panic-card{background:rgba(255,107,107,.08)}
+.sz-comfort-card{background:rgba(126,205,176,.08)}
+.sz-stretch-card{background:rgba(240,137,108,.08)}
+.sz-panic-card{background:rgba(240,112,112,.08)}
 .sz-bar{display:flex;height:6px;border-radius:3px;overflow:hidden;margin-top:8px;background:var(--surface2)}
 .sz-bar-seg{height:100%;transition:width .3s}
 /* TIMER BAR */
@@ -72,7 +74,7 @@
 /* SIDEBAR NAV */
 .nav-side{display:none;position:fixed;top:0;left:0;bottom:0;width:72px;background:var(--surface);border-right:1px solid var(--border);flex-direction:column;align-items:center;padding:12px 0;gap:4px;z-index:200;overflow-y:auto}
 .nav-side .s-item{display:flex;flex-direction:column;align-items:center;padding:10px 4px;gap:2px;color:var(--text2);font-size:9px;font-weight:500;cursor:pointer;border:none;background:none;border-radius:10px;width:64px}
-.nav-side .s-item.active{color:var(--accent);background:rgba(108,99,255,.1)}
+.nav-side .s-item.active{color:var(--accent);background:rgba(240,137,108,.1)}
 .nav-side .s-item span{font-size:20px}
 .nav-side .s-logo{font-size:14px;font-weight:900;color:var(--accent);margin-bottom:8px;padding:8px 0}
 /* CALENDAR */
@@ -85,7 +87,7 @@
 .curr-row{display:grid;grid-template-columns:28px 1fr 1fr 1fr 1fr;gap:1px;background:var(--border)}
 .curr-cell{background:var(--surface);padding:5px 6px;font-size:11px;overflow:hidden;text-overflow:ellipsis}
 .curr-cell.curr-n{text-align:center;display:flex;align-items:center;justify-content:center;background:var(--surface2)}
-.curr-topic{cursor:pointer;transition:background .15s}.curr-topic:hover,.curr-topic:active{background:rgba(108,99,255,.1)}
+.curr-topic{cursor:pointer;transition:background .15s}.curr-topic:hover,.curr-topic:active{background:rgba(240,137,108,.1)}
 .curr-header .curr-cell{background:var(--surface2);text-align:center;padding:4px 2px}
 @media(max-width:700px){.curr-row{grid-template-columns:24px 1fr 1fr 1fr 1fr}.curr-cell{padding:3px 4px;font-size:10px}}
 .cal-day.has-data::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--success)}
@@ -97,7 +99,7 @@
 
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
-  font-family: 'Noto Sans JP', sans-serif;
+  font-family: 'Zen Maru Gothic', sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100dvh;
@@ -124,7 +126,7 @@ body {
 .nav-item svg { width: 22px; height: 22px; }
 
 /* === SCREENS === */
-.screen { display: none; padding: 16px 16px 90px; max-width: 480px; margin: 0 auto; }
+.screen { display: none; padding: 16px 16px 90px 24px; max-width: 480px; margin: 0 auto; }
 .screen.active { display: block; }
 #screenParent { max-width: 900px; }
 
@@ -195,12 +197,11 @@ body {
   display: inline-block; padding: 3px 10px; border-radius: 20px;
   font-size: 11px; font-weight: 700; margin-bottom: 10px;
 }
-.badge-math { background: rgba(108,99,255,.15); color: var(--accent); }
-.badge-science { background: rgba(78,205,196,.15); color: var(--accent2); }
-.badge-social { background: rgba(255,217,61,.15); color: var(--warning); }
-.badge-english { background: rgba(54,160,255,.15); color: #54a0ff; }
-.badge-japanese { background: rgba(255,107,107,.15); color: var(--danger); }
-.badge-english { background: rgba(116,192,252,.15); color: var(--frozen); }
+.badge-math { background: rgba(240,137,108,.15); color: var(--accent); }
+.badge-science { background: rgba(126,205,176,.15); color: var(--accent2); }
+.badge-social { background: rgba(245,200,66,.15); color: #e8b030; }
+.badge-english { background: rgba(126,184,224,.15); color: var(--frozen); }
+.badge-japanese { background: rgba(230,140,160,.15); color: #e08ca0; }
 .card-source { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
 .card-topic { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
 .card-content { font-size: 14px; color: var(--text2); line-height: 1.6; }
@@ -212,8 +213,8 @@ body {
   font-size: 10px; padding: 3px 8px; border-radius: 6px;
   background: var(--surface2); color: var(--text2);
 }
-.meta-freq-high { color: var(--danger); border: 1px solid rgba(255,107,107,.3); }
-.meta-diff-hard { color: var(--warning); border: 1px solid rgba(255,217,61,.3); }
+.meta-freq-high { color: var(--danger); border: 1px solid rgba(240,112,112,.3); }
+.meta-diff-hard { color: var(--warning); border: 1px solid rgba(245,200,66,.3); }
 
 /* answer buttons */
 .answer-btns {
@@ -276,9 +277,9 @@ body {
   font-family: inherit; transition: transform .15s;
 }
 .btn-ans:active { transform: scale(0.95); }
-.btn-correct { background: rgba(81,207,102,.15); color: var(--success); border: 1px solid rgba(81,207,102,.3); }
-.btn-wrong { background: rgba(255,107,107,.15); color: var(--danger); border: 1px solid rgba(255,107,107,.3); }
-.btn-hard { background: rgba(255,217,61,.12); color: var(--warning); border: 1px solid rgba(255,217,61,.25); }
+.btn-correct { background: rgba(109,208,138,.15); color: var(--success); border: 1px solid rgba(109,208,138,.3); }
+.btn-wrong { background: rgba(240,112,112,.15); color: var(--danger); border: 1px solid rgba(240,112,112,.3); }
+.btn-hard { background: rgba(245,200,66,.12); color: #e8b030; border: 1px solid rgba(245,200,66,.25); }
 
 /* === COMPLETION === */
 .completion {
@@ -299,7 +300,7 @@ body {
 .comp-stat-label { font-size: 10px; color: var(--text2); margin-top: 2px; }
 .graduated-flash {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(81,207,102,.12); display: flex; align-items: center;
+  background: rgba(109,208,138,.12); display: flex; align-items: center;
   justify-content: center; z-index: 200; opacity: 0;
   pointer-events: none; transition: opacity .4s;
 }
@@ -329,7 +330,7 @@ body {
   cursor: pointer; font-family: inherit; margin-top: 8px;
 }
 .queue-warning {
-  background: rgba(255,217,61,.1); border: 1px solid rgba(255,217,61,.25);
+  background: rgba(245,200,66,.1); border: 1px solid rgba(245,200,66,.25);
   border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;
   font-size: 12px; color: var(--warning);
 }
@@ -346,13 +347,13 @@ body {
 }
 .zone-card .num { font-size: 28px; font-weight: 900; }
 .zone-card .label { font-size: 11px; color: var(--text2); margin-top: 2px; }
-.zone-priority { border-color: rgba(255,107,107,.3); }
+.zone-priority { border-color: rgba(240,112,112,.3); }
 .zone-priority .num { color: var(--danger); }
-.zone-graduated { border-color: rgba(81,207,102,.3); }
+.zone-graduated { border-color: rgba(109,208,138,.3); }
 .zone-graduated .num { color: var(--success); }
-.zone-frozen { border-color: rgba(116,192,252,.3); }
+.zone-frozen { border-color: rgba(126,184,224,.3); }
 .zone-frozen .num { color: var(--frozen); }
-.zone-review { border-color: rgba(255,217,61,.3); }
+.zone-review { border-color: rgba(245,200,66,.3); }
 .zone-review .num { color: var(--warning); }
 
 .subject-breakdown {
@@ -400,12 +401,12 @@ body {
 .pli-actions { display: flex; gap: 6px; }
 .btn-freeze {
   padding: 4px 10px; border-radius: 6px; font-size: 10px;
-  border: 1px solid var(--frozen); background: rgba(116,192,252,.1);
+  border: 1px solid var(--frozen); background: rgba(126,184,224,.1);
   color: var(--frozen); cursor: pointer; font-family: inherit;
 }
 .btn-delete-p {
   padding: 4px 10px; border-radius: 6px; font-size: 10px;
-  border: 1px solid var(--danger); background: rgba(255,107,107,.08);
+  border: 1px solid var(--danger); background: rgba(240,112,112,.08);
   color: var(--danger); cursor: pointer; font-family: inherit;
 }
 
@@ -431,7 +432,7 @@ body {
   cursor: pointer; font-family: inherit; text-align: center;
 }
 .btn-danger {
-  background: rgba(255,107,107,.1); border-color: rgba(255,107,107,.3);
+  background: rgba(240,112,112,.1); border-color: rgba(240,112,112,.3);
   color: var(--danger);
 }
 #importFile { display: none; }
@@ -446,7 +447,7 @@ body {
   justify-content: center; flex-direction: column; gap: 6px;
 }
 .img-drop:hover, .img-drop.dragover {
-  border-color: var(--accent); background: rgba(108,99,255,.05);
+  border-color: var(--accent); background: rgba(240,137,108,.05);
 }
 .img-drop input[type="file"] {
   position: absolute; inset: 0; opacity: 0; cursor: pointer;
@@ -492,7 +493,7 @@ body {
   nav.nav{display:none!important}
   .nav-side{display:flex!important}
   .timer-bar{left:72px}
-  .screen { max-width:none; padding:56px 16px 8px 16px; margin-left:72px; }
+  .screen { max-width:none; padding:56px 16px 8px 24px; margin-left:72px; }
   /* Today: 2-column, left=info+problem, right=scratchpad */
   .today-layout{display:grid;grid-template-columns:340px 1fr;gap:12px;height:calc(100vh - 64px)}
   .today-left{overflow-y:auto;max-height:calc(100vh - 64px);padding-right:8px;-webkit-overflow-scrolling:touch}
@@ -526,13 +527,13 @@ body {
 
 /* freeze candidate notification */
 .freeze-alert {
-  background: rgba(116,192,252,.1); border: 1px solid rgba(116,192,252,.25);
+  background: rgba(126,184,224,.1); border: 1px solid rgba(126,184,224,.25);
   border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;
   font-size: 12px; color: var(--frozen); display: flex; align-items: center; gap: 10px;
 }
 .freeze-alert button {
   padding: 5px 12px; border-radius: 6px; font-size: 11px;
-  border: 1px solid var(--frozen); background: rgba(116,192,252,.15);
+  border: 1px solid var(--frozen); background: rgba(126,184,224,.15);
   color: var(--frozen); cursor: pointer; font-family: inherit; white-space: nowrap;
 }
 @keyframes fadeInOut { 0%{opacity:0;transform:translateY(-8px)} 15%{opacity:1;transform:translateY(0)} 85%{opacity:1} 100%{opacity:0} }
@@ -545,37 +546,46 @@ body {
 </head>
 <body>
 
-<!-- TIMER BAR -->
+<!-- HEADER BAR -->
 <div class="timer-bar">
   <div style="display:flex;align-items:center;gap:8px">
-    <span style="font-size:11px;font-weight:800;color:var(--accent);letter-spacing:-.5px;opacity:0.7">revnote</span>
-    <div class="timer-display" id="timerDisplay">25:00</div>
+    <span style="font-size:12px;font-weight:900;color:var(--accent);letter-spacing:-.5px;font-family:'Zen Maru Gothic',sans-serif">revnote</span>
+    <div class="timer-display" id="pomodoroDisplay">25:00</div>
     <button class="timer-btn" id="timerStartBtn" onclick="toggleTimer()">▶</button>
     <button class="timer-btn" onclick="resetTimer()">↺</button>
     <button class="timer-btn" id="timerModeBtn" onclick="cycleTimerMode()">25分</button>
   </div>
-  <div id="countdownBadge" class="countdown-badge"></div>
-<button id="modeToggleBtn" onclick="toggleParentChild()" style="font-size:10px;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-weight:600;white-space:nowrap">👦 子ども</button>
+  <div id="headerProgress" style="display:flex;align-items:center;gap:6px;flex:1;max-width:200px;margin:0 8px">
+    <span id="headerQueueLabel" style="font-size:10px;color:var(--text2);white-space:nowrap;font-weight:600">0/0</span>
+    <div style="flex:1;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden">
+      <div id="headerQueueBar" style="height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width .5s"></div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px">
+    <div id="countdownBadge" class="countdown-badge"></div>
+    <button onclick="saveDataNow()" style="font-size:10px;padding:3px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-weight:600" id="headerSaveBtn">保存</button>
+    <button id="modeToggleBtn" onclick="toggleParentChild()" style="font-size:10px;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-weight:600;white-space:nowrap">子ども</button>
+  </div>
 </div>
 
 <!-- SIDEBAR NAV (landscape) -->
 <nav class="nav-side" id="navSide">
-  <div class="s-logo">rn<div style="font-size:8px;color:var(--text2);font-weight:400">v4.0</div></div>
-  <button class="s-item active" data-screen="Today" onclick="switchScreen('Today')"><span>⚔️</span>今日</button>
-  <button class="s-item" data-screen="Add" onclick="switchScreen('Add')"><span>📸</span>間違い登録</button>
-  <button class="s-item" data-screen="List" onclick="switchScreen('List')"><span>📚</span>一覧</button>
-  <button class="s-item" data-screen="Calendar" onclick="switchScreen('Calendar')"><span>📅</span>履歴</button>
-  <button class="s-item" data-screen="Dash" onclick="switchScreen('Dash')"><span>📊</span>分析</button>
-  <button class="s-item" data-screen="Parent" onclick="switchScreen('Parent');renderParentDash()"><span>👨‍👩‍👧</span>保護者</button>
-  <button class="s-item" data-screen="Settings" onclick="switchScreen('Settings')"><span>⚙️</span>設定</button>
+  <div class="s-logo" style="font-family:'Zen Maru Gothic',sans-serif">rn<div style="font-size:8px;color:var(--text2);font-weight:400">v4.5</div></div>
+  <button class="s-item active" data-screen="Today" onclick="switchScreen('Today')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L2 12h3v8h6v-5h2v5h6v-8h3L12 3z"/></svg>今日</button>
+  <button class="s-item" data-screen="Add" onclick="switchScreen('Add')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>登録</button>
+  <button class="s-item" data-screen="List" onclick="switchScreen('List')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>一覧</button>
+  <button class="s-item" data-screen="Calendar" onclick="switchScreen('Calendar')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>履歴</button>
+  <button class="s-item" data-screen="Dash" onclick="switchScreen('Dash')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>分析</button>
+  <button class="s-item" data-screen="Parent" onclick="switchScreen('Parent');renderParentDash()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>保護者</button>
+  <button class="s-item" data-screen="Settings" onclick="switchScreen('Settings')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>設定</button>
   <div style="flex:1"></div>
-  <button class="s-item" onclick="toggleTheme()" id="sideThemeBtn"><span>🌙</span>テーマ</button>
+  <button class="s-item" onclick="toggleTheme()" id="sideThemeBtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>テーマ</button>
 </nav>
 
 <!-- === GRADUATED FLASH === -->
 <div class="graduated-flash" id="graduatedFlash">
   <div class="graduated-inner">
-    <div class="icon">🎉</div>
+    <div style="font-size:36px;font-weight:900;color:var(--success)">CLEAR</div>
     <h2 style="font-size:22px;font-weight:900;margin-top:12px">定着おめでとう！</h2>
     <p id="graduatedMsg" style="color:var(--text2);font-size:14px;margin-top:6px"></p>
   </div>
@@ -586,22 +596,13 @@ body {
   <div class="today-layout">
     <!-- LEFT PANE: today info + problem/answer -->
     <div class="today-left">
-      <div class="header">
-        <div>
-          <h1>📓 revnote</h1>
-          <div class="header-sub" id="todayDate"></div>
-        </div>
-      </div>
-      <div class="streak-bar">
-        <div class="streak-fire">🔥</div>
-        <div>
-          <div class="streak-num" id="streakCount">0</div>
-          <div class="streak-label">日連続</div>
-        </div>
-        <div class="streak-days" id="streakDots"></div>
+      <!-- Progress Lamps -->
+      <div id="progressLamps" style="display:flex;align-items:center;gap:6px;padding:8px 12px;flex-wrap:wrap">
+        <span id="lampLabel" style="font-size:11px;color:var(--text2);font-weight:600;white-space:nowrap"></span>
+        <div id="lampDots" style="display:flex;gap:4px;flex-wrap:wrap;flex:1"></div>
       </div>
       <div id="monthTopics" class="card" style="display:none;background:var(--surface);border-radius:var(--radius);padding:12px 16px;border:1px solid var(--border);margin-bottom:12px">
-        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">📖 今月の学習単元</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">今月の学習単元</div>
         <div id="monthTopicsList" style="font-size:13px;font-weight:600"></div>
       </div>
       <div id="freezeAlerts"></div>
@@ -613,26 +614,26 @@ body {
         <div id="queueStretchBar" style="margin-top:6px"></div>
         <!-- Session filter -->
         <div id="sessionFilter" style="margin-top:10px;padding:10px;background:var(--surface2);border-radius:10px">
-          <div style="font-size:11px;font-weight:600;margin-bottom:6px;color:var(--text2)">📚 今回やる範囲</div>
+          <div style="font-size:11px;font-weight:600;margin-bottom:6px;color:var(--text2)">今回やる範囲</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px" id="filterSubjectChips"></div>
           <div style="display:flex;gap:6px;flex-wrap:wrap" id="filterTypeChips">
             <button class="filter-chip active" onclick="setSessionType('all',this)">全部</button>
-            <button class="filter-chip" onclick="setSessionType('think',this)">🧠 思考</button>
-            <button class="filter-chip" onclick="setSessionType('flash',this)">⚡ 暗記</button>
+            <button class="filter-chip" onclick="setSessionType('think',this)">思考</button>
+            <button class="filter-chip" onclick="setSessionType('flash',this)">暗記</button>
           </div>
         </div>
         <!-- XP & Level -->
         <div id="playerStats" style="margin-top:10px;display:flex;align-items:center;gap:10px">
           <div style="font-size:13px;font-weight:700" id="playerLevel">Lv.1</div>
           <div style="flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden">
-            <div id="xpBar" style="height:100%;background:linear-gradient(90deg,var(--accent),#ff6b6b);border-radius:4px;width:0%;transition:width .5s"></div>
+            <div id="xpBar" style="height:100%;background:linear-gradient(90deg,var(--accent),#f07070);border-radius:4px;width:0%;transition:width .5s"></div>
           </div>
           <div style="font-size:10px;color:var(--text2)" id="xpText">0 / 100 XP</div>
         </div>
         <button class="btn-start" id="btnStart" onclick="startFilteredSession()">復習をはじめる</button>
       </div>
       <div class="completion" id="completionView" style="display:none">
-        <div class="completion-icon">🏆</div>
+        <div style="font-size:36px;font-weight:900;color:var(--accent)">COMPLETE</div>
         <h2>今日のリベンジ完了！</h2>
         <p id="completionMsg"></p>
         <div class="completion-stats" id="completionStats"></div>
@@ -640,78 +641,55 @@ body {
       <!-- Problem card + answer (in left pane) -->
       <div class="card-wrap" id="cardWrap">
         <div id="cardProgress" style="font-size:12px;color:var(--text2);text-align:center"></div>
-        <!-- Problem Timer -->
-        <div id="problemTimer" style="display:none;text-align:center;margin:6px 0">
-          <div style="display:flex;align-items:center;justify-content:center;gap:8px">
-            <span id="timerDisplay" style="font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent)">5:00</span>
-            <span id="timerLabel" style="font-size:10px;color:var(--text2)">🧠 思考タイム</span>
-          </div>
-          <div style="height:3px;background:var(--surface2);border-radius:2px;margin-top:4px;overflow:hidden">
-            <div id="timerBar" style="height:100%;background:var(--accent);border-radius:2px;width:100%;transition:width 1s linear"></div>
-          </div>
+        <!-- Problem Timer (count up) -->
+        <div id="problemTimer" style="text-align:center;margin:4px 0">
+          <span id="pTimerDisplay" style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text2)">0:00</span>
         </div>
         <div class="problem-card" id="problemCard"></div>
         <!-- Hint button (before reveal) -->
-        <button class="btn-reveal" id="btnHint" onclick="showHint()" style="display:none;background:var(--surface2);border-color:var(--border);color:var(--text2)">💡 ヒントを見る</button>
-        <button class="btn-reveal" id="btnAIHint" onclick="showAIHint()" style="background:linear-gradient(135deg,#9b59b6,#3498db);border:none;color:#fff;font-weight:700">🤖 AI解説</button>
-        <div id="aiHintSection" style="display:none;padding:12px 14px;background:linear-gradient(135deg,rgba(155,89,182,.06),rgba(52,152,219,.06));border:1px solid rgba(155,89,182,.2);border-radius:10px;margin:6px 0;font-size:13px;line-height:1.8;color:var(--text1);white-space:pre-wrap"></div>
-        <div id="hintSection" style="display:none;padding:10px 14px;background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.2);border-radius:8px;margin:6px 0;font-size:13px;color:var(--warning)"></div>
-        <button class="btn-reveal" id="btnReveal" onclick="revealAnswer()">👁 答えを見る</button>
+        <button class="btn-reveal" id="btnHint" onclick="toggleHint()" style="display:none;background:var(--surface2);border-color:var(--border);color:var(--text2)">メモ・ヒントを見る</button>
+        <div id="hintSection" style="display:none;padding:10px 14px;background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.2);border-radius:8px;margin:6px 0;font-size:13px;color:var(--text1);white-space:pre-wrap"></div>
+        <button class="btn-reveal" id="btnReveal" onclick="revealAnswer()">答えを見る</button>
         <div class="answer-section" id="answerSection"></div>
         <div class="review-memo" id="reviewMemo" style="display:none">
           <textarea id="reviewMemoText" placeholder="メモ（気づいたこと、間違えたポイントなど）"></textarea>
         </div>
         <div class="answer-btns" id="answerBtns" style="display:none">
-          <button class="btn-ans btn-wrong" onclick="recordAnswer(0)">❌ できなかった</button>
-          <button class="btn-ans btn-hard" onclick="recordAnswer(3)">🤔 あやしい</button>
-          <button class="btn-ans btn-correct" onclick="recordAnswer(5)">✅ できた！</button>
+          <button class="btn-ans btn-wrong" onclick="recordAnswer(0)">× できなかった</button>
+          <button class="btn-ans btn-hard" onclick="recordAnswer(3)">△ あやしい</button>
+          <button class="btn-ans btn-correct" onclick="recordAnswer(5)">◎ できた！</button>
         </div>
-        <!-- Mistake reason (shown after ❌) -->
+        <!-- Mistake reason (shown after ×) -->
         <div id="mistakeReason" style="display:none;margin-top:8px;text-align:center">
           <div style="font-size:11px;color:var(--text2);margin-bottom:6px">間違えた理由は？</div>
           <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
-            <button class="filter-chip" onclick="tagMistake('計算ミス')">🔢 計算ミス</button>
-            <button class="filter-chip" onclick="tagMistake('読み違い')">📖 読み違い</button>
-            <button class="filter-chip" onclick="tagMistake('解法不明')">❓ 解法不明</button>
-            <button class="filter-chip" onclick="tagMistake('時間切れ')">⏰ 時間切れ</button>
+            <button class="filter-chip" onclick="tagMistake('計算ミス')">計算ミス</button>
+            <button class="filter-chip" onclick="tagMistake('読み違い')">読み違い</button>
+            <button class="filter-chip" onclick="tagMistake('知識不足')">知識不足</button>
+            <button class="filter-chip" onclick="tagMistake('解法不明')">解法不明</button>
+            <button class="filter-chip" onclick="tagMistake('ケアレス')">ケアレス</button>
+            <button class="filter-chip" onclick="tagMistake('時間切れ')">時間切れ</button>
             <button class="filter-chip" onclick="tagMistake('')">スキップ</button>
           </div>
-        </div>
-        <button class="btn-skip" id="btnSkip" onclick="skipProblem()" style="display:none">⏭ スキップ</button>
-        <!-- Swipe hint for flash -->
-        <div id="swipeHint" style="display:none;text-align:center;font-size:10px;color:var(--text2);margin-top:6px">
-          ← スワイプ: ❌ できなかった ｜ スワイプ →: ✅ できた
-        </div>
-      </div>
-      <div class="card" id="calCard" style="margin-top:12px;background:var(--surface);border-radius:var(--radius);padding:12px 16px;border:1px solid var(--border)">
-        <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleCalendar()">
-          <span style="font-size:12px;font-weight:600">📅 学習カレンダー</span>
-          <span id="calToggle" style="font-size:14px;color:var(--text2);transition:transform .2s">▶</span>
-        </div>
-        <div id="calBody" style="display:none;margin-top:8px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <button class="sp-btn" onclick="calNav(-1)">◀</button>
-            <h3 id="calTitle" style="font-size:13px;font-weight:700"></h3>
-            <button class="sp-btn" onclick="calNav(1)">▶</button>
-          </div>
-          <div class="cal-grid" id="calGrid"></div>
         </div>
       </div>
     </div>
     <!-- RIGHT PANE: scratchpad only -->
     <div class="today-right">
       <div class="scratchpad-wrap" id="scratchpadWrap">
-        <div class="scratchpad-toolbar" id="scratchpadToolbar">
-          <button class="sp-btn" onclick="undoScratchpad()">↩ 戻す</button>
-          <button class="sp-btn" onclick="clearScratchpad()">リセット</button>
-          <button class="sp-btn" id="spEraser" onclick="toggleEraser()">消しゴム</button>
-          <input type="range" min="1" max="8" value="3" id="spLineWidth" style="width:50px;accent-color:var(--accent)">
-          <div class="sp-color active" style="background:#333" onclick="setScratchColor('#333',this)"></div>
-          <div class="sp-color" style="background:#6c63ff" onclick="setScratchColor('#6c63ff',this)"></div>
-          <div class="sp-color" style="background:#ff6b6b" onclick="setScratchColor('#ff6b6b',this)"></div>
-          <div class="sp-color" style="background:#51cf66" onclick="setScratchColor('#51cf66',this)"></div>
+        <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden">
+          <div class="scratchpad-toolbar" id="scratchpadToolbar" style="position:relative;top:auto;right:auto;opacity:1;border:none;border-radius:0;border-bottom:1px solid var(--border);padding:6px 8px;background:var(--surface)">
+            <button class="sp-btn" onclick="undoScratchpad()">↩</button>
+            <button class="sp-btn" onclick="clearScratchpad()">消去</button>
+            <button class="sp-btn" id="spEraser" onclick="toggleEraser()">消しゴム</button>
+            <input type="range" min="1" max="8" value="3" id="spLineWidth" style="width:50px;accent-color:var(--accent)">
+            <div class="sp-color active" style="background:#333" onclick="setScratchColor('#333',this)"></div>
+            <div class="sp-color" style="background:#f0896c" onclick="setScratchColor('#f0896c',this)"></div>
+            <div class="sp-color" style="background:#f07070" onclick="setScratchColor('#f07070',this)"></div>
+            <div class="sp-color" style="background:#6dd08a" onclick="setScratchColor('#6dd08a',this)"></div>
+          </div>
+          <canvas class="scratchpad-canvas" id="scratchpadCanvas" width="500" height="350" style="border-radius:0"></canvas>
         </div>
-        <canvas class="scratchpad-canvas" id="scratchpadCanvas" width="500" height="350"></canvas>
       </div>
     </div>
   </div>
@@ -725,12 +703,12 @@ body {
   <!-- Mode toggle -->
   <div style="display:flex;gap:8px;margin-bottom:14px">
     <button class="filter-chip active" id="modeNormal" onclick="setAddMode('normal')">通常登録</button>
-    <button class="filter-chip" id="modeQuick" onclick="setAddMode('quick')">📷 かんたん登録</button>
+    <button class="filter-chip" id="modeQuick" onclick="setAddMode('quick')">かんたん登録</button>
   </div>
 
   <!-- Quick mode hint -->
   <div id="quickModeHint" style="display:none;background:var(--surface2);padding:10px 14px;border-radius:10px;margin-bottom:12px;font-size:12px;color:var(--text2)">
-    📷 教科を選んで写真を撮るだけ。単元や答えは後から追加できます。
+    教科を選んで写真を撮るだけ。単元や答えは後から追加できます。
   </div>
 
   <div class="form-group">
@@ -783,11 +761,11 @@ body {
   <div class="form-group">
     <label>なぜ間違えた？</label>
     <div style="display:flex;flex-wrap:wrap;gap:4px" id="addMistakeReasonBtns">
-      <button type="button" class="tag-chip" onclick="selectMistakeReason(this,'ケアレスミス')" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer">😅 ケアレスミス</button>
-      <button type="button" class="tag-chip" onclick="selectMistakeReason(this,'知識不足')" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer">📚 知識不足</button>
-      <button type="button" class="tag-chip" onclick="selectMistakeReason(this,'時間切れ')" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer">⏰ 時間切れ</button>
-      <button type="button" class="tag-chip" onclick="selectMistakeReason(this,'解法わからず')" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer">❓ 解法わからず</button>
-      <button type="button" class="tag-chip" onclick="selectMistakeReason(this,'問題の読み違い')" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer">👀 読み違い</button>
+      <button type="button" class="tag-chip" onclick="selectMistakeReason(this,'ケアレスミス')" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer">ケアレスミス</button>
+      <button type="button" class="tag-chip" onclick="selectMistakeReason(this,'知識不足')" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer">知識不足</button>
+      <button type="button" class="tag-chip" onclick="selectMistakeReason(this,'時間切れ')" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer">時間切れ</button>
+      <button type="button" class="tag-chip" onclick="selectMistakeReason(this,'解法わからず')" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer">解法わからず</button>
+      <button type="button" class="tag-chip" onclick="selectMistakeReason(this,'問題の読み違い')" style="font-size:11px;padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer"> 読み違い</button>
     </div>
     <input type="hidden" id="addMistakeReason" value="">
   </div>
@@ -805,9 +783,9 @@ body {
     <div id="contentImageArea" style="display:none">
       <div class="img-drop" id="contentImgDrop">
         <input type="file" accept="image/*" onchange="handleImgUpload(event,'content')">
-        <div id="contentImgPreview">📷 タップで選択 / ペーストも可</div>
+        <div id="contentImgPreview">タップで選択 / ペーストも可</div>
       </div>
-      <button class="sp-btn" style="margin-top:6px;width:100%;padding:10px" onclick="pasteFromClipboard('content')">📋 クリップボードから貼り付け</button>
+      <button class="sp-btn" style="margin-top:6px;width:100%;padding:10px" onclick="pasteFromClipboard('content')">クリップボードから貼り付け</button>
     </div>
   </div>
 
@@ -824,9 +802,9 @@ body {
     <div id="answerImageArea" style="display:none">
       <div class="img-drop" id="answerImgDrop">
         <input type="file" accept="image/*" onchange="handleImgUpload(event,'answer')">
-        <div id="answerImgPreview">📷 タップで選択 / ペーストも可</div>
+        <div id="answerImgPreview">タップで選択 / ペーストも可</div>
       </div>
-      <button class="sp-btn" style="margin-top:6px;width:100%;padding:10px" onclick="pasteFromClipboard('answer')">📋 クリップボードから貼り付け</button>
+      <button class="sp-btn" style="margin-top:6px;width:100%;padding:10px" onclick="pasteFromClipboard('answer')">クリップボードから貼り付け</button>
     </div>
   </div>
 
@@ -879,14 +857,14 @@ body {
   <!-- Tab: 一覧 / カリキュラム (sticky) -->
   <div style="position:sticky;top:0;z-index:20;background:var(--bg);padding-bottom:4px">
     <div style="display:flex;gap:0;border-bottom:2px solid var(--border)">
-      <button class="list-tab active" id="tabList" onclick="switchListTab('list')" style="flex:1;padding:8px;font-size:13px;font-weight:700;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--text1)">📚 一覧 <span id="listCountBadge" style="font-size:10px;font-weight:400;color:var(--text2)"></span></button>
-      <button class="list-tab" id="tabCurriculum" onclick="switchListTab('curriculum')" style="flex:1;padding:8px;font-size:13px;font-weight:700;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text2)">📖 カリキュラム</button>
+      <button class="list-tab active" id="tabList" onclick="switchListTab('list')" style="flex:1;padding:8px;font-size:13px;font-weight:700;border:none;background:none;cursor:pointer;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--text1)">一覧 <span id="listCountBadge" style="font-size:10px;font-weight:400;color:var(--text2)"></span></button>
+      <button class="list-tab" id="tabCurriculum" onclick="switchListTab('curriculum')" style="flex:1;padding:8px;font-size:13px;font-weight:700;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text2)">カリキュラム</button>
     </div>
   </div>
   <!-- List view -->
   <div id="listViewPane">
     <div style="margin-bottom:10px">
-      <input class="form-input" id="listSearch" type="search" placeholder="🔍 問題を検索（単元名・問題文・メモ・出典）" oninput="renderList()" style="width:100%;font-size:13px">
+      <input class="form-input" id="listSearch" type="search" placeholder="問題を検索（単元名・問題文・メモ・出典）" oninput="renderList()" style="width:100%;font-size:13px">
     </div>
     <div class="filter-row" id="filterRow"></div>
     <div class="filter-row" id="subjectFilterRow" style="margin-top:-6px"></div>
@@ -913,20 +891,20 @@ body {
 
 <!-- === SCREEN: CALENDAR (履歴) === -->
 <div class="screen" id="screenCalendar">
-  <div class="header"><h1>📅 学習履歴</h1></div>
+  <div class="header"><h1>学習履歴</h1></div>
   <!-- Streak summary -->
   <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;flex:1;min-width:100px;text-align:center">
       <div style="font-size:24px;font-weight:800;color:var(--danger)" id="calStreakNum">0</div>
-      <div style="font-size:10px;color:var(--text2)">🔥 連続日数</div>
+      <div style="font-size:10px;color:var(--text2)">連続日数</div>
     </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;flex:1;min-width:100px;text-align:center">
       <div style="font-size:24px;font-weight:800;color:var(--success)" id="calTotalDays">0</div>
-      <div style="font-size:10px;color:var(--text2)">📆 学習した日数</div>
+      <div style="font-size:10px;color:var(--text2)">学習した日数</div>
     </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;flex:1;min-width:100px;text-align:center">
       <div style="font-size:24px;font-weight:800;color:var(--accent)" id="calTotalProblems">0</div>
-      <div style="font-size:10px;color:var(--text2)">📝 累計問題数</div>
+      <div style="font-size:10px;color:var(--text2)">累計問題数</div>
     </div>
   </div>
   <!-- Full Calendar -->
@@ -952,7 +930,7 @@ body {
 <div class="screen" id="screenDash">
   <div class="header"><h1>ダッシュボード</h1></div>
   <div style="margin-bottom:16px">
-    <h3 style="font-size:14px;font-weight:700;margin-bottom:10px">🎯 ストレッチゾーン</h3>
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:10px">ストレッチゾーン</h3>
     <div style="font-size:11px;color:var(--text2);margin-bottom:8px">最適な負荷の問題を優先出題</div>
     <div id="stretchZoneGrid"></div>
     <div id="szDetailPanel" style="display:none;margin-top:8px;padding:12px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border)">
@@ -979,61 +957,61 @@ body {
 <div class="screen" id="screenParent">
   <div style="padding:16px;max-width:900px;margin:0 auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div style="font-size:18px;font-weight:800">👨‍👩‍👧 保護者ダッシュボード</div>
-      <button onclick="toggleParentChild()" style="font-size:12px;padding:6px 14px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-weight:700;cursor:pointer">👦 子ども画面へ</button>
+      <div style="font-size:18px;font-weight:800">保護者ダッシュボード</div>
+      <button onclick="toggleParentChild()" style="font-size:12px;padding:6px 14px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-weight:700;cursor:pointer">子ども画面へ</button>
     </div>
 
     <!-- Today's Activity Timeline -->
     <div class="card" style="background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--border);margin-bottom:14px">
-      <div style="font-size:14px;font-weight:800;margin-bottom:12px">📋 今日の学習ログ</div>
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">今日の学習ログ</div>
       <div id="parentTimeline"></div>
     </div>
 
     <!-- Weakness Heatmap -->
     <div class="card" style="background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--border);margin-bottom:14px">
-      <div style="font-size:14px;font-weight:800;margin-bottom:12px">🎯 弱点分析（単元別）</div>
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">弱点分析（単元別）</div>
       <div id="parentWeakness"></div>
     </div>
 
     <!-- Mistake Pattern -->
     <div class="card" style="background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--border);margin-bottom:14px">
-      <div style="font-size:14px;font-weight:800;margin-bottom:12px">🔍 間違いパターン</div>
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">間違いパターン</div>
       <div id="parentMistakePattern"></div>
     </div>
 
     <!-- Repeat Offenders -->
     <div class="card" style="background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--border);margin-bottom:14px">
-      <div style="font-size:14px;font-weight:800;margin-bottom:12px">⚠️ 繰り返し間違える問題</div>
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">繰り返し間違える問題</div>
       <div id="parentRepeatErrors"></div>
     </div>
 
     <!-- Weekly Stats -->
     <div class="card" style="background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--border);margin-bottom:14px">
-      <div style="font-size:14px;font-weight:800;margin-bottom:12px">📊 週間サマリー</div>
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">週間サマリー</div>
       <div id="parentWeekly"></div>
     </div>
 
     <!-- Phase 2: Priority Review Suggestion -->
-    <div class="card" style="background:linear-gradient(135deg,rgba(108,99,255,.06),rgba(78,205,196,.06));border-radius:var(--radius);padding:16px;border:1px solid var(--accent)33;margin-bottom:14px">
-      <div style="font-size:14px;font-weight:800;margin-bottom:12px">💡 今週の優先復習（自動提案）</div>
+    <div class="card" style="background:linear-gradient(135deg,rgba(240,137,108,.06),rgba(126,205,176,.06));border-radius:var(--radius);padding:16px;border:1px solid var(--accent)33;margin-bottom:14px">
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">今週の優先復習（自動提案）</div>
       <div id="parentPriority"></div>
     </div>
 
     <!-- Phase 2: Subject Balance -->
     <div class="card" style="background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--border);margin-bottom:14px">
-      <div style="font-size:14px;font-weight:800;margin-bottom:12px">📐 教科バランス</div>
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">教科バランス</div>
       <div id="parentSubjectBalance"></div>
     </div>
 
     <!-- Phase 2: Growth Tracker -->
     <div class="card" style="background:var(--surface);border-radius:var(--radius);padding:16px;border:1px solid var(--border);margin-bottom:14px">
-      <div style="font-size:14px;font-weight:800;margin-bottom:12px">📈 成長の記録（過去4週間）</div>
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">成長の記録（過去4週間）</div>
       <div id="parentGrowth"></div>
     </div>
 
     <!-- Phase 3: AI Insights -->
     <div class="card" style="background:linear-gradient(135deg,rgba(155,89,182,.06),rgba(52,152,219,.06));border-radius:var(--radius);padding:16px;border:1px solid rgba(155,89,182,.2);margin-bottom:14px">
-      <div style="font-size:14px;font-weight:800;margin-bottom:12px">🤖 学習アドバイス</div>
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">学習アドバイス</div>
       <div id="parentAdvice"></div>
     </div>
   </div>
@@ -1043,7 +1021,7 @@ body {
   <div class="header"><h1>設定</h1></div>
   <!-- Cloud Auth -->
   <div class="setting-card" id="authCard">
-    <h3>☁️ クラウド同期</h3>
+    <h3>クラウド同期</h3>
     <div id="authLoggedOut">
       <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px">
         ログインすると問題データがクラウドに保存され、<br>複数端末で同期・親子共有ができます。
@@ -1060,14 +1038,14 @@ body {
     </div>
     <div id="authLoggedIn" style="display:none">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span style="font-size:13px">✅ <strong id="authUserEmail"></strong></span>
-        <button class="btn-export" onclick="cloudSync()" style="border-color:var(--accent);color:var(--accent)">🔄 今すぐ同期</button>
+        <span style="font-size:13px"> <strong id="authUserEmail"></strong></span>
+        <button class="btn-export" onclick="cloudSync()" style="border-color:var(--accent);color:var(--accent)">同期する</button>
         <button class="btn-export" onclick="authLogout()">ログアウト</button>
       </div>
       <div id="syncStatus" style="font-size:11px;color:var(--text2);margin-top:6px"></div>
     </div>
   </div>
-  <div class="setting-card"><h3>👶 お子様情報</h3>
+  <div class="setting-card"><h3>お子様情報</h3>
     <div class="setting-row"><span class="setting-label">生年月日</span><input type="date" class="form-input" id="settingBirthDate" onchange="saveBirthJuku()" style="width:auto"></div>
     <div class="setting-row" style="margin-top:8px"><span class="setting-label">準拠塾</span>
       <select class="form-select" id="settingJuku" onchange="saveBirthJuku()" style="width:auto;padding:6px 12px;font-size:13px">
@@ -1079,33 +1057,14 @@ body {
     </div>
     <div id="jukuInfo" style="margin-top:8px;font-size:12px;color:var(--text2)"></div>
   </div>
-  <div class="setting-card"><h3>🎯 入試目標</h3>
+  <div class="setting-card"><h3>入試目標</h3>
     <div class="setting-row"><span class="setting-label">入試日</span><input type="date" class="form-input" id="settingExamDate" onchange="saveExamGoal()" style="width:auto"></div>
     <div class="setting-row" style="margin-top:8px"><span class="setting-label">目標校</span><input class="form-input" id="settingExamName" onchange="saveExamGoal()" placeholder="例: 開成中学" style="width:180px"></div>
   </div>
-  <div class="setting-card">
-    <h3>🤖 AI解説（Claude API）</h3>
-    <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px">
-      Anthropic APIキーを設定すると、問題の解説・ヒント・類題提案をAIが生成します。<br>
-      <a href="https://console.anthropic.com/" target="_blank" style="color:var(--accent)">console.anthropic.com</a> でキーを取得できます。
-    </div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <input class="form-input" id="settingAPIKey" type="password" placeholder="sk-ant-api03-..." style="flex:1;font-size:12px" onchange="saveAPIKey()">
-      <button class="btn-export" onclick="testAIConnection()" style="white-space:nowrap;border-color:var(--accent);color:var(--accent)">接続テスト</button>
-    </div>
-    <div style="margin-top:6px;display:flex;gap:8px;align-items:center">
-      <span style="font-size:11px;color:var(--text2)">モデル:</span>
-      <select class="form-select" id="settingAIModel" onchange="saveAPIKey()" style="font-size:11px;padding:4px 8px;width:auto">
-        <option value="claude-haiku-4-5-20251001">Haiku 4.5（安い・速い）</option>
-        <option value="claude-sonnet-4-5-20250929">Sonnet 4.5（賢い）</option>
-      </select>
-    </div>
-    <div id="aiTestResult" style="font-size:11px;margin-top:6px;min-height:16px"></div>
-  </div>
-  <div class="setting-card"><h3>🎨 テーマ</h3>
+  <div class="setting-card"><h3>テーマ</h3>
     <div class="setting-row">
       <span class="setting-label">表示モード</span>
-      <button class="btn-export" id="settingThemeBtn" onclick="toggleTheme()" style="min-width:100px">🌙 ダーク</button>
+      <button class="btn-export" id="settingThemeBtn" onclick="toggleTheme()" style="min-width:100px">ダーク</button>
     </div>
   </div>
   <div class="setting-card">
@@ -1129,14 +1088,14 @@ body {
       <span><input type="range" class="range-input" id="settingFreeze" min="3" max="10" value="5" oninput="updateFreezeLabel()"> <span class="setting-val" id="freezeLabel">5回</span></span>
     </div>
   </div>
-  <div class="setting-card"><h3>🔄 親子同期</h3>
+  <div class="setting-card"><h3>親子同期</h3>
     <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px">
       親のiPadで登録 → エクスポート → 子のiPadでインポート<br>
       <strong style="color:var(--accent)">共有リンク:</strong> URLにデータを埋め込み。サーバー不要で同期。
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-      <button class="btn-export" onclick="generateShareLink()" style="border-color:var(--accent);color:var(--accent)">🔗 共有リンク生成</button>
-      <button class="btn-export" onclick="importFromURL()">📲 リンクから取込</button>
+      <button class="btn-export" onclick="generateShareLink()" style="border-color:var(--accent);color:var(--accent)"> 共有リンク生成</button>
+      <button class="btn-export" onclick="importFromURL()">リンクから取込</button>
     </div>
     <div id="shareLinkArea" style="display:none;margin-top:8px">
       <textarea id="shareLinkText" class="form-textarea" style="min-height:40px;font-size:10px" readonly></textarea>
@@ -1147,16 +1106,23 @@ body {
     <h3>データ管理</h3>
     <div style="font-size:12px;color:var(--text2);margin-bottom:8px" id="dataCountInfo"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn-export" onclick="exportData()">📤 エクスポート</button>
-      <label class="btn-import-label">📥 インポート<input type="file" id="importFile" accept=".json" onchange="importData(event)"></label>
+      <button class="btn-export" onclick="exportData()">エクスポート</button>
+      <label class="btn-import-label">インポート<input type="file" id="importFile" accept=".json" onchange="importData(event)"></label>
     </div>
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn-export" onclick="deleteSampleData()" style="border-color:var(--warning);color:var(--warning)">🧹 サンプルデータ削除</button>
-      <button class="btn-export btn-danger" onclick="confirmResetAll()" style="border-color:var(--danger);color:var(--danger)">🗑 全データ削除</button>
+      <button class="btn-export" onclick="deleteSampleData()" style="border-color:var(--warning);color:var(--warning)"> サンプルデータ削除</button>
+      <button class="btn-export btn-danger" onclick="confirmResetAll()" style="border-color:var(--danger);color:var(--danger)"> 全データ削除</button>
     </div>
     <div style="margin-top:12px">
-      <button class="btn-export" onclick="loadSampleData()">📋 サンプルデータを読み込む（4・5・6年 全教科）</button>
+      <button class="btn-export" onclick="loadSampleData()">サンプルデータを読み込む（4・5・6年 全教科）</button>
     </div>
+  </div>
+  <div class="setting-card">
+    <h3>デッキ管理</h3>
+    <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px">
+      学年・教科ごとにデッキを追加・削除できます。
+    </div>
+    <div id="deckManagerArea"></div>
   </div>
   <div class="setting-card">
     <h3>忘却曲線アルゴリズム</h3>
@@ -1172,27 +1138,27 @@ body {
 </div>
 <nav class="nav">
   <button class="nav-item active" onclick="switchScreen('Today')">
-    <span style="font-size:20px">⚔️</span>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L2 12h3v8h6v-5h2v5h6v-8h3L12 3z"/></svg>
     今日
   </button>
   <button class="nav-item" onclick="switchScreen('Add')">
-    <span style="font-size:20px">📸</span>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
     登録
   </button>
   <button class="nav-item" onclick="switchScreen('List')">
-    <span style="font-size:20px">📚</span>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
     一覧
   </button>
   <button class="nav-item" onclick="switchScreen('Calendar')">
-    <span style="font-size:20px">📅</span>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="8" cy="15" r="1.5" fill="currentColor"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
     履歴
   </button>
   <button class="nav-item" onclick="switchScreen('Dash')">
-    <span style="font-size:20px">📊</span>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
     分析
   </button>
   <button class="nav-item" onclick="switchScreen('Settings')">
-    <span style="font-size:20px">⚙️</span>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     設定
   </button>
 </nav>
@@ -1202,7 +1168,7 @@ body {
 // DATA LAYER
 // ================================================================
 var STORAGE_KEY = 'revengeNote_v1';
-var today = () => new Date().toISOString().split('T')[0];
+var today = () => { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); };
 
 // ================================================================
 // SUPABASE
@@ -1220,10 +1186,47 @@ function loadData() {
 }
 function saveData(d) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
-  // Debounced cloud sync
+  // Debounced cloud sync (silent, background only)
   if (_currentUser) {
     clearTimeout(_syncTimer);
     _syncTimer = setTimeout(function() { cloudSync(true); }, 3000);
+  }
+  updateHeaderProgress();
+}
+
+function saveDataNow() {
+  saveData(DATA);
+  var btn = document.getElementById('headerSaveBtn');
+  if (btn) {
+    btn.textContent = '保存済';
+    btn.style.color = 'var(--success)';
+    btn.style.borderColor = 'var(--success)';
+    setTimeout(function() {
+      btn.textContent = '保存';
+      btn.style.color = 'var(--text2)';
+      btn.style.borderColor = 'var(--border)';
+    }, 1500);
+  }
+  if (_currentUser) cloudSync(true);
+}
+
+function updateHeaderProgress() {
+  var t = today();
+  var doneToday = 0;
+  DATA.problems.forEach(function(p) {
+    (p.history || []).forEach(function(h) { if (h.date === t) doneToday++; });
+  });
+  var cap = parseInt(DATA.settings.dailyCap || 15);
+  var label = document.getElementById('headerQueueLabel');
+  var bar = document.getElementById('headerQueueBar');
+  if (label) label.textContent = doneToday + '/' + cap;
+  if (bar) bar.style.width = Math.min(100, Math.round(doneToday / cap * 100)) + '%';
+  if (doneToday >= cap && label) {
+    label.style.color = 'var(--success)';
+    if (bar) bar.style.background = 'var(--success)';
+  } else {
+    if (label) label.style.color = 'var(--text2)';
+    if (bar) bar.style.background = 'var(--accent)';
   }
 }
 function defaultData() {
@@ -1396,7 +1399,7 @@ function getProblemType(p) {
 }
 
 // Stage: visible to user
-// 🆕 new(0) → 📝 learning(1-2) → 🔄 reviewing(3+) → ✅ mastered(interval≧14)
+//  new(0) →  learning(1-2) →  reviewing(3+) →  mastered(interval≧14)
 function getStage(p) {
   if (p.frozen) return 'frozen';
   var reps = p.repetitions || 0;
@@ -1410,11 +1413,11 @@ function getStage(p) {
 function getStageBadge(p) {
   var s = getStage(p);
   var map = {
-    'new':       '<span class="stage-badge stage-new">🆕 はじめて</span>',
-    'learning':  '<span class="stage-badge stage-learning">📝 練習中</span>',
-    'reviewing': '<span class="stage-badge stage-reviewing">🔄 復習中</span>',
-    'mastered':  '<span class="stage-badge stage-mastered">✅ 定着</span>',
-    'frozen':    '<span class="stage-badge stage-frozen">❄️ 凍結</span>'
+    'new':       '<span class="stage-badge stage-new">● はじめて</span>',
+    'learning':  '<span class="stage-badge stage-learning">● 練習中</span>',
+    'reviewing': '<span class="stage-badge stage-reviewing">● 復習中</span>',
+    'mastered':  '<span class="stage-badge stage-mastered">● 定着</span>',
+    'frozen':    '<span class="stage-badge stage-frozen">● 凍結</span>'
   };
   return map[s] || '';
 }
@@ -1422,8 +1425,8 @@ function getStageBadge(p) {
 function getTypeBadge(p) {
   var t = getProblemType(p);
   return t === 'flash'
-    ? '<span class="type-badge type-flash">⚡暗記</span>'
-    : '<span class="type-badge type-think">🧠思考</span>';
+    ? '<span class="type-badge type-flash">暗記</span>'
+    : '<span class="type-badge type-think">思考</span>';
 }
 
 function calcNextReview(problem, quality) {
@@ -1454,12 +1457,13 @@ function calcNextReview(problem, quality) {
 
   var nextDate = new Date();
   nextDate.setDate(nextDate.getDate() + interval);
+  var nextDateStr = nextDate.getFullYear() + '-' + String(nextDate.getMonth()+1).padStart(2,'0') + '-' + String(nextDate.getDate()).padStart(2,'0');
 
   return {
     interval: interval,
     repetitions: reps,
     consecutiveFailures: consFailures,
-    nextReviewDate: nextDate.toISOString().split('T')[0],
+    nextReviewDate: nextDateStr,
     // Keep easeFactor/masteryLevel for backward compat but derive from reps
     easeFactor: problem.easeFactor || 2.5,
     masteryLevel: (interval >= 14 && reps >= 4) ? 4 : Math.min(3, reps)
@@ -1485,6 +1489,60 @@ function classifyZone(p) {
   var isHighFreq = p.frequency === 'high' || p.frequency === 'medium';
   if ((stage === 'new' || stage === 'learning') && isHighFreq) return 'priority';
   return 'review';
+}
+
+// ================================================================
+// PRIORITY NUDGE (tells child WHY this problem is shown)
+// ================================================================
+function getPriorityNudge(p) {
+  var hist = (p.history || []);
+  var stage = getStage(p);
+  if (stage === 'new') return '● はじめての挑戦！';
+  
+  // Find last mistake reason
+  var lastReason = '';
+  for (var i = hist.length - 1; i >= 0; i--) {
+    if (hist[i].mistakeReason) { lastReason = hist[i].mistakeReason; break; }
+  }
+  
+  // Recent trend
+  var recent = hist.slice(-3);
+  var recentWrong = recent.filter(function(h) { return h.result === 'incorrect'; }).length;
+  var lastResult = recent.length > 0 ? recent[recent.length - 1].result : '';
+  
+  if (lastResult === 'incorrect' && lastReason === '計算ミス') {
+    return '前回は計算ミス → 落ち着いて丁寧に';
+  }
+  if (lastResult === 'incorrect' && lastReason === 'ケアレス') {
+    return '前回はケアレスミス → 見直しを忘れずに';
+  }
+  if (lastResult === 'incorrect' && lastReason === '読み違い') {
+    return '前回は読み違い → 問題文をよく読もう';
+  }
+  if (lastResult === 'incorrect' && lastReason === '知識不足') {
+    return '知識を補ってから挑戦しよう';
+  }
+  if (lastResult === 'incorrect' && lastReason === '解法不明') {
+    return '解き方を確認してから挑戦しよう';
+  }
+  if (lastResult === 'incorrect' && lastReason === '時間切れ') {
+    return '前回は時間切れ → テンポよく！';
+  }
+  if (recentWrong >= 2) {
+    return '何度か間違えてる → 今日こそ！';
+  }
+  if (lastResult === 'hard') {
+    return '前回あやしかった → もう一度確認';
+  }
+  if (p.consecutiveFailures >= 3) {
+    return '苦手ポイント → ゆっくり考えよう';
+  }
+  // Overdue
+  var daysOverdue = Math.floor((new Date(today()) - new Date(p.nextReviewDate)) / 86400000);
+  if (daysOverdue >= 7) {
+    return daysOverdue + '日ぶり → 忘れてないかチェック';
+  }
+  return '';
 }
 
 // ================================================================
@@ -1529,21 +1587,72 @@ function generateQueue() {
 }
 
 function calcPriority(p, t) {
+  var score = 0;
+  
+  // === 1. URGENCY: how overdue is this review? ===
   var daysOverdue = Math.floor((new Date(t) - new Date(p.nextReviewDate)) / 86400000);
-  var urgency = Math.max(0, daysOverdue) + 1;
-  var freqMult = { high: 2, medium: 1, low: 0.5 }[p.frequency] || 1;
-  var failPenalty = (p.consecutiveFailures || 0) >= 3 ? 0.3 : 1.0;
-  var rateMult = 1.0;
-  if (p.correctRate != null) {
-    if (p.correctRate >= 70) rateMult = 1.5;
-    else if (p.correctRate >= 40) rateMult = 1.3;
-    else if (p.correctRate >= 20) rateMult = 1.0;
-    else rateMult = 0.7;
+  score += Math.min(daysOverdue + 1, 10); // cap at 10 so it doesn't overwhelm other factors
+  
+  // === 2. ROI: which problems give the biggest improvement per effort? ===
+  var hist = (p.history || []).slice(-5);
+  var lastReason = '';
+  for (var i = hist.length - 1; i >= 0; i--) {
+    if (hist[i].mistakeReason) { lastReason = hist[i].mistakeReason; break; }
   }
-  // New problems get a boost
+  // Mistake type ROI: easy fixes first
+  var roiByReason = {
+    '計算ミス': 5,   // High ROI: one retry usually fixes it
+    'ケアレス': 5,   // High ROI: attention fix
+    '読み違い': 4,   // Moderate-high: attention issue, fixable
+    '知識不足': 2,   // Moderate: needs study but learnable
+    '時間切れ': 3,   // Moderate: needs practice speed
+    '解法不明': 1,   // Low ROI in app alone: needs teaching/textbook
+    '': 2            // Unknown: default
+  };
+  score += (roiByReason[lastReason] || 2);
+  
+  // === 3. MOMENTUM: recent trend ===
+  if (hist.length >= 2) {
+    var recent = hist.slice(-3);
+    var recentCorrect = recent.filter(function(h) { return h.result === 'correct'; }).length;
+    var recentWrong = recent.filter(function(h) { return h.result === 'incorrect'; }).length;
+    if (recentWrong >= 2) {
+      // Struggling: boost priority — this needs attention
+      score += 4;
+    } else if (recentCorrect >= 2 && recentWrong === 0) {
+      // On a roll: lower priority — probably fine
+      score -= 2;
+    } else if (recent.length > 0 && recent[recent.length - 1].result === 'incorrect') {
+      // Just got it wrong: boost
+      score += 3;
+    }
+  }
+  
+  // === 4. STAGE: new problems get a moderate boost ===
   var stage = getStage(p);
-  var stageMult = stage === 'new' ? 1.5 : stage === 'learning' ? 1.2 : 1.0;
-  return urgency * freqMult * failPenalty * rateMult * stageMult;
+  if (stage === 'new') score += 3;
+  else if (stage === 'learning') score += 1;
+  
+  // === 5. FREQUENCY: exam-relevant problems first ===
+  if (p.frequency === 'high') score += 2;
+  else if (p.frequency === 'medium') score += 1;
+  
+  // === 6. DIFFICULTY match: basics before hard ===
+  // Basics that are wrong = highest priority (foundational)
+  if (p.difficulty === 'basic' && stage !== 'mastered') score += 2;
+  else if (p.difficulty === 'hard') score -= 1; // hard problems lower when basics aren't solid
+  
+  // === 7. CONSECUTIVE FAILURES: don't bury, but flag ===
+  var cf = p.consecutiveFailures || 0;
+  if (cf >= 5) {
+    // Too many fails: slightly lower priority, suggest freeze
+    score -= 2;
+  } else if (cf >= 2) {
+    // Struggling but still recoverable
+    score += 2;
+  }
+  
+  return score;
 }
 
 // ================================================================
@@ -1576,8 +1685,6 @@ function switchScreen(name) {
 }
 
 function renderToday() {
-  document.getElementById('todayDate').textContent = formatDate(today());
-  
   // Empty state: no problems registered
   var emptyState = document.getElementById('todayEmptyState');
   if (DATA.problems.length === 0) {
@@ -1585,23 +1692,30 @@ function renderToday() {
       var wrap = document.querySelector('#screenToday .today-left') || document.getElementById('screenToday');
       var div = document.createElement('div');
       div.id = 'todayEmptyState';
-      div.style.cssText = 'text-align:center;padding:40px 20px;';
-      div.innerHTML = '<div style="font-size:48px;margin-bottom:16px">📸</div>'
-        + '<div style="font-size:18px;font-weight:800;margin-bottom:8px">リベンジノートを始めよう！</div>'
-        + '<div style="font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:20px">'
-        + 'テストや宿題で間違えた問題を写真に撮って登録。<br>'
-        + '忘却曲線に基づいて最適なタイミングで復習します。<br>'
-        + '<strong style="color:var(--accent)">間違えた問題だけの、自分専用問題集。</strong></div>'
-        + '<button onclick="switchScreen(\'Add\')" style="padding:12px 32px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">📸 間違えた問題を登録する</button>'
-        + '<div style="margin-top:16px"><button onclick="loadSampleData()" style="padding:8px 20px;background:none;border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text2);cursor:pointer">サンプルデータで試してみる</button></div>';
+      div.style.cssText = 'text-align:center;padding:24px 12px;';
+      div.innerHTML = '<div style="font-size:18px;font-weight:800;margin-bottom:6px">リベンジノートを始めよう</div>'
+        + '<div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:20px">'
+        + '間違えた問題を登録して、忘却曲線で最適に復習。<br>'
+        + 'まずはデッキを選んで体験してみよう！</div>'
+        + '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px">'
+        + '<button onclick="setDeckGrade(4)" id="deckG4" class="filter-chip active" style="font-size:13px;padding:8px 18px;font-weight:700">4年生</button>'
+        + '<button onclick="setDeckGrade(5)" id="deckG5" class="filter-chip" style="font-size:13px;padding:8px 18px;font-weight:700">5年生</button>'
+        + '<button onclick="setDeckGrade(6)" id="deckG6" class="filter-chip" style="font-size:13px;padding:8px 18px;font-weight:700">6年生</button>'
+        + '</div>'
+        + '<div id="deckCards" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:360px;margin:0 auto"></div>'
+        + '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">'
+        + '<button onclick="switchScreen(\'Add\')" style="padding:10px 28px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">自分の間違いを登録する</button>'
+        + '</div>';
       wrap.insertBefore(div, wrap.firstChild);
+      _deckGrade = 4;
+      renderDeckCards();
     }
     return;
   } else if (emptyState) {
     emptyState.remove();
   }
   
-  renderStreak();
+  updateStreak();
   renderFreezeAlerts();
   currentQueue = generateQueue();
   var total = DATA.problems.filter(p => !p.frozen && getStage(p) !== 'mastered' && p.nextReviewDate <= today()).length;
@@ -1622,11 +1736,11 @@ function renderToday() {
   var szBar = document.getElementById('queueStretchBar');
   if(szBar && count){
     szBar.innerHTML='<div style="display:flex;gap:8px;font-size:10px;margin-bottom:4px;flex-wrap:wrap">'
-      +'<span class="type-badge type-think">🧠 思考 '+thinkCount+'</span>'
-      +'<span class="type-badge type-flash">⚡ 暗記 '+flashCount+'</span>'
-      +'<span style="margin-left:4px" class="stage-badge stage-new">🆕 '+stages.new+'</span>'
-      +'<span class="stage-badge stage-learning">📝 '+stages.learning+'</span>'
-      +'<span class="stage-badge stage-reviewing">🔄 '+stages.reviewing+'</span>'
+      +'<span class="type-badge type-think">思考 '+thinkCount+'</span>'
+      +'<span class="type-badge type-flash">暗記 '+flashCount+'</span>'
+      +'<span style="margin-left:4px" class="stage-badge stage-new"> '+stages.new+'</span>'
+      +'<span class="stage-badge stage-learning"> '+stages.learning+'</span>'
+      +'<span class="stage-badge stage-reviewing"> '+stages.reviewing+'</span>'
       +'</div>';
   }else if(szBar){szBar.innerHTML=''}
 
@@ -1639,6 +1753,8 @@ function renderToday() {
   renderSessionFilters();
   // Render XP
   renderPlayerStats();
+  // Render progress lamps
+  renderProgressLamps();
 }
 
 // Session filter state
@@ -1748,7 +1864,7 @@ function checkBossBattle(prevLv) {
 
 function showLevelUp(lv) {
   var flash = document.getElementById('graduatedFlash');
-  document.getElementById('graduatedMsg').textContent = '🎉 Lv.' + lv + ' に上がった！';
+  document.getElementById('graduatedMsg').textContent = 'Lv.' + lv + ' に上がった！';
   flash.classList.add('show');
   setTimeout(() => flash.classList.remove('show'), 2500);
 }
@@ -1759,12 +1875,12 @@ function showBossDefeat(lv) {
   var bossName = bosses[Math.min(bossIdx, bosses.length - 1)];
   var overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;animation:fadeIn .3s';
-  overlay.innerHTML = '<div style="font-size:60px;animation:xpPop .6s">⚔️</div>'
+  overlay.innerHTML = '<div style="font-size:36px;font-weight:900;animation:xpPop .6s;color:var(--accent)">BOSS</div>'
     + '<div style="font-size:24px;font-weight:900;color:#ffd700;margin:16px 0;text-shadow:0 0 20px rgba(255,215,0,.5)">BOSS DEFEATED!</div>'
     + '<div style="font-size:18px;color:#fff;font-weight:700">Lv.' + lv + ' 「' + bossName + '」を撃破！</div>'
-    + '<div style="font-size:13px;color:var(--text2);margin-top:8px">定着した知識が武器になる💪</div>'
+    + '<div style="font-size:13px;color:var(--text2);margin-top:8px">定着した知識が武器になる</div>'
     + '<div style="display:flex;gap:10px;margin-top:24px">'
-    + '<button onclick="shareCard({type:\'boss\',bossName:\'' + bossName + '\',bossLv:' + lv + '});this.parentElement.parentElement.remove()" style="padding:10px 28px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;border:none;font-size:15px;cursor:pointer">📱 シェアする</button>'
+    + '<button onclick="shareCard({type:\'boss\',bossName:\'' + bossName + '\',bossLv:' + lv + '});this.parentElement.parentElement.remove()" style="padding:10px 28px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;border:none;font-size:15px;cursor:pointer">シェアする</button>'
     + '<button onclick="this.parentElement.parentElement.remove()" style="padding:10px 28px;border-radius:8px;background:var(--surface2);color:#fff;font-weight:700;border:1px solid var(--border);font-size:15px;cursor:pointer">続ける</button>'
     + '</div>';
   document.body.appendChild(overlay);
@@ -1785,11 +1901,11 @@ function generateShareCard(opts) {
   ctx.fillStyle = grad; ctx.fillRect(0, 0, 600, 340);
   // Accent strip top
   var strip = ctx.createLinearGradient(0, 0, 600, 0);
-  strip.addColorStop(0, '#6c63ff'); strip.addColorStop(1, '#ff6b6b');
+  strip.addColorStop(0, '#f0896c'); strip.addColorStop(1, '#f07070');
   ctx.fillStyle = strip; ctx.fillRect(0, 0, 600, 4);
   // Logo
   ctx.fillStyle = '#fff'; ctx.font = 'bold 20px "Noto Sans JP",sans-serif';
-  ctx.fillText('📓 revnote', 24, 36);
+  ctx.fillText('revnote', 24, 36);
   ctx.fillStyle = '#8b8fa8'; ctx.font = '11px sans-serif';
   ctx.fillText('中学受験リベンジノート', 130, 36);
   // Main content based on type
@@ -1800,38 +1916,38 @@ function generateShareCard(opts) {
   if (opts.type === 'boss') {
     ctx.fillStyle = '#ffd700'; ctx.font = 'bold 36px "Noto Sans JP",sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('⚔️ BOSS DEFEATED!', 300, 100);
+    ctx.fillText('BOSS DEFEATED!', 300, 100);
     ctx.fillStyle = '#fff'; ctx.font = 'bold 22px "Noto Sans JP",sans-serif';
     ctx.fillText('Lv.' + opts.bossLv + ' 「' + opts.bossName + '」撃破！', 300, 140);
     ctx.textAlign = 'left';
   } else if (opts.type === 'streak') {
-    ctx.fillStyle = '#ff6b6b'; ctx.font = 'bold 48px "Noto Sans JP",sans-serif';
+    ctx.fillStyle = '#f07070'; ctx.font = 'bold 48px "Noto Sans JP",sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('🔥 ' + streak + '日連続！', 300, 110);
+    ctx.fillText(streak + '日連続！', 300, 110);
     ctx.textAlign = 'left';
   } else if (opts.type === 'milestone') {
-    ctx.fillStyle = '#4ecdc4'; ctx.font = 'bold 36px "Noto Sans JP",sans-serif';
+    ctx.fillStyle = '#7ecdb0'; ctx.font = 'bold 36px "Noto Sans JP",sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('✅ ' + mastered + '問 定着達成！', 300, 110);
+    ctx.fillText(mastered + '問 定着達成！', 300, 110);
     ctx.textAlign = 'left';
   } else {
     ctx.fillStyle = '#fff'; ctx.font = 'bold 28px "Noto Sans JP",sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('🏆 今日のリベンジ完了！', 300, 100);
+    ctx.fillText('今日のリベンジ完了！', 300, 100);
     ctx.textAlign = 'left';
   }
   // Stats row
   var statsY = 180;
   var stats = [
-    { emoji: '⚔️', val: 'Lv.' + lv, label: 'レベル' },
-    { emoji: '🔥', val: streak + '日', label: '連続' },
-    { emoji: '✅', val: mastered + '問', label: '定着' },
-    { emoji: '📚', val: total + '問', label: '全問題' }
+    { emoji: '◆', val: 'Lv.' + lv, label: 'レベル' },
+    { emoji: '◆', val: streak + '日', label: '連続' },
+    { emoji: '◆', val: mastered + '問', label: '定着' },
+    { emoji: '◆', val: total + '問', label: '全問題' }
   ];
   var colW = 140;
   stats.forEach(function(s, i) {
     var x = 24 + i * colW;
-    ctx.fillStyle = 'rgba(108,99,255,.15)';
+    ctx.fillStyle = 'rgba(240,137,108,.15)';
     roundRect(ctx, x, statsY, colW - 12, 70, 10); ctx.fill();
     ctx.fillStyle = '#fff'; ctx.font = 'bold 22px "Noto Sans JP",sans-serif';
     ctx.textAlign = 'center';
@@ -1844,8 +1960,8 @@ function generateShareCard(opts) {
   if (DATA.settings.examDate) {
     var diff = Math.ceil((new Date(DATA.settings.examDate) - new Date()) / 864e5);
     if (diff > 0) {
-      ctx.fillStyle = '#ff6b6b'; ctx.font = 'bold 13px "Noto Sans JP",sans-serif';
-      ctx.fillText('📅 ' + (DATA.settings.examName || '入試') + 'まで あと' + diff + '日', 24, 288);
+      ctx.fillStyle = '#f07070'; ctx.font = 'bold 13px "Noto Sans JP",sans-serif';
+      ctx.fillText((DATA.settings.examName || '入試') + 'まで あと' + diff + '日', 24, 288);
     }
   }
   // Footer
@@ -1855,7 +1971,7 @@ function generateShareCard(opts) {
   if (opts.type === 'session' && sessionStats) {
     ctx.fillStyle = '#8b8fa8'; ctx.font = '12px "Noto Sans JP",sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText('⭕' + sessionStats.correct + ' 🔺' + sessionStats.hard + ' ❌' + sessionStats.wrong, 576, 322);
+    ctx.fillText("◎" + sessionStats.correct + ' △' + sessionStats.hard + ' ×' + sessionStats.wrong, 576, 322);
     ctx.textAlign = 'left';
   }
   return canvas;
@@ -1883,11 +1999,11 @@ async function shareCard(opts) {
   var lv = getLevel(), streak = DATA.streak.count;
   var mastered = DATA.problems.filter(p => getStage(p) === 'mastered').length;
   var text = '';
-  if (opts.type === 'boss') text = '⚔️ Lv.' + opts.bossLv + '「' + opts.bossName + '」を撃破！';
-  else if (opts.type === 'streak') text = '🔥 ' + streak + '日連続リベンジ達成！';
-  else if (opts.type === 'milestone') text = '✅ ' + mastered + '問が定着！';
-  else text = '🏆 今日のリベンジ完了！⭕' + sessionStats.correct + ' 🔺' + sessionStats.hard + ' ❌' + sessionStats.wrong;
-  text += '\nLv.' + lv + ' | 🔥' + streak + '日連続 | ✅' + mastered + '問定着';
+  if (opts.type === 'boss') text = 'Lv.' + opts.bossLv + '「' + opts.bossName + '」を撃破！';
+  else if (opts.type === 'streak') text = streak + '日連続リベンジ達成！';
+  else if (opts.type === 'milestone') text = mastered + '問が定着！';
+  else text = '今日のリベンジ完了！◎' + sessionStats.correct + ' △' + sessionStats.hard + ' ×' + sessionStats.wrong;
+  text += '\nLv.' + lv + ' | ' + streak + '日連続 | ' + mastered + '問定着';
   text += '\n\n#revnote #中学受験 #勉強垢\nhttps://ppxa.github.io/revnote/';
 
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -1903,7 +2019,7 @@ async function shareCard(opts) {
 function showShareFallback(canvas, text) {
   var overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:20px';
-  overlay.innerHTML = '<div style="font-size:14px;color:#fff;font-weight:700;margin-bottom:12px">📱 シェアカード</div>';
+  overlay.innerHTML = '<div style="font-size:14px;color:#fff;font-weight:700;margin-bottom:12px">シェアカード</div>';
   var img = document.createElement('img');
   img.src = canvas.toDataURL();
   img.style.cssText = 'max-width:90%;max-height:40vh;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.5)';
@@ -1914,11 +2030,11 @@ function showShareFallback(canvas, text) {
   // X (Twitter)
   btns.innerHTML = '<a href="https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '" target="_blank" style="padding:10px 20px;background:#000;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px">𝕏 ポスト</a>'
     + '<a href="https://line.me/R/share?text=' + encodeURIComponent(text) + '" target="_blank" style="padding:10px 20px;background:#06c755;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px">LINE</a>'
-    + '<button onclick="navigator.clipboard.writeText(\'' + text.replace(/'/g, "\\'").replace(/\n/g, "\\n") + '\');this.textContent=\'コピー済✓\'" style="padding:10px 20px;background:var(--surface2);color:#fff;border-radius:8px;border:1px solid var(--border);font-weight:700;font-size:13px;cursor:pointer">📋 コピー</button>';
+    + '<button onclick="navigator.clipboard.writeText(\'' + text.replace(/'/g, "\\'").replace(/\n/g, "\\n") + '\');this.textContent=\'コピー済✓\'" style="padding:10px 20px;background:var(--surface2);color:#fff;border-radius:8px;border:1px solid var(--border);font-weight:700;font-size:13px;cursor:pointer"> コピー</button>';
   overlay.appendChild(btns);
   // Save image
   var saveBtn = document.createElement('button');
-  saveBtn.textContent = '💾 画像を保存';
+  saveBtn.textContent = '画像を保存';
   saveBtn.style.cssText = 'margin-top:12px;padding:8px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer';
   saveBtn.onclick = function() {
     var a = document.createElement('a');
@@ -1950,11 +2066,11 @@ function checkStreakMilestone() {
 function showStreakMilestone(days) {
   var overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999';
-  overlay.innerHTML = '<div style="font-size:60px">🔥</div>'
-    + '<div style="font-size:28px;font-weight:900;color:#ff6b6b;margin:12px 0">' + days + '日連続達成！</div>'
-    + '<div style="font-size:14px;color:var(--text2)">毎日の努力が力になる💪</div>'
+  overlay.innerHTML = '<div style="font-size:36px;font-weight:900;color:var(--accent)">STREAK</div>'
+    + '<div style="font-size:28px;font-weight:900;color:#f07070;margin:12px 0">' + days + '日連続達成！</div>'
+    + '<div style="font-size:14px;color:var(--text2)">毎日の努力が力になる</div>'
     + '<div style="display:flex;gap:10px;margin-top:20px">'
-    + '<button onclick="shareCard({type:\'streak\'});this.parentElement.parentElement.remove()" style="padding:10px 24px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;border:none;font-size:14px;cursor:pointer">📱 シェアする</button>'
+    + '<button onclick="shareCard({type:\'streak\'});this.parentElement.parentElement.remove()" style="padding:10px 24px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;border:none;font-size:14px;cursor:pointer">シェアする</button>'
     + '<button onclick="this.parentElement.parentElement.remove()" style="padding:10px 24px;border-radius:8px;background:var(--surface2);color:#fff;font-weight:700;border:1px solid var(--border);font-size:14px;cursor:pointer">閉じる</button>'
     + '</div>';
   document.body.appendChild(overlay);
@@ -1969,11 +2085,11 @@ function checkMasteredMilestone() {
     setTimeout(function() {
       var overlay = document.createElement('div');
       overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999';
-      overlay.innerHTML = '<div style="font-size:60px">✅</div>'
-        + '<div style="font-size:28px;font-weight:900;color:#4ecdc4;margin:12px 0">' + m + '問 定着達成！</div>'
-        + '<div style="font-size:14px;color:var(--text2)">着実に力がついてる📈</div>'
+      overlay.innerHTML = '<div style="font-size:60px"></div>'
+        + '<div style="font-size:28px;font-weight:900;color:#7ecdb0;margin:12px 0">' + m + '問 定着達成！</div>'
+        + '<div style="font-size:14px;color:var(--text2)">着実に力がついてる</div>'
         + '<div style="display:flex;gap:10px;margin-top:20px">'
-        + '<button onclick="shareCard({type:\'milestone\'});this.parentElement.parentElement.remove()" style="padding:10px 24px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;border:none;font-size:14px;cursor:pointer">📱 シェアする</button>'
+        + '<button onclick="shareCard({type:\'milestone\'});this.parentElement.parentElement.remove()" style="padding:10px 24px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;border:none;font-size:14px;cursor:pointer">シェアする</button>'
         + '<button onclick="this.parentElement.parentElement.remove()" style="padding:10px 24px;border-radius:8px;background:var(--surface2);color:#fff;font-weight:700;border:1px solid var(--border);font-size:14px;cursor:pointer">閉じる</button>'
         + '</div>';
       document.body.appendChild(overlay);
@@ -1983,17 +2099,52 @@ function checkMasteredMilestone() {
 }
 
 function renderStreak() {
+  // No longer renders streak dots — just calls updateStreak for data
   updateStreak();
-  document.getElementById('streakCount').textContent = DATA.streak.count;
-  var dots = document.getElementById('streakDots');
-  dots.innerHTML = '';
-  var hist = DATA.streak.history.slice(-7);
-  for (var i = 0; i < 7; i++) {
-    var d = document.createElement('div');
-    d.className = 'streak-dot';
-    if (hist[i]) d.classList.add('done');
-    if (i === hist.length - 1 && hist[i] === today()) d.classList.add('today');
-    dots.appendChild(d);
+}
+
+function renderProgressLamps() {
+  var cap = parseInt(DATA.settings.dailyCap || 15);
+  // Count how many problems done today
+  var t = today();
+  var doneToday = 0;
+  DATA.problems.forEach(function(p) {
+    (p.history || []).forEach(function(h) {
+      if (h.date === t) doneToday++;
+    });
+  });
+  var lampLabel = document.getElementById('lampLabel');
+  var lampDots = document.getElementById('lampDots');
+  if (!lampLabel || !lampDots) return;
+  // Show total to show (max of cap or doneToday)
+  var total = Math.max(cap, doneToday);
+  lampDots.innerHTML = '';
+  for (var i = 0; i < total; i++) {
+    var dot = document.createElement('div');
+    dot.style.cssText = 'width:10px;height:10px;border-radius:50%;transition:all .3s;';
+    if (i < doneToday) {
+      // Done — lit up
+      if (i >= cap) {
+        // Bonus (beyond target)
+        dot.style.background = 'var(--accent)';
+        dot.style.boxShadow = '0 0 6px var(--accent)';
+      } else {
+        dot.style.background = 'var(--success)';
+        dot.style.boxShadow = '0 0 4px var(--success)';
+      }
+    } else {
+      // Not done — dim
+      dot.style.background = 'var(--surface2)';
+      dot.style.border = '1px solid var(--border)';
+    }
+    lampDots.appendChild(dot);
+  }
+  if (doneToday >= cap) {
+    lampLabel.textContent = ' ' + doneToday + '問クリア！';
+    lampLabel.style.color = 'var(--success)';
+  } else {
+    lampLabel.textContent = doneToday + '/' + cap + '問';
+    lampLabel.style.color = 'var(--text2)';
   }
 }
 
@@ -2001,7 +2152,7 @@ function updateStreak() {
   var t = today();
   var yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  var y = yesterday.toISOString().split('T')[0];
+  var y = yesterday.getFullYear() + '-' + String(yesterday.getMonth()+1).padStart(2,'0') + '-' + String(yesterday.getDate()).padStart(2,'0');
   if (DATA.streak.lastDate === t) return; // already recorded today
   // Check if today has any history entries (session completed today but streak not yet counted)
   var todayHasSession = DATA.problems.some(function(p) {
@@ -2037,7 +2188,7 @@ function recordStreakToday() {
   if (DATA.streak.lastDate !== t) {
     var yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    var y = yesterday.toISOString().split('T')[0];
+    var y = yesterday.getFullYear() + '-' + String(yesterday.getMonth()+1).padStart(2,'0') + '-' + String(yesterday.getDate()).padStart(2,'0');
     if (DATA.streak.lastDate === y || !DATA.streak.lastDate) {
       DATA.streak.count++;
     } else {
@@ -2063,7 +2214,7 @@ function renderFreezeAlerts() {
     var div = document.createElement('div');
     div.className = 'freeze-alert';
     div.innerHTML = `
-      <span>❄️ 「${p.topic}」が${p.consecutiveFailures}回連続不正解</span>
+      <span>凍結: 「${p.topic}」が${p.consecutiveFailures}回連続不正解</span>
       <button onclick="freezeProblem('${p.id}')">凍結する</button>
     `;
     container.appendChild(div);
@@ -2104,13 +2255,15 @@ function showCard() {
   var hasImage = !!p.contentImage;
   // Store image for scratchpad embedding
   window._currentProblemImage = hasImage ? p.contentImage : null;
+  // Generate nudge based on priority reason
+  var nudge = getPriorityNudge(p);
   document.getElementById('problemCard').innerHTML = `
     <span class="card-badge ${badgeClass}">${p.subject}</span>
     <div class="card-source">${p.source || ''}</div>
     <div class="card-topic">${p.topic}</div>
-    ${p.lastMemo ? `<div style="font-size:11px;color:var(--accent);margin-bottom:4px">📝 ${p.lastMemo}</div>` : ''}
+    ${nudge ? `<div style="font-size:11px;color:var(--accent);margin-bottom:4px;padding:4px 8px;background:rgba(224,122,58,.06);border-radius:6px">${nudge}</div>` : ''}
     <div class="card-content" id="cardContentArea">
-      ${hasImage ? '<div style="font-size:11px;color:var(--accent)">📸 図つき問題 — 計算スペースに表示（2本指で移動・拡縮）</div>' : (p.content || '')}
+      ${hasImage ? '<div style="font-size:11px;color:var(--accent)"> 図つき問題 — 計算スペースに表示（2本指で移動・拡縮）</div>' : (p.content || '')}
     </div>
     <div class="card-meta">
       ${getStageBadge(p)} ${getTypeBadge(p)}
@@ -2131,28 +2284,16 @@ function showCard() {
   document.getElementById('answerBtns').style.display = 'none';
   document.getElementById('reviewMemo').style.display = 'none';
   document.getElementById('reviewMemoText').value = '';
-  document.getElementById('btnSkip').style.display = '';
-
-  // Reset AI hint
-  document.getElementById('aiHintSection').style.display = 'none';
-  document.getElementById('btnAIHint').textContent = '🤖 AI解説';
-  document.getElementById('btnAIHint').disabled = false;
-  document.getElementById('btnAIHint').style.display = getAPIKey() ? '' : 'none';
-  var aiExplain = document.getElementById('btnAIExplain');
-  if (aiExplain) aiExplain.remove();
+  
 
   // Reset scratchpad
   clearScratchpad();
   initScratchpad();
-  // Restore previous drawing if exists
-  setTimeout(function() { restoreProblemDrawing(p); }, 200);
 
   // Timer for think problems
   startProblemTimer(p);
   // Hint setup
   setupHint(p);
-  // Swipe for flash
-  setupSwipe(p);
   // Reset mistake reason
   document.getElementById('mistakeReason').style.display = 'none';
 
@@ -2169,255 +2310,85 @@ function showCard() {
 var _problemTimer = null;
 var _timerSeconds = 0;
 var _timerTotal = 0;
+var _elapsedTimer = null;
+var _elapsedSeconds = 0;
 
 function startProblemTimer(p) {
   clearInterval(_problemTimer);
-  var el = document.getElementById('problemTimer');
-  if (getProblemType(p) === 'think') {
-    // Default 5 min, can be set per problem
-    var mins = p.timerMinutes || 5;
-    _timerTotal = mins * 60;
-    _timerSeconds = _timerTotal;
-    el.style.display = '';
-    updateTimerUI();
-    _problemTimer = setInterval(function() {
-      _timerSeconds--;
-      updateTimerUI();
-      if (_timerSeconds <= 0) {
-        clearInterval(_problemTimer);
-        // Timer expired - gentle nudge
-        document.getElementById('timerDisplay').style.color = 'var(--danger)';
-        document.getElementById('timerLabel').textContent = '⏰ 時間切れ！';
-      }
-    }, 1000);
-  } else {
-    el.style.display = 'none';
-  }
-}
-
-function updateTimerUI() {
-  var m = Math.floor(Math.max(0, _timerSeconds) / 60);
-  var s = Math.max(0, _timerSeconds) % 60;
-  document.getElementById('timerDisplay').textContent = m + ':' + String(s).padStart(2, '0');
-  var pct = _timerTotal > 0 ? (_timerSeconds / _timerTotal * 100) : 0;
-  document.getElementById('timerBar').style.width = pct + '%';
-  // Color changes
-  var disp = document.getElementById('timerDisplay');
-  if (_timerSeconds <= 30) { disp.style.color = 'var(--danger)'; }
-  else if (_timerSeconds <= 60) { disp.style.color = 'var(--warning)'; }
-  else { disp.style.color = 'var(--accent)'; }
+  clearInterval(_elapsedTimer);
+  _elapsedSeconds = 0;
+  // Always show count-up timer
+  document.getElementById('pTimerDisplay').textContent = '0:00';
+  document.getElementById('pTimerDisplay').style.color = 'var(--text2)';
+  _elapsedTimer = setInterval(function() {
+    _elapsedSeconds++;
+    var m = Math.floor(_elapsedSeconds / 60);
+    var s = _elapsedSeconds % 60;
+    document.getElementById('pTimerDisplay').textContent = m + ':' + String(s).padStart(2, '0');
+  }, 1000);
 }
 
 // ================================================================
-// HINT SYSTEM
+// HINT SYSTEM (shows accumulated memos)
 // ================================================================
 function setupHint(p) {
   var btnHint = document.getElementById('btnHint');
   var hintSection = document.getElementById('hintSection');
   hintSection.style.display = 'none';
-  // Generate hint from problem data
-  var hint = generateHint(p);
-  if (hint) {
+  // Build hint from accumulated memos
+  var memos = (p.memos || []).slice();
+  // Also check lastMemo for legacy
+  if (!memos.length && p.lastMemo) memos.push(p.lastMemo);
+  // Add auto-generated topic hint if available
+  var topicHint = generateTopicHint(p);
+  var hasContent = memos.length > 0 || topicHint;
+  if (hasContent) {
+    var lines = [];
+    if (topicHint) lines.push(' ' + topicHint);
+    if (memos.length > 0) {
+      lines.push('');
+      lines.push(' 過去のメモ:');
+      memos.forEach(function(m, i) { lines.push('  ' + (i+1) + '. ' + m); });
+    }
     btnHint.style.display = '';
-    btnHint.setAttribute('data-hint', hint);
+    btnHint.setAttribute('data-hint', lines.join('\n'));
+    btnHint.textContent = 'メモ・ヒント' + (memos.length ? ' (' + memos.length + ')' : '');
   } else {
     btnHint.style.display = 'none';
   }
 }
 
-function generateHint(p) {
-  // Auto-generate hints based on problem type
-  var type = getProblemType(p);
-  if (type === 'flash') {
-    // For flash: show first character of answer, or partial
-    if (p.answer) {
-      var ans = p.answer.trim();
-      if (ans.length <= 2) return null; // too short for hint
-      // Show first char + blanks
-      return '答えの最初: 「' + ans.charAt(0) + '○'.repeat(Math.min(ans.length - 1, 5)) + '」';
-    }
-    return null;
+function generateTopicHint(p) {
+  var hints = {
+    '食塩水': '食塩の重さ ÷ 食塩水の重さ × 100',
+    '速さ': 'き（距離）= は（速さ）× じ（時間）',
+    '割合': 'くらべる量 ÷ もとにする量 = 割合',
+    '面積': '底辺 × 高さ ÷ 2',
+    '体積': '底面積 × 高さ',
+    '比': '内項の積 = 外項の積',
+    '濃度': '溶質 ÷ 溶液 × 100',
+    '旅人算': '二人の速さの和（出会い）or 差（追いかけ）',
+    '仕事算': '全体を1として、1日あたりの仕事量を求める',
+    '場合の数': '樹形図を書いて数える',
+  };
+  var topic = p.topic || '';
+  for (var key in hints) {
+    if (topic.indexOf(key) >= 0) return hints[key];
+  }
+  return null;
+}
+
+function toggleHint() {
+  var section = document.getElementById('hintSection');
+  var btn = document.getElementById('btnHint');
+  if (section.style.display === 'none' || !section.style.display) {
+    var hint = btn.getAttribute('data-hint');
+    section.textContent = hint;
+    section.style.display = '';
   } else {
-    // For think: hint from topic
-    var hints = {
-      '食塩水': '食塩の重さ ÷ 食塩水の重さ × 100',
-      '速さ': 'き（距離）= は（速さ）× じ（時間）',
-      '割合': 'くらべる量 ÷ もとにする量 = 割合',
-      '面積': '底辺 × 高さ ÷ 2',
-      '体積': '底面積 × 高さ',
-      '比': '内項の積 = 外項の積',
-      '濃度': '溶質 ÷ 溶液 × 100',
-      '旅人算': '二人の速さの和（出会い）or 差（追いかけ）',
-      '仕事算': '全体を1として、1日あたりの仕事量を求める',
-      '場合の数': '樹形図を書いて数える',
-    };
-    var topic = p.topic || '';
-    for (var key in hints) {
-      if (topic.indexOf(key) >= 0) return '💡 ' + hints[key];
-    }
-    // Generic hint: show tags or memo
-    if (p.lastMemo) return '📝 前回のメモ: ' + p.lastMemo;
-    return null;
+    section.style.display = 'none';
   }
 }
-
-function showHint() {
-  var hint = document.getElementById('btnHint').getAttribute('data-hint');
-  document.getElementById('hintSection').textContent = hint;
-  document.getElementById('hintSection').style.display = '';
-  document.getElementById('btnHint').style.display = 'none';
-}
-
-// ================================================================
-// AI HINT (Claude API)
-// ================================================================
-function saveAPIKey() {
-  DATA.settings.apiKey = document.getElementById('settingAPIKey').value.trim();
-  DATA.settings.aiModel = document.getElementById('settingAIModel').value;
-  saveData(DATA);
-}
-
-function getAPIKey() { return (DATA.settings && DATA.settings.apiKey) || ''; }
-function getAIModel() { return (DATA.settings && DATA.settings.aiModel) || 'claude-haiku-4-5-20251001'; }
-
-async function testAIConnection() {
-  var el = document.getElementById('aiTestResult');
-  var key = getAPIKey();
-  if (!key) { el.textContent = '❌ APIキーを入力してください'; el.style.color = 'var(--danger)'; return; }
-  el.textContent = '接続中...'; el.style.color = 'var(--text2)';
-  try {
-    var res = await callClaude('「テスト成功」とだけ返してください。');
-    el.textContent = '✅ 接続成功: ' + res.slice(0, 30);
-    el.style.color = 'var(--success)';
-  } catch(e) {
-    el.textContent = '❌ ' + (e.message || e);
-    el.style.color = 'var(--danger)';
-  }
-}
-
-async function callClaude(userMessage, imageBase64) {
-  var key = getAPIKey();
-  if (!key) throw new Error('APIキーが設定されていません（設定画面で入力）');
-
-  var content = [];
-  if (imageBase64) {
-    var mediaType = 'image/jpeg';
-    if (imageBase64.startsWith('data:image/png')) mediaType = 'image/png';
-    var base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-    content.push({ type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } });
-  }
-  content.push({ type: 'text', text: userMessage });
-
-  var res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': key,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({
-      model: getAIModel(),
-      max_tokens: 1024,
-      system: 'あなたは中学受験の家庭教師です。小学4〜6年生にわかりやすく、簡潔に教えてください。\n\nルール:\n- 答えをそのまま教えず、考え方のヒントを段階的に出す\n- 図や式を使って説明する（テキストで表現）\n- 「なぜそうなるか」を重視する\n- 励ましの言葉を添える\n- 200文字以内で簡潔に',
-      messages: [{ role: 'user', content: content }]
-    })
-  });
-
-  if (!res.ok) {
-    var err = await res.json().catch(function() { return {}; });
-    throw new Error(err.error ? err.error.message : 'API Error ' + res.status);
-  }
-  var data = await res.json();
-  return data.content.map(function(c) { return c.text || ''; }).join('');
-}
-
-async function showAIHint() {
-  var p = currentQueue[currentIndex];
-  if (!p) return;
-
-  var btn = document.getElementById('btnAIHint');
-  var section = document.getElementById('aiHintSection');
-  btn.textContent = '🤖 考え中...';
-  btn.disabled = true;
-  section.style.display = '';
-  section.textContent = '🤖 AIが考えています...';
-
-  try {
-    var prompt = buildAIPrompt(p, 'hint');
-    var imageData = p.contentImage || null;
-    var response = await callClaude(prompt, imageData);
-    section.textContent = response;
-  } catch(e) {
-    section.textContent = '⚠️ ' + e.message;
-    section.style.borderColor = 'var(--danger)';
-  }
-  btn.textContent = '🤖 AI解説';
-  btn.disabled = false;
-}
-
-function buildAIPrompt(problem, mode) {
-  var parts = [];
-  parts.push('【教科】' + (problem.subject || '不明'));
-  parts.push('【単元】' + (problem.topic || '不明'));
-  if (problem.content) parts.push('【問題文】' + problem.content);
-  if (problem.contentImage) parts.push('（問題の画像を添付しています）');
-
-  // Add history context
-  var hist = (problem.history || []);
-  if (hist.length > 0) {
-    var fails = hist.filter(function(h) { return h.result === 'incorrect'; }).length;
-    var total = hist.length;
-    parts.push('【学習履歴】' + total + '回挑戦、' + fails + '回間違い');
-    var lastMistake = hist.slice().reverse().find(function(h) { return h.mistakeReason; });
-    if (lastMistake) parts.push('【前回の間違い理由】' + lastMistake.mistakeReason);
-  }
-
-  if (mode === 'hint') {
-    parts.push('\nこの問題の解き方のヒントを、答えは言わずに段階的に教えてください。');
-    if (problem.answer) parts.push('（正解は「' + problem.answer + '」ですが、答えは言わないで）');
-  } else if (mode === 'explain') {
-    parts.push('\nこの問題の解説をしてください。');
-    if (problem.answer) parts.push('【正解】' + problem.answer);
-  }
-
-  return parts.join('\n');
-}
-
-// Also add AI explain button after answer is revealed
-var _origRevealAnswer = revealAnswer;
-revealAnswer = function() {
-  _origRevealAnswer();
-  // Show AI explain button after reveal
-  var existing = document.getElementById('btnAIExplain');
-  if (existing) existing.remove();
-  var answerSection = document.getElementById('answerSection');
-  if (answerSection) {
-    var btn = document.createElement('button');
-    btn.id = 'btnAIExplain';
-    btn.className = 'btn-reveal';
-    btn.style.cssText = 'background:linear-gradient(135deg,#9b59b6,#3498db);border:none;color:#fff;font-weight:700;font-size:12px;padding:8px 16px;margin-top:8px;width:100%';
-    btn.textContent = '🤖 AIに解説してもらう';
-    btn.onclick = async function() {
-      var p = currentQueue[currentIndex];
-      if (!p) return;
-      btn.textContent = '🤖 考え中...';
-      btn.disabled = true;
-      try {
-        var prompt = buildAIPrompt(p, 'explain');
-        var response = await callClaude(prompt, p.contentImage || null);
-        var div = document.createElement('div');
-        div.style.cssText = 'padding:12px 14px;background:linear-gradient(135deg,rgba(155,89,182,.06),rgba(52,152,219,.06));border:1px solid rgba(155,89,182,.2);border-radius:10px;margin-top:8px;font-size:13px;line-height:1.8;white-space:pre-wrap';
-        div.textContent = response;
-        btn.after(div);
-        btn.style.display = 'none';
-      } catch(e) {
-        btn.textContent = '⚠️ ' + e.message;
-      }
-    };
-    answerSection.after(btn);
-  }
-};
 
 // ================================================================
 // MISTAKE REASON TAG
@@ -2443,13 +2414,12 @@ function tagMistake(reason) {
 function revealAnswer() {
   document.getElementById('answerSection').classList.add('show');
   document.getElementById('btnReveal').style.display = 'none';
-  document.getElementById('btnHint').style.display = 'none';
   document.getElementById('hintSection').style.display = 'none';
   document.getElementById('answerBtns').style.display = 'flex';
   document.getElementById('reviewMemo').style.display = 'block';
-  document.getElementById('btnSkip').style.display = 'none';
-  document.getElementById('swipeHint').style.display = 'none';
+  
   clearInterval(_problemTimer);
+  clearInterval(_elapsedTimer);
   // Show past attempt history
   var p = currentQueue[currentIndex];
   if (p) {
@@ -2488,10 +2458,21 @@ function doRecordAnswer(quality, mistakeReason) {
   if (mistakeReason) entry.mistakeReason = mistakeReason;
   // Save timestamp for parent timeline
   entry.timestamp = new Date().toISOString();
-  // Record time spent (from timer)
-  if (_timerTotal > 0) entry.timeSpent = _timerTotal - Math.max(0, _timerSeconds);
+  // Record time spent
+  if (_elapsedSeconds > 0) {
+    entry.timeSpent = _elapsedSeconds;
+  }
   real.history.push(entry);
-  if (memo) real.lastMemo = memo;
+  // Accumulate memos (deduplicated)
+  if (memo) {
+    real.lastMemo = memo;
+    if (!real.memos) real.memos = [];
+    if (real.memos.indexOf(memo) < 0) {
+      real.memos.push(memo);
+      // Keep only last 10 memos
+      if (real.memos.length > 10) real.memos.shift();
+    }
+  }
   // Save scratchpad drawing data for this problem
   if (window._spStrokes && window._spStrokes.length > 0) {
     real.lastDrawing = JSON.parse(JSON.stringify(window._spStrokes));
@@ -2532,7 +2513,9 @@ function doRecordAnswer(quality, mistakeReason) {
 
   checkBossBattle(prevLv);
   clearInterval(_problemTimer);
+  clearInterval(_elapsedTimer);
   saveData(DATA);
+  renderProgressLamps();
   currentIndex++;
   showCard();
 }
@@ -2550,70 +2533,6 @@ function skipProblem() {
 // ================================================================
 // SWIPE GESTURE (flash cards)
 // ================================================================
-var _swipeStartX = 0;
-var _swipeStartY = 0;
-var _swipeActive = false;
-
-function setupSwipe(p) {
-  var card = document.getElementById('problemCard');
-  var hint = document.getElementById('swipeHint');
-  // Only show swipe for flash type after answer is revealed
-  if (getProblemType(p) === 'flash') {
-    hint.style.display = '';
-  } else {
-    hint.style.display = 'none';
-  }
-  // Remove old listeners
-  card.removeEventListener('touchstart', swipeTouchStart);
-  card.removeEventListener('touchmove', swipeTouchMove);
-  card.removeEventListener('touchend', swipeTouchEnd);
-  // Add new
-  card.addEventListener('touchstart', swipeTouchStart, { passive: true });
-  card.addEventListener('touchmove', swipeTouchMove, { passive: false });
-  card.addEventListener('touchend', swipeTouchEnd, { passive: true });
-}
-
-function swipeTouchStart(e) {
-  if (e.touches.length !== 1) return;
-  // Only allow swipe after answer is revealed
-  var ansEl = document.getElementById('answerSection');
-  if (!ansEl.classList.contains('show')) return;
-  _swipeStartX = e.touches[0].clientX;
-  _swipeStartY = e.touches[0].clientY;
-  _swipeActive = true;
-}
-
-function swipeTouchMove(e) {
-  if (!_swipeActive || e.touches.length !== 1) return;
-  var dx = e.touches[0].clientX - _swipeStartX;
-  var dy = e.touches[0].clientY - _swipeStartY;
-  // Only horizontal swipes
-  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
-    e.preventDefault();
-    var card = document.getElementById('problemCard');
-    card.style.transform = 'translateX(' + dx + 'px) rotate(' + (dx * 0.05) + 'deg)';
-    card.style.opacity = Math.max(0.5, 1 - Math.abs(dx) / 300);
-  }
-}
-
-function swipeTouchEnd(e) {
-  if (!_swipeActive) return;
-  _swipeActive = false;
-  var card = document.getElementById('problemCard');
-  var dx = (e.changedTouches[0] ? e.changedTouches[0].clientX : 0) - _swipeStartX;
-  card.style.transform = '';
-  card.style.opacity = '';
-  if (Math.abs(dx) > 100) {
-    if (dx > 0) {
-      // Swipe right = correct
-      doRecordAnswer(5, '');
-    } else {
-      // Swipe left = wrong
-      doRecordAnswer(0, '');
-    }
-  }
-}
-
 // ================================================================
 // SCRATCHPAD (drawing canvas)
 // ================================================================
@@ -2712,12 +2631,12 @@ function redrawCanvas() {
     spCtx.drawImage(_imgLoaded, _imgState.x, _imgState.y, _imgState.w, _imgState.h);
     if (_imgState.selected) {
       // Selection border
-      spCtx.strokeStyle = '#6c63ff'; spCtx.lineWidth = 3; spCtx.setLineDash([8, 4]);
+      spCtx.strokeStyle = '#f0896c'; spCtx.lineWidth = 3; spCtx.setLineDash([8, 4]);
       spCtx.strokeRect(_imgState.x - 6, _imgState.y - 6, _imgState.w + 12, _imgState.h + 12);
       spCtx.setLineDash([]);
       // Resize handle (bottom-right)
       var hx = _imgState.x + _imgState.w; var hy = _imgState.y + _imgState.h;
-      spCtx.fillStyle = '#6c63ff';
+      spCtx.fillStyle = '#f0896c';
       spCtx.beginPath(); spCtx.arc(hx, hy, 16, 0, Math.PI * 2); spCtx.fill();
       spCtx.fillStyle = '#fff'; spCtx.font = 'bold 18px sans-serif'; spCtx.textAlign = 'center'; spCtx.textBaseline = 'middle';
       spCtx.fillText('⤡', hx, hy);
@@ -3011,13 +2930,13 @@ function finishSession() {
   var total = sessionStats.correct + sessionStats.wrong + sessionStats.hard;
 
   if (isSingleProblemMode) {
-    var result = sessionStats.correct > 0 ? '✅ できた！' : sessionStats.hard > 0 ? '🤔 あやしい' : '❌ できなかった';
+    var result = sessionStats.correct > 0 ? '◎ できた！' : sessionStats.hard > 0 ? '△ あやしい' : '× できなかった';
     document.getElementById('completionMsg').textContent = result;
     var pid = currentQueue[0]?.id || '';
     document.getElementById('completionStats').innerHTML = `
       <div style="grid-column:1/-1;display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap">
-        <button class="btn-start" onclick="isSingleProblemMode=false;openProblemDetail('${pid}')" style="max-width:180px;background:var(--accent)">🔄 もう一度</button>
-        <button class="btn-start" onclick="isSingleProblemMode=false;switchScreen('List')" style="max-width:180px;background:var(--surface2);border:1px solid var(--border)">📚 一覧に戻る</button>
+        <button class="btn-start" onclick="isSingleProblemMode=false;openProblemDetail('${pid}')" style="max-width:180px;background:var(--accent)"> もう一度</button>
+        <button class="btn-start" onclick="isSingleProblemMode=false;switchScreen('List')" style="max-width:180px;background:var(--surface2);border:1px solid var(--border)">一覧に戻る</button>
       </div>
     `;
   } else {
@@ -3030,7 +2949,7 @@ function finishSession() {
       <div class="comp-stat"><div class="comp-stat-num" style="color:var(--warning)">${sessionStats.hard}</div><div class="comp-stat-label">あやしい</div></div>
       <div class="comp-stat"><div class="comp-stat-num" style="color:var(--danger)">${sessionStats.wrong}</div><div class="comp-stat-label">できなかった</div></div>
       <div style="grid-column:1/-1;text-align:center;margin-top:8px">
-        <button onclick="shareCard({type:'session'})" style="padding:8px 20px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;border:none;font-size:13px;cursor:pointer">📱 結果をシェア</button>
+        <button onclick="shareCard({type:'session'})" style="padding:8px 20px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;border:none;font-size:13px;cursor:pointer"> 結果をシェア</button>
       </div>
     `;
   }
@@ -3217,11 +3136,11 @@ function renderImgPreview(elemId, dataUrl, target) {
 function removeImg(target) {
   if (target === 'content') {
     contentImageData = null;
-    document.getElementById('contentImgPreview').innerHTML = '📷 タップで選択 / ペーストも可';
+    document.getElementById('contentImgPreview').innerHTML = 'タップで選択 / ペーストも可';
     document.querySelector('#contentImgDrop input').value = '';
   } else {
     answerImageData = null;
-    document.getElementById('answerImgPreview').innerHTML = '📷 タップで選択 / ペーストも可';
+    document.getElementById('answerImgPreview').innerHTML = 'タップで選択 / ペーストも可';
     document.querySelector('#answerImgDrop input').value = '';
   }
 }
@@ -3270,13 +3189,13 @@ function updateRateLabel() {
   var hint = document.getElementById('rateHint');
   label.textContent = v + '%';
   if (v >= 70) {
-    hint.innerHTML = '<span style="color:var(--success)">🟢 基本問題 — 確実に取りたい</span>';
+    hint.innerHTML = '<span style="color:var(--success)"> 基本問題 — 確実に取りたい</span>';
   } else if (v >= 40) {
-    hint.innerHTML = '<span style="color:var(--warning)">🟡 差がつく問題 — 最優先で復習</span>';
+    hint.innerHTML = '<span style="color:var(--warning)"> 差がつく問題 — 最優先で復習</span>';
   } else if (v >= 20) {
-    hint.innerHTML = '<span style="color:var(--danger)">🔴 難問 — 志望校次第で取捨選択</span>';
+    hint.innerHTML = '<span style="color:var(--danger)"> 難問 — 志望校次第で取捨選択</span>';
   } else {
-    hint.innerHTML = '<span style="color:var(--text2)">⚪ 超難問 — 捨て問候補</span>';
+    hint.innerHTML = '<span style="color:var(--text2)"> 超難問 — 捨て問候補</span>';
   }
 }
 
@@ -3338,7 +3257,7 @@ function renderAdd() {
   var pending = DATA.problems.filter(p => !p.frozen && getStage(p) !== 'mastered' && p.nextReviewDate <= today()).length;
   var warn = document.getElementById('addQueueWarning');
   if (pending > 20) {
-    warn.innerHTML = `<div class="queue-warning">⚠️ キューに${pending}問溜まっています。登録すると明日以降に追加されます。</div>`;
+    warn.innerHTML = `<div class="queue-warning"> キューに${pending}問溜まっています。登録すると明日以降に追加されます。</div>`;
   } else {
     warn.innerHTML = '';
   }
@@ -3381,7 +3300,7 @@ function addProblem() {
   
   // In quick mode, require at least a photo
   if (addMode === 'quick' && !contentImageData) {
-    alert('📷 問題の画像を撮影してください'); return;
+    alert(' 問題の画像を撮影してください'); return;
   }
 
   // Determine content type
@@ -3451,8 +3370,8 @@ function addProblem() {
   document.getElementById('addContent').value = '';
   document.getElementById('addAnswer').value = '';
   contentImageData = null; answerImageData = null;
-  document.getElementById('contentImgPreview').innerHTML = '📷 タップで選択 / ペーストも可';
-  document.getElementById('answerImgPreview').innerHTML = '📷 タップで選択 / ペーストも可';
+  document.getElementById('contentImgPreview').innerHTML = 'タップで選択 / ペーストも可';
+  document.getElementById('answerImgPreview').innerHTML = 'タップで選択 / ペーストも可';
   // Reset mistake reason
   _addMistakeReason = '';
   document.getElementById('addMistakeReason').value = '';
@@ -3466,7 +3385,7 @@ function addProblem() {
 
   // ② Toast near button
   var toast = document.getElementById('addSuccessToast');
-  toast.textContent = `✅「${topic}」を登録しました（${addCount}問目）`;
+  toast.textContent = `「${topic}」を登録しました（${addCount}問目）`;
   toast.style.display = 'block';
   setTimeout(() => { toast.style.display = 'none'; }, 2500);
   document.getElementById('addContinueHint').style.display = 'block';
@@ -3523,7 +3442,7 @@ function fireConfetti() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   var pieces = [];
-  var colors = ['#6c63ff','#4ecdc4','#ff6b6b','#ffd93d','#51cf66','#ff9ff3','#54a0ff'];
+  var colors = ['#f0896c','#7ecdb0','#f07070','#f5c842','#6dd08a','#ff9ff3','#7eb8e0'];
   for (var i = 0; i < 80; i++) {
     pieces.push({
       x: canvas.width * 0.5 + (Math.random() - 0.5) * 200,
@@ -3597,10 +3516,10 @@ function renderList() {
   var tagFilterRow = document.getElementById('tagFilterRow');
   var filters = [
     { key: 'all', label: 'すべて' },
-    { key: 'priority', label: '🔴 最優先' },
-    { key: 'review', label: '🟡 復習' },
-    { key: 'graduated', label: '🟢 定着済' },
-    { key: 'frozen', label: '❄️ 凍結' },
+    { key: 'priority', label: '最優先' },
+    { key: 'review', label: '復習' },
+    { key: 'graduated', label: '定着済' },
+    { key: 'frozen', label: '● 凍結' },
   ];
   filterRow.innerHTML = filters.map(f =>
     `<button class="filter-chip ${listFilter === f.key ? 'active' : ''}" onclick="listFilter='${f.key}';renderList()">${f.label}</button>`
@@ -3662,14 +3581,14 @@ function renderList() {
   });
 
   if (items.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="icon">📝</div><p>問題がありません</p></div>';
+    container.innerHTML = '<div class="empty-state"><div class="icon"></div><p>問題がありません</p></div>';
     return;
   }
   container.innerHTML = items.map(p => {
     var stage = getStage(p);
-    var color = {new:'var(--accent)',learning:'var(--warning)',reviewing:'#4ecdc4',mastered:'var(--success)',frozen:'var(--frozen)'}[stage] || 'var(--text2)';
+    var color = {new:'var(--accent)',learning:'var(--warning)',reviewing:'#7ecdb0',mastered:'var(--success)',frozen:'var(--frozen)'}[stage] || 'var(--text2)';
     var hist = (p.history || []).slice(-5);
-    var dotsHtml = hist.map(h => h.result === 'correct' ? '⭕' : h.result === 'hard' ? '🔺' : '❌').join('');
+    var dotsHtml = hist.map(h => h.result === 'correct' ? "◎" : h.result === 'hard' ? "△" : '×').join('');
     var tagsHtml = (p.tags||[]).map(t => `<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:var(--surface2);color:var(--text2)">#${t}</span>`).join(' ');
     var lastReview = (p.history && p.history.length > 0) ? p.history[p.history.length-1].date : null;
     var createdShort = p.createdAt ? p.createdAt.replace(/^\d{4}-/,'') : '';
@@ -3694,9 +3613,8 @@ function renderList() {
           </div>
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0">
-          <button class="btn-freeze" onclick="event.stopPropagation();openProblemDetail('${p.id}')" style="background:rgba(108,99,255,.12);border-color:var(--accent);color:var(--accent)">▶解く</button>
-          <button class="btn-freeze" onclick="event.stopPropagation();${p.frozen ? "unfreezeProblem('" + p.id + "')" : "freezeProblem('" + p.id + "')"}">${p.frozen ? '解凍' : '凍結'}</button>
-          <button class="btn-delete-p" onclick="event.stopPropagation();deleteProblem('${p.id}')">削除</button>
+          <button class="btn-freeze" onclick="event.stopPropagation();openProblemDetail('${p.id}')" style="background:rgba(240,137,108,.12);border-color:var(--accent);color:var(--accent)">解く</button>
+          <button class="btn-freeze" onclick="event.stopPropagation();editProblem('${p.id}')">編集</button>
         </div>
       </div>`;
   }).join('');
@@ -3717,6 +3635,53 @@ function deleteProblem(id) {
   saveData(DATA); renderList();
 }
 
+function editProblem(id) {
+  var p = DATA.problems.find(x => x.id === id);
+  if (!p) return;
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+  var card = document.createElement('div');
+  card.style.cssText = 'background:var(--surface);border-radius:16px;padding:20px;max-width:420px;width:100%;max-height:85vh;overflow-y:auto';
+  card.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
+    + '<div style="font-size:16px;font-weight:700">問題を編集</div>'
+    + '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text2)">✕</button></div>'
+    + '<div class="form-group"><label>教科</label><input class="form-input" id="editSubject" value="' + (p.subject||'').replace(/"/g,'&quot;') + '"></div>'
+    + '<div class="form-group"><label>単元</label><input class="form-input" id="editTopic" value="' + (p.topic||'').replace(/"/g,'&quot;') + '"></div>'
+    + '<div class="form-group"><label>出典</label><input class="form-input" id="editSource" value="' + (p.source||'').replace(/"/g,'&quot;') + '"></div>'
+    + '<div class="form-group"><label>問題文</label><textarea class="form-textarea" id="editContent" rows="3">' + (p.content||'') + '</textarea></div>'
+    + '<div class="form-group"><label>答え</label><textarea class="form-textarea" id="editAnswer" rows="2">' + (p.answer||'') + '</textarea></div>'
+    + '<div class="form-group"><label>タグ（カンマ区切り）</label><input class="form-input" id="editTags" value="' + (p.tags||[]).join(',') + '"></div>'
+    + '<div class="form-group"><label>難易度</label><select class="form-select" id="editDifficulty"><option value="basic"'+(p.difficulty==='basic'?' selected':'')+'>基本</option><option value="standard"'+(p.difficulty==='standard'?' selected':'')+'>標準</option><option value="hard"'+(p.difficulty==='hard'?' selected':'')+'>応用</option></select></div>'
+    + '<div class="form-group"><label>頻出度</label><select class="form-select" id="editFrequency"><option value="low"'+(p.frequency==='low'?' selected':'')+'>低</option><option value="medium"'+(p.frequency==='medium'?' selected':'')+'>中</option><option value="high"'+(p.frequency==='high'?' selected':'')+'>高</option></select></div>'
+    + '<div style="display:flex;gap:8px;margin-top:14px">'
+    + '<button onclick="saveEditProblem(\'' + id + '\');this.closest(\'div[style*=fixed]\').remove()" style="flex:1;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">保存</button>'
+    + '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="flex:1;padding:12px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:12px;font-size:14px;cursor:pointer;font-family:inherit">キャンセル</button>'
+    + '</div>'
+    + '<div style="display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">'
+    + '<button onclick="' + (p.frozen ? "unfreezeProblem('" + id + "')" : "freezeProblem('" + id + "')") + ';this.closest(\'div[style*=fixed]\').remove();renderList()" style="flex:1;padding:10px;background:var(--surface2);color:var(--frozen);border:1px solid var(--frozen);border-radius:12px;font-size:13px;cursor:pointer;font-family:inherit">' + (p.frozen ? '凍結解除' : '凍結する') + '</button>'
+    + '<button onclick="if(confirm(\'この問題を削除しますか？\')){deleteProblem(\'' + id + '\');this.closest(\'div[style*=fixed]\').remove()}" style="flex:1;padding:10px;background:var(--surface2);color:var(--danger);border:1px solid var(--danger);border-radius:12px;font-size:13px;cursor:pointer;font-family:inherit">削除</button>'
+    + '</div>';
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+}
+
+function saveEditProblem(id) {
+  var p = DATA.problems.find(x => x.id === id);
+  if (!p) return;
+  p.subject = document.getElementById('editSubject').value.trim() || p.subject;
+  p.topic = document.getElementById('editTopic').value.trim() || p.topic;
+  p.source = document.getElementById('editSource').value.trim();
+  p.content = document.getElementById('editContent').value.trim();
+  p.answer = document.getElementById('editAnswer').value.trim();
+  var tags = document.getElementById('editTags').value.trim();
+  p.tags = tags ? tags.split(',').map(function(t) { return t.trim(); }).filter(Boolean) : [];
+  p.difficulty = document.getElementById('editDifficulty').value;
+  p.frequency = document.getElementById('editFrequency').value;
+  saveData(DATA);
+  renderList();
+}
+
 // ================================================================
 // DASHBOARD
 // ================================================================
@@ -3729,9 +3694,9 @@ function renderDashboard() {
   var szEl = document.getElementById('stretchZoneGrid');
   if(szEl){
     szEl.innerHTML = '<div class="sz-grid">'
-      +'<div class="sz-card sz-stretch-card" onclick="showSZDetail(\'stretch\')"><div class="sz-num">'+szStats.totals.stretch+'</div><div class="sz-label">✨ ストレッチ</div></div>'
-      +'<div class="sz-card sz-comfort-card" onclick="showSZDetail(\'comfort\')"><div class="sz-num">'+szStats.totals.comfort+'</div><div class="sz-label">⚠️ コンフォート</div></div>'
-      +'<div class="sz-card sz-panic-card" onclick="showSZDetail(\'panic\')"><div class="sz-num">'+szStats.totals.panic+'</div><div class="sz-label">🔴 パニック</div></div>'
+      +'<div class="sz-card sz-stretch-card" onclick="showSZDetail(\'stretch\')"><div class="sz-num">'+szStats.totals.stretch+'</div><div class="sz-label">ストレッチ</div></div>'
+      +'<div class="sz-card sz-comfort-card" onclick="showSZDetail(\'comfort\')"><div class="sz-num">'+szStats.totals.comfort+'</div><div class="sz-label">コンフォート</div></div>'
+      +'<div class="sz-card sz-panic-card" onclick="showSZDetail(\'panic\')"><div class="sz-num">'+szStats.totals.panic+'</div><div class="sz-label">パニック</div></div>'
       +'</div>';
     // Per-subject breakdown
     var subjects = getSubjects();
@@ -3742,7 +3707,7 @@ function renderDashboard() {
         +'<span style="width:40px;font-weight:600">'+s+'</span>'
         +'<div class="sz-bar" style="flex:1">'
         +'<div class="sz-bar-seg" style="width:'+Math.round(st/tot*100)+'%;background:var(--accent)"></div>'
-        +'<div class="sz-bar-seg" style="width:'+Math.round(co/tot*100)+'%;background:#4ecdc4"></div>'
+        +'<div class="sz-bar-seg" style="width:'+Math.round(co/tot*100)+'%;background:#7ecdb0"></div>'
         +'<div class="sz-bar-seg" style="width:'+Math.round(pa/tot*100)+'%;background:var(--danger)"></div>'
         +'</div>'
         +'<span style="color:var(--text2)">'+tot+'問</span></div>';
@@ -3753,11 +3718,11 @@ function renderDashboard() {
   var stageCounts = {new:0, learning:0, reviewing:0, mastered:0, frozen:0};
   DATA.problems.forEach(function(p){ stageCounts[getStage(p)]++; });
   document.getElementById('zoneGrid').innerHTML = `
-    <div class="zone-card zone-priority" onclick="showZoneDetail('priority','🆕 はじめて')" style="cursor:pointer"><div class="num">${stageCounts.new}</div><div class="label">🆕 はじめて</div></div>
-    <div class="zone-card zone-review" onclick="showZoneDetail('review','📝 練習中')" style="cursor:pointer"><div class="num">${stageCounts.learning}</div><div class="label">📝 練習中</div></div>
-    <div class="zone-card zone-review" onclick="showZoneDetail('review','🔄 復習中')" style="cursor:pointer;border-color:#4ecdc4"><div class="num">${stageCounts.reviewing}</div><div class="label">🔄 復習中</div></div>
-    <div class="zone-card zone-graduated" onclick="showZoneDetail('graduated','✅ 定着')" style="cursor:pointer"><div class="num">${stageCounts.mastered}</div><div class="label">✅ 定着</div></div>
-    <div class="zone-card zone-frozen" onclick="showZoneDetail('frozen','❄️ 凍結')" style="cursor:pointer"><div class="num">${stageCounts.frozen}</div><div class="label">❄️ 凍結中</div></div>
+    <div class="zone-card zone-priority" onclick="showZoneDetail('priority','● はじめて')" style="cursor:pointer"><div class="num">${stageCounts.new}</div><div class="label">● はじめて</div></div>
+    <div class="zone-card zone-review" onclick="showZoneDetail('review','● 練習中')" style="cursor:pointer"><div class="num">${stageCounts.learning}</div><div class="label">● 練習中</div></div>
+    <div class="zone-card zone-review" onclick="showZoneDetail('review','● 復習中')" style="cursor:pointer;border-color:#7ecdb0"><div class="num">${stageCounts.reviewing}</div><div class="label">● 復習中</div></div>
+    <div class="zone-card zone-graduated" onclick="showZoneDetail('graduated','● 定着')" style="cursor:pointer"><div class="num">${stageCounts.mastered}</div><div class="label">● 定着</div></div>
+    <div class="zone-card zone-frozen" onclick="showZoneDetail('frozen','● 凍結')" style="cursor:pointer"><div class="num">${stageCounts.frozen}</div><div class="label">● 凍結中</div></div>
   `;
   // subject bars
   var subjects = getSubjects();
@@ -3809,11 +3774,7 @@ function renderSettings() {
   updateCapLabel();
   updateFreezeLabel();
   updateDataCountInfo();
-  // AI settings
-  if (document.getElementById('settingAPIKey')) {
-    document.getElementById('settingAPIKey').value = DATA.settings.apiKey || '';
-    document.getElementById('settingAIModel').value = DATA.settings.aiModel || 'claude-haiku-4-5-20251001';
-  }
+  renderDeckManager();
 }
 function updateCapLabel() {
   var v = document.getElementById('settingCap').value;
@@ -3870,7 +3831,7 @@ async function resetAll() {
 
 function confirmResetAll() {
   var count = DATA.problems.length;
-  if (confirm('⚠️ 全' + count + '問のデータと設定を完全に削除します。\n\nこの操作は元に戻せません。\n本当に削除しますか？')) {
+  if (confirm(' 全' + count + '問のデータと設定を完全に削除します。\n\nこの操作は元に戻せません。\n本当に削除しますか？')) {
     if (confirm('最終確認: 本当にすべて削除しますか？')) {
       resetAll();
     }
@@ -3879,10 +3840,9 @@ function confirmResetAll() {
 
 function deleteSampleData() {
   var sampleIds = DATA.problems.filter(function(p) {
-    return p.id && (p.id.startsWith('sample_') || p.id.startsWith('s_'));
+    return p.id && (p.id.startsWith('sample_') || p.id.startsWith('s_') || p.id.startsWith('deck_') || p.deckId);
   });
   if (sampleIds.length === 0) {
-    // Try to detect sample data by checking if they have no history beyond initial
     var noHistory = DATA.problems.filter(function(p) {
       return (p.history || []).length === 0 || 
         ((p.history || []).length === 1 && (p.history[0].memo || '').indexOf('サンプル') >= 0);
@@ -3893,19 +3853,19 @@ function deleteSampleData() {
           !((p.history || []).length === 1 && (p.history[0].memo || '').indexOf('サンプル') >= 0);
       });
       saveData(DATA);
-      alert('✅ ' + noHistory.length + '問のサンプルデータを削除しました。自分の問題は残っています。');
+      alert(noHistory.length + '問のサンプルデータを削除しました。自分の問題は残っています。');
       renderSettings();
       return;
     }
     alert('サンプルデータは見つかりませんでした。');
     return;
   }
-  if (confirm('サンプルデータ ' + sampleIds.length + '問を削除しますか？\n自分で登録した問題は残ります。')) {
+  if (confirm('サンプル/デッキデータ ' + sampleIds.length + '問を削除しますか？\n自分で登録した問題は残ります。')) {
     DATA.problems = DATA.problems.filter(function(p) {
-      return !(p.id && (p.id.startsWith('sample_') || p.id.startsWith('s_')));
+      return !(p.id && (p.id.startsWith('sample_') || p.id.startsWith('s_') || p.id.startsWith('deck_') || p.deckId));
     });
     saveData(DATA);
-    alert('✅ ' + sampleIds.length + '問のサンプルデータを削除しました。');
+    alert(sampleIds.length + '問のサンプル/デッキデータを削除しました。');
     renderSettings();
   }
 }
@@ -3922,6 +3882,346 @@ function updateDataCountInfo() {
 
 // ================================================================
 // SAMPLE DATA
+// ================================================================
+// ================================================================
+// STARTER DECKS
+// ================================================================
+var _deckGrade = 4;
+
+function setDeckGrade(g) {
+  _deckGrade = g;
+  [4,5,6].forEach(function(n) {
+    var btn = document.getElementById('deckG' + n);
+    if (btn) { btn.classList.toggle('active', n === g); }
+  });
+  renderDeckCards();
+}
+
+function renderDeckCards() {
+  var el = document.getElementById('deckCards');
+  if (!el) return;
+  var decks = getStarterDecks(_deckGrade);
+  el.innerHTML = decks.map(function(d) {
+    var deckId = _deckGrade + '_' + d.key;
+    var loaded = DATA.problems.filter(function(p) { return p.deckId === deckId; }).length;
+    var statusHtml = loaded > 0 ? '<div style="font-size:9px;color:var(--success);margin-top:4px">ロード済 ' + loaded + '問</div>' : '';
+    return '<div onclick="loadDeck(\'' + _deckGrade + '\',\'' + d.key + '\')" style="'
+      + 'background:var(--surface);border:1px solid ' + (loaded > 0 ? 'var(--accent)' : 'var(--border)') + ';border-radius:14px;'
+      + 'padding:18px 12px;cursor:pointer;transition:border-color .2s;text-align:center'
+      + '" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'' + (loaded > 0 ? 'var(--accent)' : 'var(--border)') + '\'">'
+      + '<div style="font-size:22px;font-weight:900;color:var(--accent);margin-bottom:6px">' + d.count + '</div>'
+      + '<div style="font-size:13px;font-weight:700;margin-bottom:4px">' + d.title + '</div>'
+      + '<div style="font-size:10px;color:var(--text2);line-height:1.5">' + d.desc + '</div>'
+      + statusHtml
+      + '</div>';
+  }).join('');
+}
+
+function getStarterDecks(grade) {
+  return [
+    { key: 'kanji', title: '漢字書き取り', count: '20問', desc: grade + '年配当漢字の読み→書き' },
+    { key: 'math', title: '算数一行問題', count: '15問', desc: '計算・文章題の即答トレーニング' },
+    { key: 'science', title: '理科一問一答', count: '10問', desc: '暗記と理解の基礎チェック' },
+    { key: 'social', title: '社会一問一答', count: '10問', desc: '地理・歴史・公民の基礎' }
+  ];
+}
+
+function loadDeck(grade, key) {
+  var deckId = grade + '_' + key;
+  var problems = STARTER_DECKS[deckId] || [];
+  if (!problems.length) { alert('デッキが見つかりません'); return; }
+  // Check if already loaded
+  var existing = DATA.problems.filter(function(p) { return p.deckId === deckId; });
+  if (existing.length > 0) {
+    if (!confirm('このデッキは既に' + existing.length + '問ロード済みです。追加しますか？')) return;
+  }
+  problems.forEach(function(s, i) {
+    DATA.problems.push({
+      id: 'deck_' + grade + '_' + key + '_' + i + '_' + Math.random().toString(36).substr(2,4),
+      subject: s.subject,
+      topic: s.topic,
+      source: grade + '年デッキ',
+      deckId: deckId,
+      content: s.q,
+      answer: s.a,
+      correctRate: null,
+      frequency: 'medium',
+      difficulty: 'basic',
+      tags: [grade + '年', key === 'kanji' ? '漢字' : key],
+      problemType: key === 'kanji' ? 'flash' : null,
+      easeFactor: 2.5,
+      interval: 0,
+      repetitions: 0,
+      consecutiveFailures: 0,
+      nextReviewDate: today(),
+      frozen: false,
+      history: [],
+      createdAt: today()
+    });
+  });
+  saveData(DATA);
+  switchScreen('Today');
+  renderToday();
+  // Also refresh deck manager if visible
+  renderDeckManager();
+}
+
+function removeDeck(deckId) {
+  var count = DATA.problems.filter(function(p) { return p.deckId === deckId; }).length;
+  if (!count) { alert('このデッキの問題はありません'); return; }
+  if (!confirm(count + '問を削除します。よろしいですか？')) return;
+  DATA.problems = DATA.problems.filter(function(p) { return p.deckId !== deckId; });
+  saveData(DATA);
+  renderDeckManager();
+  renderList();
+}
+
+function renderDeckManager() {
+  var el = document.getElementById('deckManagerArea');
+  if (!el) return;
+  var deckLabels = {
+    kanji: '漢字書き取り', math: '算数一行問題',
+    science: '理科一問一答', social: '社会一問一答'
+  };
+  var grades = [4, 5, 6];
+  var keys = ['kanji', 'math', 'science', 'social'];
+  var html = '';
+  grades.forEach(function(g) {
+    html += '<div style="font-size:12px;font-weight:700;margin:10px 0 6px;color:var(--text)">' + g + '年生</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
+    keys.forEach(function(k) {
+      var deckId = g + '_' + k;
+      var src = STARTER_DECKS[deckId] || [];
+      var loaded = DATA.problems.filter(function(p) { return p.deckId === deckId; });
+      var loadedCount = loaded.length;
+      var totalCount = src.length;
+      // Count history
+      var answered = loaded.filter(function(p) { return p.history && p.history.length > 0; }).length;
+      var isLoaded = loadedCount > 0;
+      html += '<div style="padding:8px 10px;border:1px solid ' + (isLoaded ? 'var(--accent)' : 'var(--border)') + ';border-radius:10px;background:' + (isLoaded ? 'rgba(240,137,108,.04)' : 'var(--surface)') + '">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center">'
+        + '<div style="font-size:11px;font-weight:600">' + deckLabels[k] + '</div>'
+        + '<div style="font-size:10px;color:var(--text2)">' + totalCount + '問</div>'
+        + '</div>';
+      if (isLoaded) {
+        html += '<div style="font-size:10px;color:var(--accent);margin-top:3px">ロード済 ' + loadedCount + '問（学習済 ' + answered + '）</div>'
+          + '<button onclick="removeDeck(\'' + deckId + '\')" style="margin-top:4px;font-size:10px;padding:3px 10px;border-radius:6px;border:1px solid var(--danger);background:none;color:var(--danger);cursor:pointer;font-family:inherit">削除</button>';
+      } else {
+        html += '<button onclick="loadDeck(' + g + ',\'' + k + '\')" style="margin-top:4px;font-size:10px;padding:3px 10px;border-radius:6px;border:1px solid var(--accent);background:rgba(240,137,108,.1);color:var(--accent);cursor:pointer;font-family:inherit;font-weight:600">追加</button>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  el.innerHTML = html;
+}
+
+var STARTER_DECKS = {
+  // ==================== 4年 漢字 ====================
+  '4_kanji': [
+    {subject:'国語',topic:'漢字書き取り',q:'「のぞむ」を漢字で書きなさい（希□）',a:'希望（きぼう）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「きょうそう」を漢字で書きなさい（走る）',a:'競走（きょうそう）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「たっせい」を漢字で書きなさい',a:'達成（たっせい）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「かんさつ」を漢字で書きなさい',a:'観察（かんさつ）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「しゅうかく」を漢字で書きなさい',a:'収穫（しゅうかく）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「ひつよう」を漢字で書きなさい',a:'必要（ひつよう）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「れんしゅう」を漢字で書きなさい',a:'練習（れんしゅう）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「けっか」を漢字で書きなさい',a:'結果（けっか）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「しんけん」を漢字で書きなさい',a:'真剣（しんけん）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「せつめい」を漢字で書きなさい',a:'説明（せつめい）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「でんとう」を漢字で書きなさい（伝わる）',a:'伝統（でんとう）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「きかい」を漢字で書きなさい（チャンス）',a:'機会（きかい）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「さんか」を漢字で書きなさい',a:'参加（さんか）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「やくそく」を漢字で書きなさい',a:'約束（やくそく）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「こうどう」を漢字で書きなさい（行動する）',a:'行動（こうどう）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「しっぱい」を漢字で書きなさい',a:'失敗（しっぱい）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「れきし」を漢字で書きなさい',a:'歴史（れきし）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「けんこう」を漢字で書きなさい',a:'健康（けんこう）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「きょうりょく」を漢字で書きなさい',a:'協力（きょうりょく）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「ぶんか」を漢字で書きなさい（文化祭）',a:'文化（ぶんか）'}
+  ],
+  // ==================== 4年 算数 ====================
+  '4_math': [
+    {subject:'算数',topic:'計算',q:'25×36 を工夫して計算しなさい',a:'25×4×9 = 100×9 = 900'},
+    {subject:'算数',topic:'計算',q:'998×5 を工夫して計算しなさい',a:'(1000−2)×5 = 5000−10 = 4990'},
+    {subject:'算数',topic:'和差算',q:'兄と弟で合計3200円。兄が弟より400円多い。弟はいくら？',a:'(3200−400)÷2 = 1400円'},
+    {subject:'算数',topic:'植木算',q:'120mの道に6mおきに木を植える。両端にも植えると何本？',a:'120÷6+1 = 21本'},
+    {subject:'算数',topic:'つるかめ算',q:'ツルとカメ合計10匹。足の合計28本。カメは何匹？',a:'(28−2×10)÷(4−2) = 4匹'},
+    {subject:'算数',topic:'角度',q:'二等辺三角形の頂角が40°。底角は何度？',a:'(180−40)÷2 = 70°'},
+    {subject:'算数',topic:'約数',q:'36の約数は全部で何個？',a:'36=2²×3² → (2+1)(2+1) = 9個'},
+    {subject:'算数',topic:'倍数',q:'4と6の最小公倍数は？',a:'12（4=2², 6=2×3, LCM=2²×3=12）'},
+    {subject:'算数',topic:'面積',q:'底辺8cm、高さ5cmの三角形の面積は？',a:'8×5÷2 = 20cm²'},
+    {subject:'算数',topic:'場合の数',q:'1,2,3の3枚から2枚選んで2桁の数。何通り？',a:'3×2 = 6通り（12,13,21,23,31,32）'},
+    {subject:'算数',topic:'計算',q:'3.5×4 はいくつ？',a:'14'},
+    {subject:'算数',topic:'計算',q:'1000−37×26 を計算しなさい',a:'1000−962 = 38'},
+    {subject:'算数',topic:'計算',q:'2/3 + 1/4 はいくつ？',a:'8/12 + 3/12 = 11/12'},
+    {subject:'算数',topic:'面積',q:'たて6cm、よこ9cmの長方形の面積は？',a:'6×9 = 54cm²'},
+    {subject:'算数',topic:'角度',q:'三角形の内角の和は何度？',a:'180°'}
+  ],
+  // ==================== 4年 理科 ====================
+  '4_science': [
+    {subject:'理科',topic:'植物',q:'植物の光合成に必要な3つは？',a:'光・水・二酸化炭素'},
+    {subject:'理科',topic:'植物',q:'光合成でできるものは何と何？',a:'デンプン（栄養）と酸素'},
+    {subject:'理科',topic:'天気',q:'気温が一日で一番高くなるのは何時ごろ？',a:'午後2時ごろ'},
+    {subject:'理科',topic:'電気',q:'直列つなぎと並列つなぎ、豆電球が明るいのは？',a:'直列つなぎ（電圧が高い）'},
+    {subject:'理科',topic:'水のすがた',q:'水が氷になると体積はどうなる？',a:'約1.1倍に増える'},
+    {subject:'理科',topic:'星座',q:'夏の大三角を構成する3つの星は？',a:'ベガ・アルタイル・デネブ'},
+    {subject:'理科',topic:'人体',q:'血液を全身に送り出す臓器は？',a:'心臓'},
+    {subject:'理科',topic:'もののあたたまり方',q:'金属の温まり方の特徴は？',a:'熱した部分から順に伝わる（伝導）'},
+    {subject:'理科',topic:'月',q:'月が満月から次の満月になるまで約何日？',a:'約29.5日'},
+    {subject:'理科',topic:'空気と水',q:'空気はおしちぢめられる？水は？',a:'空気は縮む。水はほとんど縮まない'}
+  ],
+  // ==================== 4年 社会 ====================
+  '4_social': [
+    {subject:'社会',topic:'都道府県',q:'日本で一番面積が大きい都道府県は？',a:'北海道'},
+    {subject:'社会',topic:'都道府県',q:'日本で一番面積が小さい都道府県は？',a:'香川県'},
+    {subject:'社会',topic:'地図',q:'地図の上はどの方角？',a:'北'},
+    {subject:'社会',topic:'水の利用',q:'浄水場の役割は？',a:'川の水をきれいにして飲み水にする'},
+    {subject:'社会',topic:'ごみ',q:'燃やすごみを処理する施設は？',a:'清掃工場（焼却場）'},
+    {subject:'社会',topic:'都道府県',q:'日本一長い川は？',a:'信濃川（367km）'},
+    {subject:'社会',topic:'都道府県',q:'日本一大きい湖は？',a:'琵琶湖（滋賀県）'},
+    {subject:'社会',topic:'くらし',q:'消防署に電話するときの番号は？',a:'119番'},
+    {subject:'社会',topic:'地図',q:'等高線の間隔がせまいと地形はどうなっている？',a:'急な坂（傾斜がきつい）'},
+    {subject:'社会',topic:'都道府県',q:'東京都の県庁所在地は？',a:'東京（新宿区）'}
+  ],
+  // ==================== 5年 漢字 ====================
+  '5_kanji': [
+    {subject:'国語',topic:'漢字書き取り',q:'「こうけん」を漢字で書きなさい（社会に―する）',a:'貢献（こうけん）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「せいぞう」を漢字で書きなさい',a:'製造（せいぞう）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「しじ」を漢字で書きなさい（先生の―に従う）',a:'指示（しじ）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「ほしょう」を漢字で書きなさい（安全を―する）',a:'保障（ほしょう）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「ぼうえき」を漢字で書きなさい',a:'貿易（ぼうえき）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「きんぞく」を漢字で書きなさい',a:'金属（きんぞく）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「けいたい」を漢字で書きなさい（形の状態）',a:'形態（けいたい）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「にんむ」を漢字で書きなさい',a:'任務（にんむ）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「こうぞう」を漢字で書きなさい',a:'構造（こうぞう）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「しゅだん」を漢字で書きなさい',a:'手段（しゅだん）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「えいきょう」を漢字で書きなさい',a:'影響（えいきょう）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「ひはん」を漢字で書きなさい',a:'批判（ひはん）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「ぜったい」を漢字で書きなさい',a:'絶対（ぜったい）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「せいかく」を漢字で書きなさい（性格がよい）',a:'性格（せいかく）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「こうか」を漢字で書きなさい（効き目）',a:'効果（こうか）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「じったい」を漢字で書きなさい',a:'実態（じったい）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「しょうにん」を漢字で書きなさい（承ける）',a:'承認（しょうにん）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「へんか」を漢字で書きなさい',a:'変化（へんか）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「しげん」を漢字で書きなさい（天然―）',a:'資源（しげん）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「そんちょう」を漢字で書きなさい',a:'尊重（そんちょう）'}
+  ],
+  // ==================== 5年 算数 ====================
+  '5_math': [
+    {subject:'算数',topic:'割合',q:'800円の2割引きはいくら？',a:'800×0.8 = 640円'},
+    {subject:'算数',topic:'割合',q:'60人中45人が合格。合格率は何%？',a:'45÷60 = 75%'},
+    {subject:'算数',topic:'食塩水',q:'10%の食塩水200gに含まれる食塩は何g？',a:'200×0.1 = 20g'},
+    {subject:'算数',topic:'速さ',q:'時速60kmで2時間30分走ると何km？',a:'60×2.5 = 150km'},
+    {subject:'算数',topic:'速さ',q:'150kmを3時間で走った。時速何km？',a:'150÷3 = 時速50km'},
+    {subject:'算数',topic:'比',q:'A:B = 3:5 でBが40のとき、Aは？',a:'5→40なので1→8、A=3×8=24'},
+    {subject:'算数',topic:'円',q:'半径6cmの円の面積は？（円周率3.14）',a:'6×6×3.14 = 113.04cm²'},
+    {subject:'算数',topic:'体積',q:'たて3cm、よこ4cm、高さ5cmの直方体の体積は？',a:'3×4×5 = 60cm³'},
+    {subject:'算数',topic:'分数',q:'2/3 × 3/4 はいくつ？',a:'6/12 = 1/2'},
+    {subject:'算数',topic:'分数',q:'3/5 ÷ 2/3 はいくつ？',a:'3/5 × 3/2 = 9/10'},
+    {subject:'算数',topic:'平均',q:'テスト5回の点数が 80,90,70,85,75。平均は？',a:'(80+90+70+85+75)÷5 = 80点'},
+    {subject:'算数',topic:'損益算',q:'原価600円に4割の利益をつけた定価は？',a:'600×1.4 = 840円'},
+    {subject:'算数',topic:'相似',q:'相似比が2:3の三角形。面積比は？',a:'2²:3² = 4:9'},
+    {subject:'算数',topic:'割合',q:'ある数の30%が120。ある数は？',a:'120÷0.3 = 400'},
+    {subject:'算数',topic:'計算',q:'1.2÷0.4 はいくつ？',a:'3'}
+  ],
+  // ==================== 5年 理科 ====================
+  '5_science': [
+    {subject:'理科',topic:'水溶液',q:'BTB液の色：酸性→？ 中性→？ アルカリ性→？',a:'酸性:黄 中性:緑 アルカリ性:青'},
+    {subject:'理科',topic:'水溶液',q:'塩酸にアルミニウムを入れるとどうなる？',a:'溶けて水素が発生する'},
+    {subject:'理科',topic:'てこ',q:'支点から30cmに100g。50cmで釣り合わせるには何g？',a:'30×100÷50 = 60g'},
+    {subject:'理科',topic:'電磁石',q:'電磁石を強くする方法を2つ',a:'コイルの巻き数を増やす・電流を大きくする'},
+    {subject:'理科',topic:'気象',q:'台風は上から見ると時計回り？反時計回り？',a:'反時計回り（北半球）'},
+    {subject:'理科',topic:'植物',q:'花のつくり：外側から順に4つ',a:'がく→花びら→おしべ→めしべ'},
+    {subject:'理科',topic:'メダカ',q:'メダカのオスとメスの見分け方は？',a:'背びれに切れ込み→オス、しりびれが大きい→オス'},
+    {subject:'理科',topic:'天気',q:'雲量が0〜1で何、2〜8で何、9〜10で何？',a:'快晴・晴れ・くもり'},
+    {subject:'理科',topic:'ふりこ',q:'ふりこの周期を変えるのは何？',a:'ふりこの長さ（重さや振れ幅では変わらない）'},
+    {subject:'理科',topic:'川の流れ',q:'川の上流・中流・下流で石の形は？',a:'上流:角ばって大きい → 下流:丸くて小さい'}
+  ],
+  // ==================== 5年 社会 ====================
+  '5_social': [
+    {subject:'社会',topic:'農業',q:'米の生産量トップ3の都道府県は？',a:'1位 新潟県 2位 北海道 3位 秋田県'},
+    {subject:'社会',topic:'工業',q:'太平洋ベルトとは？',a:'東京〜北九州を結ぶ帯状の工業地帯'},
+    {subject:'社会',topic:'水産業',q:'日本の排他的経済水域は海岸から何海里？',a:'200海里'},
+    {subject:'社会',topic:'農業',q:'促成栽培とはどんな栽培方法？',a:'暖かい地域で時期を早めて出荷する栽培'},
+    {subject:'社会',topic:'工業',q:'中京工業地帯の中心都市と主な産業は？',a:'名古屋市・自動車工業'},
+    {subject:'社会',topic:'国土',q:'日本の国土面積は約何万km²？',a:'約38万km²'},
+    {subject:'社会',topic:'気候',q:'日本海側の冬の特徴は？',a:'北西の季節風で雪が多い（豪雪地帯）'},
+    {subject:'社会',topic:'環境',q:'公害の四大裁判をひとつ答えなさい',a:'水俣病・新潟水俣病・イタイイタイ病・四日市ぜんそく'},
+    {subject:'社会',topic:'情報',q:'マスメディアの例を3つ',a:'テレビ・新聞・ラジオ（インターネットも）'},
+    {subject:'社会',topic:'林業',q:'日本の国土の約何%が森林？',a:'約67%（2/3）'}
+  ],
+  // ==================== 6年 漢字 ====================
+  '6_kanji': [
+    {subject:'国語',topic:'漢字書き取り',q:'「けんとう」を漢字で書きなさい（よく調べ考える）',a:'検討（けんとう）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「こんなん」を漢字で書きなさい',a:'困難（こんなん）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「そうぞう」を漢字で書きなさい（新しく作り出す）',a:'創造（そうぞう）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「けんり」を漢字で書きなさい',a:'権利（けんり）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「ぎむ」を漢字で書きなさい',a:'義務（ぎむ）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「ひめい」を漢字で書きなさい（石に名を刻む）',a:'碑銘（ひめい）→ 秘めた決意なら「秘」'},
+    {subject:'国語',topic:'漢字書き取り',q:'「きんちょう」を漢字で書きなさい',a:'緊張（きんちょう）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「しゅけん」を漢字で書きなさい（国民―）',a:'主権（しゅけん）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「けんぽう」を漢字で書きなさい',a:'憲法（けんぽう）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「はいけい」を漢字で書きなさい（手紙の最初）',a:'拝啓（はいけい）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「たんじゅん」を漢字で書きなさい',a:'単純（たんじゅん）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「きちょう」を漢字で書きなさい（―な体験）',a:'貴重（きちょう）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「げんみつ」を漢字で書きなさい',a:'厳密（げんみつ）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「こうえん」を漢字で書きなさい（講義する）',a:'講演（こうえん）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「ちょぞう」を漢字で書きなさい',a:'貯蔵（ちょぞう）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「ほうこく」を漢字で書きなさい',a:'報告（ほうこく）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「きゅうしゅう」を漢字で書きなさい（水分を―する）',a:'吸収（きゅうしゅう）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「こうせい」を漢字で書きなさい（公正な判断）',a:'公正（こうせい）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「しょうひ」を漢字で書きなさい（―税）',a:'消費（しょうひ）'},
+    {subject:'国語',topic:'漢字書き取り',q:'「どくりつ」を漢字で書きなさい',a:'独立（どくりつ）'}
+  ],
+  // ==================== 6年 算数 ====================
+  '6_math': [
+    {subject:'算数',topic:'分数計算',q:'2/3 ÷ 4/9 × 3/5 は？',a:'2/3 × 9/4 × 3/5 = 54/60 = 9/10'},
+    {subject:'算数',topic:'速さ',q:'分速80mと分速60mで向かい合い。600m離れて何分後に出会う？',a:'600÷(80+60) = 約4.3分'},
+    {subject:'算数',topic:'面積',q:'半径10cmの半円の面積は？（円周率3.14）',a:'10×10×3.14÷2 = 157cm²'},
+    {subject:'算数',topic:'体積',q:'底面の半径3cm、高さ10cmの円柱の体積は？',a:'3×3×3.14×10 = 282.6cm³'},
+    {subject:'算数',topic:'比例・反比例',q:'y=3xのとき、xが4ならyは？',a:'y = 3×4 = 12'},
+    {subject:'算数',topic:'場合の数',q:'5人から委員長と副委員長を選ぶ。何通り？',a:'5×4 = 20通り'},
+    {subject:'算数',topic:'仕事算',q:'Aは12日、Bは18日で終わる仕事。一緒だと何日？',a:'1/12+1/18 = 5/36 → 36/5 = 7.2日'},
+    {subject:'算数',topic:'食塩水',q:'8%の食塩水200gに水を足して5%にする。水は何g？',a:'食塩16g÷0.05=320g全体 → 水120g'},
+    {subject:'算数',topic:'通過算',q:'長さ150mの列車が時速90kmで400mの鉄橋を渡りきるのに何秒？',a:'(150+400)÷25 = 22秒'},
+    {subject:'算数',topic:'数列',q:'1,4,9,16,25,… の10番目は？',a:'10² = 100（平方数の列）'},
+    {subject:'算数',topic:'比',q:'3:5の比を、比の値で表しなさい',a:'3÷5 = 0.6'},
+    {subject:'算数',topic:'割合',q:'定価の3割引で売って420円の利益。原価1000円のとき定価は？',a:'(1000+420)÷0.7 = 2028.6→要確認\n定価×0.7=原価+420'},
+    {subject:'算数',topic:'面積',q:'底辺12cm、高さ8cmの平行四辺形の面積は？',a:'12×8 = 96cm²'},
+    {subject:'算数',topic:'計算',q:'0.125を分数にしなさい',a:'1/8'},
+    {subject:'算数',topic:'計算',q:'3と1/3 − 1と3/4 は？',a:'10/3 − 7/4 = 40/12 − 21/12 = 19/12'}
+  ],
+  // ==================== 6年 理科 ====================
+  '6_science': [
+    {subject:'理科',topic:'人体',q:'人間の血液の循環：心臓→肺→心臓の循環を何という？',a:'肺循環（小循環）'},
+    {subject:'理科',topic:'人体',q:'消化液を出さない臓器は？ 肝臓・すい臓・小腸・大腸',a:'大腸'},
+    {subject:'理科',topic:'水溶液',q:'リトマス紙：酸性で青→何色？アルカリ性で赤→何色？',a:'酸性で青→赤、アルカリ性で赤→青'},
+    {subject:'理科',topic:'地層',q:'堆積岩の3種類は？',a:'れき岩・砂岩・泥岩'},
+    {subject:'理科',topic:'燃焼',q:'ものが燃えるのに必要な3条件は？',a:'燃えるもの・酸素・発火点以上の温度'},
+    {subject:'理科',topic:'電気',q:'発光ダイオード(LED)の特徴を2つ',a:'消費電力が少ない・長寿命'},
+    {subject:'理科',topic:'生態系',q:'食物連鎖で、植物→バッタ→カエル→ヘビ。カエルは何次消費者？',a:'二次消費者'},
+    {subject:'理科',topic:'天体',q:'月食はどんな現象？',a:'地球の影に月が入る現象（満月のときに起こる）'},
+    {subject:'理科',topic:'植物',q:'根から吸い上げた水の通り道は？',a:'道管（茎の内側）'},
+    {subject:'理科',topic:'てこ',q:'はさみ・ピンセット・くるみ割り、支点が端にあるのは？',a:'ピンセット（第3種てこ）'}
+  ],
+  // ==================== 6年 社会 ====================
+  '6_social': [
+    {subject:'社会',topic:'歴史',q:'聖徳太子が定めた「十七条の憲法」は何年？',a:'604年'},
+    {subject:'社会',topic:'歴史',q:'鎌倉幕府を開いたのは誰？',a:'源頼朝（1185年）'},
+    {subject:'社会',topic:'歴史',q:'江戸幕府の鎖国で貿易が許された場所と国は？',a:'長崎の出島・オランダと中国'},
+    {subject:'社会',topic:'公民',q:'三権分立の3つの権力は？',a:'立法（国会）・行政（内閣）・司法（裁判所）'},
+    {subject:'社会',topic:'公民',q:'国会は何院制？それぞれの名前は？',a:'二院制：衆議院と参議院'},
+    {subject:'社会',topic:'公民',q:'日本国憲法の三大原則は？',a:'国民主権・基本的人権の尊重・平和主義'},
+    {subject:'社会',topic:'歴史',q:'明治維新の三大改革は？',a:'学制・徴兵令・地租改正'},
+    {subject:'社会',topic:'世界',q:'国際連合の本部がある都市は？',a:'ニューヨーク'},
+    {subject:'社会',topic:'歴史',q:'太平洋戦争が終わった年は？',a:'1945年（昭和20年）8月15日'},
+    {subject:'社会',topic:'公民',q:'選挙権は満何歳から？',a:'満18歳以上'}
+  ]
+};
+
+// ================================================================
+// SAMPLE DATA (legacy)
 // ================================================================
 function loadSampleData() {
   if (DATA.problems.length > 0 && !confirm('既存データに追加されます。続けますか？')) return;
@@ -4024,8 +4324,8 @@ function formatDate(d) {
 var timerSec=25*60,timerRunning=false,timerInterval=null;
 var timerModes=[{label:'25分',sec:25*60},{label:'5分休',sec:5*60},{label:'50分',sec:50*60},{label:'10分休',sec:10*60}];
 var timerModeIdx=0;
-function updateTimerDisplay(){var m=Math.floor(timerSec/60),s=timerSec%60;document.getElementById('timerDisplay').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')}
-function toggleTimer(){if(timerRunning){clearInterval(timerInterval);timerRunning=false;document.getElementById('timerStartBtn').textContent='▶'}else{timerRunning=true;document.getElementById('timerStartBtn').textContent='⏸';timerInterval=setInterval(function(){timerSec--;if(timerSec<=0){clearInterval(timerInterval);timerRunning=false;document.getElementById('timerStartBtn').textContent='▶';alert('⏰ タイマー終了！')}updateTimerDisplay()},1000)}}
+function updateTimerDisplay(){var m=Math.floor(timerSec/60),s=timerSec%60;document.getElementById('pomodoroDisplay').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')}
+function toggleTimer(){if(timerRunning){clearInterval(timerInterval);timerRunning=false;document.getElementById('timerStartBtn').textContent='▶'}else{timerRunning=true;document.getElementById('timerStartBtn').textContent='⏸';timerInterval=setInterval(function(){timerSec--;if(timerSec<=0){clearInterval(timerInterval);timerRunning=false;document.getElementById('timerStartBtn').textContent='▶';alert(' タイマー終了！')}updateTimerDisplay()},1000)}}
 function resetTimer(){clearInterval(timerInterval);timerRunning=false;timerSec=timerModes[timerModeIdx].sec;updateTimerDisplay();document.getElementById('timerStartBtn').textContent='▶'}
 function cycleTimerMode(){timerModeIdx=(timerModeIdx+1)%timerModes.length;timerSec=timerModes[timerModeIdx].sec;document.getElementById('timerModeBtn').textContent=timerModes[timerModeIdx].label;updateTimerDisplay();if(timerRunning){clearInterval(timerInterval);timerRunning=false;document.getElementById('timerStartBtn').textContent='▶'}}
 
@@ -4084,11 +4384,11 @@ function showDayDetail(dateStr) {
   var hard = entries.filter(e => e.result === 'hard').length;
   var wrong = entries.filter(e => e.result === 'incorrect').length;
   var list = entries.map(function(e) {
-    var icon = e.result === 'correct' ? '⭕' : e.result === 'hard' ? '🔺' : '❌';
-    return icon + ' ' + e.subject + ' / ' + e.topic + (e.memo ? ' 📝' + e.memo : '');
+    var icon = e.result === 'correct' ? "◎" : e.result === 'hard' ? "△" : '×';
+    return icon + ' ' + e.subject + ' / ' + e.topic + (e.memo ? ' ' + e.memo : '');
   }).join('\n');
   var summary = dateStr.replace(/^\d{4}-/,'') + ' の学習記録\n\n'
-    + '⭕ ' + correct + '問  🔺 ' + hard + '問  ❌ ' + wrong + '問\n'
+    + '◎ ' + correct + '問  △ ' + hard + '問  × ' + wrong + '問\n'
     + '合計: ' + entries.length + '問\n\n' + list;
   alert(summary);
 }
@@ -4169,7 +4469,7 @@ function renderCurriculum() {
   var juku = DATA.settings.jukuType || 'none';
   var el = document.getElementById('curriculumContent');
   if (juku === 'none' || !CURRICULUM_V2[juku]) {
-    el.innerHTML = '<div class="empty-state"><div class="icon">📖</div><p>設定画面で塾を選択してください</p><button class="btn-start" onclick="switchScreen(\'Settings\')" style="max-width:200px">⚙️ 設定へ</button></div>';
+    el.innerHTML = '<div class="empty-state"><div class="icon"></div><p>設定画面で塾を選択してください</p><button class="btn-start" onclick="switchScreen(\'Settings\')" style="max-width:200px"> 設定へ</button></div>';
     return;
   }
   var cur = CURRICULUM_V2[juku];
@@ -4188,16 +4488,16 @@ function renderCurriculum() {
     var isFuture = currentIdx >= 0 && termIdx > currentIdx;
 
     var borderColor = isCurrent ? 'var(--accent)' : 'var(--border)';
-    var bgColor = isCurrent ? 'rgba(108,99,255,.05)' : 'var(--surface)';
+    var bgColor = isCurrent ? 'rgba(240,137,108,.05)' : 'var(--surface)';
     var opacity = isFuture ? 'opacity:0.55' : '';
 
     html += '<div id="term_' + term.id + '" style="background:' + bgColor + ';border:2px solid ' + borderColor + ';border-radius:12px;padding:12px;margin-bottom:14px;' + opacity + '">';
     // Header
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
     html += '<span style="font-size:14px;font-weight:800">' + term.label;
-    if (isCurrent) html += ' <span style="font-size:10px;background:var(--accent);color:#fff;padding:2px 8px;border-radius:10px;margin-left:6px">📍 いまここ</span>';
-    if (isPast) html += ' <span style="font-size:10px;color:var(--success)">✅</span>';
-    if (isFuture) html += ' <span style="font-size:10px;color:var(--text2)">🔜</span>';
+    if (isCurrent) html += ' <span style="font-size:10px;background:var(--accent);color:#fff;padding:2px 8px;border-radius:10px;margin-left:6px">いまここ</span>';
+    if (isPast) html += ' <span style="font-size:10px;color:var(--success)"></span>';
+    if (isFuture) html += ' <span style="font-size:10px;color:var(--text2)"></span>';
     html += '</span>';
     html += '<span style="font-size:10px;color:var(--text2)">' + term.period + '</span>';
     html += '</div>';
@@ -4215,7 +4515,7 @@ function renderCurriculum() {
     // Data rows
     term.weeks.forEach(function(week) {
       var isTest = (week.math || '').indexOf('総合') >= 0 || (week.math || '').indexOf('マンスリー') >= 0 || (week.math || '').indexOf('カリテ') >= 0 || (week.math || '').indexOf('組分け') >= 0 || (week.math || '').indexOf('公開模試') >= 0;
-      var rowStyle = isTest ? 'background:rgba(108,99,255,.06);font-style:italic' : '';
+      var rowStyle = isTest ? 'background:rgba(240,137,108,.06);font-style:italic' : '';
       html += '<div class="curr-row" style="' + rowStyle + '">';
       html += '<div class="curr-cell curr-n" style="font-weight:700;color:var(--text2);font-size:10px">' + week.n + '</div>';
       subjCols.forEach(function(col) {
@@ -4277,12 +4577,12 @@ function applyMode() {
   var btn = document.getElementById('modeToggleBtn');
   if (btn) {
     if (mode === 'parent') {
-      btn.innerHTML = '👨‍👩‍👧 保護者';
+      btn.innerHTML = '保護者 保護者';
       btn.style.background = 'var(--accent)';
       btn.style.color = '#fff';
       btn.style.border = 'none';
     } else {
-      btn.innerHTML = '👦 子ども';
+      btn.innerHTML = '子ども';
       btn.style.background = 'var(--surface)';
       btn.style.color = 'var(--text2)';
       btn.style.border = '1px solid var(--border)';
@@ -4344,7 +4644,7 @@ function renderParentTimeline() {
 
   var html = '<div style="display:flex;flex-direction:column;gap:8px">';
   entries.forEach(function(e, idx) {
-    var icon = e.result === 'correct' ? '✅' : e.result === 'hard' ? '△' : '❌';
+    var icon = e.result === 'correct' ? '' : e.result === 'hard' ? '△' : '×';
     var color = e.result === 'correct' ? 'var(--success)' : e.result === 'hard' ? 'var(--warning)' : 'var(--danger)';
     var time = e.timestamp ? new Date(e.timestamp).toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'}) : '';
     var spent = e.timeSpent ? Math.round(e.timeSpent / 60) + '分' : '';
@@ -4356,7 +4656,7 @@ function renderParentTimeline() {
       preview = '<div style="font-size:10px;color:var(--text2);margin-top:2px;line-height:1.3">' + txt + '</div>';
     }
     // Drawing indicator
-    var drawIcon = e.lastDrawingImage ? '<span style="font-size:9px;color:var(--accent);cursor:pointer" title="描画あり">🖊</span>' : '';
+    var drawIcon = e.lastDrawingImage ? '<span style="font-size:9px;color:var(--accent);cursor:pointer" title="描画あり"></span>' : '';
 
     html += '<div style="padding:8px 10px;background:var(--surface2);border-radius:10px;cursor:pointer;border:1px solid transparent;transition:border-color .2s" onclick="showParentEntryModal(\'' + e.id + '\',' + idx + ')" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'transparent\'">';
     html += '<div style="display:flex;align-items:center;gap:8px;font-size:12px">';
@@ -4365,11 +4665,11 @@ function renderParentTimeline() {
     html += '<span style="font-weight:700">' + (e.subject || '') + '</span>';
     html += '<span style="color:var(--text1);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">' + (e.topic || '') + '</span>';
     html += drawIcon;
-    if (spent) html += '<span style="color:var(--accent);font-size:10px">⏱' + spent + '</span>';
+    if (spent) html += '<span style="color:var(--accent);font-size:10px">経過 ' + spent + '</span>';
     html += '</div>';
-    if (reason) html += '<div style="margin-top:3px;margin-left:48px"><span style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(255,107,107,.12);color:var(--danger)">' + reason + '</span></div>';
+    if (reason) html += '<div style="margin-top:3px;margin-left:48px"><span style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(240,112,112,.12);color:var(--danger)">' + reason + '</span></div>';
     if (preview) html += '<div style="margin-left:48px">' + preview + '</div>';
-    if (e.memo) html += '<div style="margin-left:48px;font-size:10px;color:var(--accent);margin-top:2px">📝 ' + e.memo + '</div>';
+    if (e.memo) html += '<div style="margin-left:48px;font-size:10px;color:var(--accent);margin-top:2px"> ' + e.memo + '</div>';
     html += '</div>';
   });
   html += '</div>';
@@ -4388,7 +4688,7 @@ function showParentEntryModal(problemId, entryIdx) {
   var e = entries[entryIdx];
   if (!e) return;
 
-  var icon = e.result === 'correct' ? '✅ できた' : e.result === 'hard' ? '🔺 あやしい' : '❌ できなかった';
+  var icon = e.result === 'correct' ? ' できた' : e.result === 'hard' ? '△ あやしい' : '× できなかった';
   var time = e.timestamp ? new Date(e.timestamp).toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'}) : '';
   var spent = e.timeSpent ? Math.floor(e.timeSpent / 60) + '分' + (e.timeSpent % 60) + '秒' : '-';
 
@@ -4401,11 +4701,11 @@ function showParentEntryModal(problemId, entryIdx) {
   html += '<div style="font-size:12px;color:var(--text2);margin-bottom:12px">' + time + ' ・ ' + icon + ' ・ 所要 ' + spent + '</div>';
   // Mistake reason
   if (e.mistakeReason) {
-    html += '<div style="margin-bottom:10px"><span style="font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(255,107,107,.12);color:var(--danger);font-weight:600">間違い理由: ' + e.mistakeReason + '</span></div>';
+    html += '<div style="margin-bottom:10px"><span style="font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(240,112,112,.12);color:var(--danger);font-weight:600">間違い理由: ' + e.mistakeReason + '</span></div>';
   }
   // Problem content
   html += '<div style="margin-bottom:12px">';
-  html += '<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px">📄 問題</div>';
+  html += '<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px"> 問題</div>';
   if (e.contentImage) {
     html += '<img src="' + e.contentImage + '" style="max-width:100%;border-radius:8px;border:1px solid var(--border)">';
   }
@@ -4418,7 +4718,7 @@ function showParentEntryModal(problemId, entryIdx) {
   html += '</div>';
   // Answer
   html += '<div style="margin-bottom:12px">';
-  html += '<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px">📝 答え</div>';
+  html += '<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px"> 答え</div>';
   if (e.answerImage) {
     html += '<img src="' + e.answerImage + '" style="max-width:100%;border-radius:8px;border:1px solid var(--border)">';
   }
@@ -4429,14 +4729,14 @@ function showParentEntryModal(problemId, entryIdx) {
   // Drawing snapshot
   if (e.lastDrawingImage) {
     html += '<div style="margin-bottom:12px">';
-    html += '<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px">🖊 子どもの書き込み（直近）</div>';
+    html += '<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px"> 子どもの書き込み（直近）</div>';
     html += '<img src="' + e.lastDrawingImage + '" style="max-width:100%;border-radius:8px;border:1px solid var(--border);background:#fff">';
     html += '</div>';
   }
   // Memo
   if (e.memo) {
     html += '<div style="margin-bottom:12px">';
-    html += '<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px">💬 メモ</div>';
+    html += '<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px"> メモ</div>';
     html += '<div style="font-size:13px;padding:8px;background:var(--surface2);border-radius:8px">' + e.memo + '</div>';
     html += '</div>';
   }
@@ -4444,7 +4744,7 @@ function showParentEntryModal(problemId, entryIdx) {
   var hist = p.history || [];
   if (hist.length > 1) {
     html += '<div style="margin-bottom:8px">';
-    html += '<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px">📊 この問題の履歴（' + hist.length + '回）</div>';
+    html += '<div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px"> この問題の履歴（' + hist.length + '回）</div>';
     html += '<div style="display:flex;gap:3px;flex-wrap:wrap">';
     hist.forEach(function(h) {
       var c = h.result === 'correct' ? 'var(--success)' : h.result === 'hard' ? 'var(--warning)' : 'var(--danger)';
@@ -4550,7 +4850,7 @@ function renderParentRepeatErrors() {
   });
 
   if (repeats.length === 0) {
-    el.innerHTML = '<div style="color:var(--text2);font-size:13px;text-align:center;padding:20px">繰り返し間違える問題はまだありません 👍</div>';
+    el.innerHTML = '<div style="color:var(--text2);font-size:13px;text-align:center;padding:20px">繰り返し間違える問題はまだありません </div>';
     return;
   }
 
@@ -4598,7 +4898,7 @@ function renderParentWeekly() {
 
   var html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center">';
   days.forEach(function(d) {
-    var bg = d.count === 0 ? 'var(--surface2)' : d.count >= 10 ? 'rgba(108,99,255,.2)' : 'rgba(108,99,255,.08)';
+    var bg = d.count === 0 ? 'var(--surface2)' : d.count >= 10 ? 'rgba(240,137,108,.2)' : 'rgba(240,137,108,.08)';
     var rate = d.count > 0 ? Math.round(d.correct / d.count * 100) : 0;
     var rateColor = rate >= 70 ? 'var(--success)' : rate >= 40 ? 'var(--warning)' : d.count > 0 ? 'var(--danger)' : 'var(--text2)';
     html += '<div style="background:' + bg + ';border-radius:8px;padding:8px 4px">';
@@ -4671,7 +4971,7 @@ function renderParentPriority() {
   });
 
   if (priorities.length === 0) {
-    el.innerHTML = '<div style="text-align:center;padding:12px;color:var(--success);font-size:13px">✨ 特に優先すべき復習はありません。順調です！</div>';
+    el.innerHTML = '<div style="text-align:center;padding:12px;color:var(--success);font-size:13px"> 特に優先すべき復習はありません。順調です！</div>';
     return;
   }
 
@@ -4681,8 +4981,8 @@ function renderParentPriority() {
     var fails = (p.history||[]).filter(function(h){return h.result==='incorrect'}).length;
     var total = (p.history||[]).length;
     var rate = Math.round((1 - fails/total) * 100);
-    var emoji = p.subject === '算数' ? '🔢' : p.subject === '国語' ? '📖' : p.subject === '理科' ? '🔬' : '🌍';
-    html += '<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(108,99,255,.06);border-radius:8px;font-size:12px;border-left:3px solid var(--danger)">';
+    var emoji = p.subject === '算数' ? '' : p.subject === '国語' ? '' : p.subject === '理科' ? '' : '';
+    html += '<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(240,137,108,.06);border-radius:8px;font-size:12px;border-left:3px solid var(--danger)">';
     html += '<span>' + emoji + '</span>';
     html += '<span style="font-weight:600;min-width:40px">' + (p.subject||'') + '</span>';
     html += '<span style="flex:1;color:var(--text1)">' + (p.topic||'') + '</span>';
@@ -4701,7 +5001,7 @@ function renderParentSubjectBalance() {
   if (!el) return;
   
   var subjects = {};
-  var colors = {'算数':'#6c63ff','国語':'#ff6b6b','理科':'#51cf66','社会':'#ffd43b'};
+  var colors = {'算数':'#f0896c','国語':'#f07070','理科':'#6dd08a','社会':'#ffd43b'};
   DATA.problems.forEach(function(p) {
     var subj = p.subject || '?';
     if (!subjects[subj]) subjects[subj] = { total: 0, correct: 0, time: 0, studied: 0 };
@@ -4776,7 +5076,7 @@ function renderParentGrowth() {
   weeks.forEach(function(w, i) {
     var rate = w.count > 0 ? Math.round(w.correct / w.count * 100) : 0;
     var isThisWeek = i === 3;
-    html += '<div style="background:' + (isThisWeek ? 'rgba(108,99,255,.08)' : 'var(--surface2)') + ';border-radius:10px;padding:10px;text-align:center;' + (isThisWeek?'border:1px solid var(--accent)33':'') + '">';
+    html += '<div style="background:' + (isThisWeek ? 'rgba(240,137,108,.08)' : 'var(--surface2)') + ';border-radius:10px;padding:10px;text-align:center;' + (isThisWeek?'border:1px solid var(--accent)33':'') + '">';
     html += '<div style="font-size:9px;color:var(--text2)">' + w.label + '</div>';
     if (isThisWeek) html += '<div style="font-size:8px;color:var(--accent);font-weight:700">今週</div>';
     html += '<div style="font-size:22px;font-weight:900;margin:4px 0">' + w.count + '</div>';
@@ -4792,12 +5092,12 @@ function renderParentGrowth() {
   if (weeks.length >= 2) {
     var curr = weeks[3], prev = weeks[2];
     var trend = '';
-    if (curr.count > prev.count) trend += '📈 学習量UP ';
-    else if (curr.count < prev.count && prev.count > 0) trend += '📉 学習量ダウン ';
+    if (curr.count > prev.count) trend += ' 学習量UP ';
+    else if (curr.count < prev.count && prev.count > 0) trend += ' 学習量ダウン ';
     var currRate = curr.count > 0 ? curr.correct/curr.count : 0;
     var prevRate = prev.count > 0 ? prev.correct/prev.count : 0;
-    if (currRate > prevRate + 0.05) trend += '✨ 正答率UP';
-    else if (currRate < prevRate - 0.05 && prev.count > 0) trend += '⚠️ 正答率ダウン';
+    if (currRate > prevRate + 0.05) trend += ' 正答率UP';
+    else if (currRate < prevRate - 0.05 && prev.count > 0) trend += ' 正答率ダウン';
     if (trend) html += '<div style="margin-top:8px;font-size:12px;text-align:center">' + trend + '</div>';
   }
 
@@ -4829,11 +5129,11 @@ function renderParentAdvice() {
   var cap = DATA.settings.dailyCap || 15;
   
   if (todayCount === 0) {
-    advices.push({icon:'⏰', text:'今日はまだ学習を始めていません。1日' + cap + '問の目標に向けて頑張りましょう！'});
+    advices.push({icon:'', text:'今日はまだ学習を始めていません。1日' + cap + '問の目標に向けて頑張りましょう！'});
   } else if (todayCount >= cap) {
-    advices.push({icon:'🎉', text:'今日の目標(' + cap + '問)を達成しました！素晴らしい！'});
+    advices.push({icon:'', text:'今日の目標(' + cap + '問)を達成しました！素晴らしい！'});
   } else {
-    advices.push({icon:'💪', text:'今日は' + todayCount + '/' + cap + '問完了。あと' + (cap-todayCount) + '問です。'});
+    advices.push({icon:'', text:'今日は' + todayCount + '/' + cap + '問完了。あと' + (cap-todayCount) + '問です。'});
   }
 
   // Careless mistake advice
@@ -4844,7 +5144,7 @@ function renderParentAdvice() {
   var careless = recentHistory.filter(function(h){return h.mistakeReason==='ケアレスミス'}).length;
   var recentWrong = recentHistory.filter(function(h){return h.result==='incorrect'}).length;
   if (recentWrong > 0 && careless / recentWrong > 0.4) {
-    advices.push({icon:'😅', text:'最近の間違いの' + Math.round(careless/recentWrong*100) + '%がケアレスミスです。「途中式を丁寧に書く」「見直しの時間を確保する」を意識してみましょう。'});
+    advices.push({icon:'', text:'最近の間違いの' + Math.round(careless/recentWrong*100) + '%がケアレスミスです。「途中式を丁寧に書く」「見直しの時間を確保する」を意識してみましょう。'});
   }
 
   // Subject imbalance
@@ -4854,7 +5154,7 @@ function renderParentAdvice() {
   if (subjEntries.length >= 2) {
     var max = subjEntries[0], min = subjEntries[subjEntries.length-1];
     if (max[1] > min[1] * 3) {
-      advices.push({icon:'⚖️', text: min[0] + 'の問題が少なめです（' + min[1] + '問）。バランスよく登録すると弱点を網羅できます。'});
+      advices.push({icon:'', text: min[0] + 'の問題が少なめです（' + min[1] + '問）。バランスよく登録すると弱点を網羅できます。'});
     }
   }
 
@@ -4862,9 +5162,9 @@ function renderParentAdvice() {
   if (withHistory > 5) {
     var masteryRate = Math.round(mastered / withHistory * 100);
     if (masteryRate >= 60) {
-      advices.push({icon:'🌟', text:'定着率' + masteryRate + '%！順調に力がついています。'});
+      advices.push({icon:'', text:'定着率' + masteryRate + '%！順調に力がついています。'});
     } else if (masteryRate < 30) {
-      advices.push({icon:'🔄', text:'定着率' + masteryRate + '%。毎日コツコツ復習を続けることが大切です。焦らず着実に。'});
+      advices.push({icon:'', text:'定着率' + masteryRate + '%。毎日コツコツ復習を続けることが大切です。焦らず着実に。'});
     }
   }
 
@@ -4872,9 +5172,9 @@ function renderParentAdvice() {
   if (DATA.settings.examDate) {
     var diff = Math.ceil((new Date(DATA.settings.examDate) - new Date()) / 864e5);
     if (diff > 0 && diff <= 30) {
-      advices.push({icon:'🏃', text:'入試まであと' + diff + '日！過去問演習と苦手単元の仕上げに集中しましょう。'});
+      advices.push({icon:'', text:'入試まであと' + diff + '日！過去問演習と苦手単元の仕上げに集中しましょう。'});
     } else if (diff > 30 && diff <= 90) {
-      advices.push({icon:'📅', text:'入試まで' + diff + '日。弱点克服と基礎の確認を並行して進めましょう。'});
+      advices.push({icon:'', text:'入試まで' + diff + '日。弱点克服と基礎の確認を並行して進めましょう。'});
     }
   }
 
@@ -4976,12 +5276,14 @@ function renderCalDayDetail(dateStr) {
           subject: p.subject,
           topic: p.topic,
           content: p.content || '',
+          answer: p.answer || '',
           contentImage: p.contentImage,
           result: h.result,
           quality: h.quality,
           memo: h.memo || '',
           mistakeReason: h.mistakeReason || '',
           timeSpent: h.timeSpent || 0,
+          timestamp: h.timestamp || '',
           type: getProblemType(p),
           stage: getStage(p)
         });
@@ -4993,6 +5295,8 @@ function renderCalDayDetail(dateStr) {
     detail.style.display = 'none';
     return;
   }
+  // Sort by timestamp (newest first within same day)
+  entries.sort(function(a,b) { return (a.timestamp||'').localeCompare(b.timestamp||''); });
   detail.style.display = '';
 
   var correct = entries.filter(e => e.result === 'correct').length;
@@ -5002,45 +5306,41 @@ function renderCalDayDetail(dateStr) {
 
   document.getElementById('calDayTitle').textContent = dateLabel + ' の学習記録';
   document.getElementById('calDaySummary').innerHTML =
-    '<span style="color:var(--success);font-weight:700">⭕ ' + correct + '</span>' +
-    '<span style="color:var(--warning);font-weight:700">🔺 ' + hard + '</span>' +
-    '<span style="color:var(--danger);font-weight:700">❌ ' + wrong + '</span>' +
+    '<span style="color:var(--success);font-weight:700">◎ ' + correct + '</span>' +
+    '<span style="color:var(--warning);font-weight:700">△ ' + hard + '</span>' +
+    '<span style="color:var(--danger);font-weight:700">× ' + wrong + '</span>' +
     '<span style="color:var(--text2)">計 ' + entries.length + '問</span>';
 
-  // Group by subject
-  var bySubj = {};
-  entries.forEach(function(e) {
-    if (!bySubj[e.subject]) bySubj[e.subject] = [];
-    bySubj[e.subject].push(e);
-  });
-
+  // Table layout - unified with list view style
   var listHtml = '';
-  Object.entries(bySubj).forEach(function([subj, items]) {
-    listHtml += '<div style="font-size:12px;font-weight:700;color:var(--accent);margin:10px 0 4px">' + subj + '（' + items.length + '問）</div>';
-    items.forEach(function(e) {
-      var icon = e.result === 'correct' ? '⭕' : e.result === 'hard' ? '🔺' : '❌';
-      var preview = '';
-      if (e.contentImage) {
-        preview = '<img src="' + e.contentImage + '" style="max-height:30px;border-radius:3px;vertical-align:middle;margin-left:6px">';
-      } else if (e.content) {
-        var txt = e.content.length > 30 ? e.content.substring(0, 30) + '…' : e.content;
-        preview = '<span style="color:var(--text2);margin-left:4px">' + txt + '</span>';
-      }
-      var extra = '';
-      if (e.mistakeReason) extra += ' <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(255,107,107,.12);color:var(--danger)">' + e.mistakeReason + '</span>';
-      if (e.timeSpent > 0) {
-        var m = Math.floor(e.timeSpent / 60), s = e.timeSpent % 60;
-        extra += ' <span style="font-size:9px;color:var(--text2)">⏱' + m + ':' + String(s).padStart(2,'0') + '</span>';
-      }
-      if (e.memo) extra += ' <span style="font-size:9px;color:var(--accent)">📝' + e.memo + '</span>';
-      listHtml += '<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">'
-        + '<span>' + icon + '</span>'
-        + '<span style="font-weight:600">' + e.topic + '</span>'
-        + '<span>' + getTypeBadge({problemType: e.type}) + '</span>'
-        + preview + extra
-        + '<span style="margin-left:auto;flex-shrink:0"><button class="btn-freeze" onclick="openProblemDetail(\'' + e.id + '\')" style="font-size:10px;padding:2px 8px">▶解く</button></span>'
-        + '</div>';
-    });
+  entries.forEach(function(e) {
+    var icon = e.result === 'correct' ? '◎' : e.result === 'hard' ? '△' : '×';
+    var iconColor = e.result === 'correct' ? 'var(--success)' : e.result === 'hard' ? 'var(--warning)' : 'var(--danger)';
+    var timeStr = e.timestamp ? new Date(e.timestamp).toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'}) : '--:--';
+    var elapsed = '';
+    if (e.timeSpent > 0) {
+      var m = Math.floor(e.timeSpent / 60), s = e.timeSpent % 60;
+      elapsed = m + ':' + String(s).padStart(2,'0');
+    }
+    var reason = e.mistakeReason || '';
+    var preview = '';
+    if (e.contentImage) {
+      preview = '<img src="' + e.contentImage + '" style="max-height:30px;border-radius:3px;opacity:.8">';
+    } else if (e.content) {
+      var txt = e.content.length > 50 ? e.content.substring(0, 50) + '…' : e.content;
+      preview = '<span style="color:var(--text2)">' + txt + '</span>';
+    }
+    listHtml += '<div style="padding:8px 4px;border-bottom:1px solid var(--border)">'
+      + '<div style="display:flex;align-items:center;gap:6px">'
+      + '<span style="font-weight:700;font-size:14px;color:' + iconColor + ';min-width:20px">' + icon + '</span>'
+      + '<span style="font-size:11px;font-weight:600">' + e.subject + '</span>'
+      + '<span style="font-size:11px;color:var(--text2)">/ ' + e.topic + '</span>'
+      + '<span style="margin-left:auto;font-size:10px;color:var(--text2)">' + timeStr + (elapsed ? ' (' + elapsed + ')' : '') + '</span>'
+      + '</div>'
+      + (preview ? '<div style="font-size:11px;margin:3px 0 0 26px;line-height:1.5">' + preview + '</div>' : '')
+      + (reason ? '<div style="font-size:10px;color:var(--danger);margin:2px 0 0 26px">' + reason + '</div>' : '')
+      + (e.memo ? '<div style="font-size:10px;color:var(--accent);margin:2px 0 0 26px">' + e.memo + '</div>' : '')
+      + '</div>';
   });
 
   document.getElementById('calDayList').innerHTML = listHtml;
@@ -5054,7 +5354,7 @@ function renderExamCountdown(){
   if(DATA.settings.examDate){
     var diff=Math.ceil((new Date(DATA.settings.examDate)-new Date())/864e5);
     if(diff>0){
-      if(badge){badge.textContent='📅 '+(DATA.settings.examName||'入試')+' あと'+diff+'日';badge.style.display='';}
+      if(badge){badge.textContent=' '+(DATA.settings.examName||'入試')+' あと'+diff+'日';badge.style.display='';}
     }else{if(badge){badge.textContent='';badge.style.display='none';}}
   }else{if(badge){badge.textContent='';badge.style.display='none';}}
 }
@@ -5077,7 +5377,7 @@ function updateJukuInfo(){
   // Show this month's topics
   if(juku!=='none'){
     var topics=getCurrentMonthTopics(juku,info.grade,info.month);
-    if(topics.length){el.innerHTML+='<br>📖 今月の単元: '+topics.map(function(t){return t.name}).join(', ')}
+    if(topics.length){el.innerHTML+='<br> 今月の単元: '+topics.map(function(t){return t.name}).join(', ')}
   }
 }
 function saveExamGoal(){
@@ -5124,7 +5424,7 @@ function showSZDetail(zone){
   var panel=document.getElementById('szDetailPanel');
   if(!panel)return;
   panel.style.display='';
-  var labels={comfort:'⚠️ コンフォートゾーン（簡単すぎる）',stretch:'✨ ストレッチゾーン（最適な負荷）',panic:'🔴 パニックゾーン（難しすぎる）'};
+  var labels={comfort:'コンフォートゾーン（簡単すぎる）',stretch:'ストレッチゾーン（最適な負荷）',panic:'パニックゾーン（難しすぎる）'};
   document.getElementById('szDetailTitle').textContent=labels[zone]||zone;
   var probs=DATA.problems.filter(function(p){return !p.frozen && p.masteryLevel<4 && classifyStretchZone(p)===zone});
   document.getElementById('szDetailList').innerHTML=probs.length?probs.map(function(p){
@@ -5163,11 +5463,11 @@ function classifyStretchZone(p) {
 }
 
 function getStretchZoneLabel(zone) {
-  return {comfort:'⚠️ コンフォート',stretch:'✨ ストレッチ',panic:'🔴 パニック'}[zone] || zone;
+  return {comfort:'コンフォート',stretch:'ストレッチ',panic:'パニック'}[zone] || zone;
 }
 function getStretchZoneBadge(zone) {
   var cls = {comfort:'sz-comfort',stretch:'sz-stretch',panic:'sz-panic'}[zone]||'sz-stretch';
-  var label = {comfort:'⚠️ 簡単',stretch:'✨ 最適',panic:'🔴 難しい'}[zone]||'';
+  var label = {comfort:' 簡単',stretch:' 最適',panic:' 難しい'}[zone]||'';
   return '<span class="sz-badge '+cls+'">'+label+'</span>';
 }
 
@@ -5203,12 +5503,9 @@ function toggleTheme(){
 }
 function updateThemeButtons(){
   var isLight = document.documentElement.classList.contains('light');
-  var icon = isLight ? '☀️' : '🌙';
   var label = isLight ? 'ライト' : 'ダーク';
   var btn = document.getElementById('settingThemeBtn');
-  if(btn) btn.textContent = icon + ' ' + label;
-  var sBtn = document.getElementById('sideThemeBtn');
-  if(sBtn) sBtn.innerHTML = '<span>' + icon + '</span>テーマ';
+  if(btn) btn.textContent = label;
 }
 function initTheme(){
   var saved = localStorage.getItem('revnote-theme');
@@ -5377,42 +5674,42 @@ function generateSampleProblems() {
   var id = Date.now();
   var samples = [
     // ===== 4年 算数 前期 =====
-    {subject:'算数',topic:'計算の工夫',question:'25×36 を工夫して計算しなさい',answer:'25×4=100を利用\n25×36=25×4×9=900\n💡25×4=100は必須暗記',source:'基本',difficulty:1,curriculum:'計算の工夫'},
-    {subject:'算数',topic:'計算の工夫',question:'998×5 を工夫して計算しなさい',answer:'(1000-2)×5=5000-10=4990\n💡1000に近い数は引き算で',source:'基本',difficulty:1,curriculum:'計算の工夫'},
+    {subject:'算数',topic:'計算の工夫',question:'25×36 を工夫して計算しなさい',answer:'25×4=100を利用\n25×36=25×4×9=900\n25×4=100は必須暗記',source:'基本',difficulty:1,curriculum:'計算の工夫'},
+    {subject:'算数',topic:'計算の工夫',question:'998×5 を工夫して計算しなさい',answer:'(1000-2)×5=5000-10=4990\n1000に近い数は引き算で',source:'基本',difficulty:1,curriculum:'計算の工夫'},
     {subject:'算数',topic:'計算の工夫',question:'□にあてはまる数: (□+15)×7=71',answer:'逆算: 71は割れないので確認→(□+15)×7=161?\n正しくは71÷7は割り切れない→問題確認\n別解: □+15=71÷7...',source:'予シリ4上',difficulty:2,curriculum:'計算の工夫'},
-    {subject:'算数',topic:'和差算',question:'兄と弟で合計3200円。兄が弟より400円多い。それぞれいくら？',answer:'【和差算】\n兄=(3200+400)÷2=1800円\n弟=3200-1800=1400円\n💡大=(和+差)÷2',source:'予シリ4上',difficulty:1,curriculum:'和差算'},
+    {subject:'算数',topic:'和差算',question:'兄と弟で合計3200円。兄が弟より400円多い。それぞれいくら？',answer:'【和差算】\n兄=(3200+400)÷2=1800円\n弟=3200-1800=1400円\n大=(和+差)÷2',source:'予シリ4上',difficulty:1,curriculum:'和差算'},
     {subject:'算数',topic:'和差算',question:'3つの数の和が45。一番大きい数は一番小さい数より12大きく、真ん中の数より5大きい。',answer:'小=x, 中=x+7, 大=x+12\n3x+19=45 → x=26/3...\n別解: 全部小に揃える→3x+12+7=45→x=26/3\n※整数問題なら再確認',source:'応用',difficulty:3,curriculum:'和差算'},
-    {subject:'算数',topic:'植木算',question:'120mの道に6mおきに木を植える。両端にも植えると何本？',answer:'120÷6=20(間の数)\n20+1=21本\n💡両端あり=間+1, 両端なし=間-1, 片方=間',source:'基本',difficulty:1,curriculum:'植木算'},
-    {subject:'算数',topic:'植木算',question:'円形の池の周りに3mおきに木を植える。周は60m。木は何本？',answer:'60÷3=20本\n💡円形=間の数と同じ（端がないから）',source:'基本',difficulty:2,curriculum:'植木算'},
+    {subject:'算数',topic:'植木算',question:'120mの道に6mおきに木を植える。両端にも植えると何本？',answer:'120÷6=20(間の数)\n20+1=21本\n両端あり=間+1, 両端なし=間-1, 片方=間',source:'基本',difficulty:1,curriculum:'植木算'},
+    {subject:'算数',topic:'植木算',question:'円形の池の周りに3mおきに木を植える。周は60m。木は何本？',answer:'60÷3=20本\n円形=間の数と同じ（端がないから）',source:'基本',difficulty:2,curriculum:'植木算'},
     {subject:'算数',topic:'つるかめ算',question:'ツルとカメが合わせて10匹。足の合計が28本。それぞれ何匹？',answer:'全部ツル仮定→足20本\n差: 28-20=8本\nカメ1匹でツルより2本多い\nカメ: 8÷2=4匹 ツル: 6匹',source:'予シリ4上',difficulty:1,curriculum:'つるかめ算'},
     {subject:'算数',topic:'つるかめ算',question:'1個80円のりんごと1個50円のみかんを合わせて15個買い、合計900円。それぞれ何個？',answer:'全部みかん仮定→50×15=750円\n差: 900-750=150円\nりんご1個で50円多い\nりんご: 150÷50=3個 みかん: 12個',source:'基本',difficulty:2,curriculum:'つるかめ算'},
-    {subject:'算数',topic:'角度',question:'三角形の内角の和は何度？五角形は？',answer:'三角形=180°\n四角形=360° 五角形=540°\n💡n角形=(n-2)×180°',source:'基本',difficulty:1,curriculum:'角度'},
-    {subject:'算数',topic:'角度',question:'二等辺三角形の頂角が40°。底角は？',answer:'(180-40)÷2=70°\n💡二等辺三角形は底角が等しい',source:'基本',difficulty:1,curriculum:'角度'},
-    {subject:'算数',topic:'約数',question:'36の約数をすべて求めなさい。',answer:'ペアで探す: 1×36,2×18,3×12,4×9,6×6\n9個\n💡素因数分解:36=2²×3²→(2+1)(2+1)=9個',source:'予シリ4上',difficulty:1,curriculum:'約数'},
-    {subject:'算数',topic:'約数',question:'72と54の最大公約数を求めなさい。',answer:'72=2³×3² 54=2×3³\nGCD=2¹×3²=18\n💡共通する素因数の小さい方の指数',source:'基本',difficulty:2,curriculum:'約数'},
-    {subject:'算数',topic:'倍数',question:'4と6の最小公倍数を求めなさい。',answer:'4=2² 6=2×3\nLCM=2²×3=12\n💡各素因数の大きい方の指数',source:'基本',difficulty:1,curriculum:'倍数'},
-    {subject:'算数',topic:'場合の数',question:'1,2,3,4の4枚のカードから3枚選んで3桁の整数を作る。何通り？',answer:'百の位:4通り 十の位:3通り 一の位:2通り\n4×3×2=24通り\n💡並べる→順列',source:'予シリ4下',difficulty:2,curriculum:'場合の数'},
-    {subject:'算数',topic:'場合の数',question:'5人から3人選ぶ組み合わせは何通り？',answer:'5C3=5×4×3÷(3×2×1)=10通り\n💡選ぶ→組合せ（÷並べ方）',source:'基本',difficulty:2,curriculum:'場合の数'},
-    {subject:'算数',topic:'面積の基本',question:'底辺8cm、高さ5cmの三角形の面積',answer:'8×5÷2=20cm²\n💡三角形=底辺×高さ÷2',source:'基本',difficulty:1,curriculum:'面積の基本'},
-    {subject:'算数',topic:'円と扇形',question:'半径6cmの円の面積と、その1/4の扇形の面積',answer:'円: 6×6×3.14=113.04cm²\n扇形: 113.04÷4=28.26cm²\n💡扇形=円×(中心角/360)',source:'基本',difficulty:2,curriculum:'円と扇形'},
+    {subject:'算数',topic:'角度',question:'三角形の内角の和は何度？五角形は？',answer:'三角形=180°\n四角形=360° 五角形=540°\nn角形=(n-2)×180°',source:'基本',difficulty:1,curriculum:'角度'},
+    {subject:'算数',topic:'角度',question:'二等辺三角形の頂角が40°。底角は？',answer:'(180-40)÷2=70°\n二等辺三角形は底角が等しい',source:'基本',difficulty:1,curriculum:'角度'},
+    {subject:'算数',topic:'約数',question:'36の約数をすべて求めなさい。',answer:'ペアで探す: 1×36,2×18,3×12,4×9,6×6\n9個\n素因数分解:36=2²×3²→(2+1)(2+1)=9個',source:'予シリ4上',difficulty:1,curriculum:'約数'},
+    {subject:'算数',topic:'約数',question:'72と54の最大公約数を求めなさい。',answer:'72=2³×3² 54=2×3³\nGCD=2¹×3²=18\n共通する素因数の小さい方の指数',source:'基本',difficulty:2,curriculum:'約数'},
+    {subject:'算数',topic:'倍数',question:'4と6の最小公倍数を求めなさい。',answer:'4=2² 6=2×3\nLCM=2²×3=12\n各素因数の大きい方の指数',source:'基本',difficulty:1,curriculum:'倍数'},
+    {subject:'算数',topic:'場合の数',question:'1,2,3,4の4枚のカードから3枚選んで3桁の整数を作る。何通り？',answer:'百の位:4通り 十の位:3通り 一の位:2通り\n4×3×2=24通り\n並べる→順列',source:'予シリ4下',difficulty:2,curriculum:'場合の数'},
+    {subject:'算数',topic:'場合の数',question:'5人から3人選ぶ組み合わせは何通り？',answer:'5C3=5×4×3÷(3×2×1)=10通り\n選ぶ→組合せ（÷並べ方）',source:'基本',difficulty:2,curriculum:'場合の数'},
+    {subject:'算数',topic:'面積の基本',question:'底辺8cm、高さ5cmの三角形の面積',answer:'8×5÷2=20cm²\n三角形=底辺×高さ÷2',source:'基本',difficulty:1,curriculum:'面積の基本'},
+    {subject:'算数',topic:'円と扇形',question:'半径6cmの円の面積と、その1/4の扇形の面積',answer:'円: 6×6×3.14=113.04cm²\n扇形: 113.04÷4=28.26cm²\n扇形=円×(中心角/360)',source:'基本',difficulty:2,curriculum:'円と扇形'},
 
     // ===== 5年 算数 =====
-    {subject:'算数',topic:'割合の基本',question:'定価800円の品物を2割引きで買った。代金は？',answer:'800×(1-0.2)=800×0.8=640円\n💡○割引=1-割合 を掛ける',source:'予シリ5上',difficulty:1,curriculum:'割合の基本'},
-    {subject:'算数',topic:'百分率と歩合',question:'60人のクラスで45人が合格。合格率は？',answer:'45÷60=0.75=75%\n💡割合=比べる量÷もとにする量',source:'基本',difficulty:1,curriculum:'百分率と歩合'},
+    {subject:'算数',topic:'割合の基本',question:'定価800円の品物を2割引きで買った。代金は？',answer:'800×(1-0.2)=800×0.8=640円\n○割引=1-割合 を掛ける',source:'予シリ5上',difficulty:1,curriculum:'割合の基本'},
+    {subject:'算数',topic:'百分率と歩合',question:'60人のクラスで45人が合格。合格率は？',answer:'45÷60=0.75=75%\n割合=比べる量÷もとにする量',source:'基本',difficulty:1,curriculum:'百分率と歩合'},
     {subject:'算数',topic:'食塩水',question:'8%の食塩水200gに水を加えて5%にしたい。水は何g？',answer:'食塩:200×0.08=16g(これは変わらない)\n16÷0.05=320g(全体)\n水:320-200=120g',source:'予シリ5上',difficulty:2,curriculum:'食塩水'},
-    {subject:'算数',topic:'食塩水',question:'10%の食塩水300gと4%の食塩水200gを混ぜると何%？',answer:'食塩: 300×0.1+200×0.04=30+8=38g\n全体: 500g\n38÷500=7.6%\n💡面積図(てんびん法)でも解ける',source:'応用',difficulty:3,curriculum:'食塩水'},
-    {subject:'算数',topic:'損益算',question:'原価600円の品物に4割の利益を見込んで定価をつけた。定価は？',answer:'600×1.4=840円\n💡定価=原価×(1+利益率)',source:'基本',difficulty:1,curriculum:'損益算'},
-    {subject:'算数',topic:'速さの基本',question:'時速60kmで2時間30分走ると何km？',answer:'60×2.5=150km\n💡距離=速さ×時間 30分=0.5時間',source:'基本',difficulty:1,curriculum:'速さの基本'},
-    {subject:'算数',topic:'旅人算',question:'AとBが600m離れて向かい合って歩く。A分速80m、B分速60m。何分後に出会う？',answer:'出会い→速さの和\n80+60=毎分140m\n600÷140=30/7≒4.3分\n💡出会い=和、追いかけ=差',source:'予シリ5上',difficulty:2,curriculum:'旅人算'},
+    {subject:'算数',topic:'食塩水',question:'10%の食塩水300gと4%の食塩水200gを混ぜると何%？',answer:'食塩: 300×0.1+200×0.04=30+8=38g\n全体: 500g\n38÷500=7.6%\n面積図(てんびん法)でも解ける',source:'応用',difficulty:3,curriculum:'食塩水'},
+    {subject:'算数',topic:'損益算',question:'原価600円の品物に4割の利益を見込んで定価をつけた。定価は？',answer:'600×1.4=840円\n定価=原価×(1+利益率)',source:'基本',difficulty:1,curriculum:'損益算'},
+    {subject:'算数',topic:'速さの基本',question:'時速60kmで2時間30分走ると何km？',answer:'60×2.5=150km\n距離=速さ×時間 30分=0.5時間',source:'基本',difficulty:1,curriculum:'速さの基本'},
+    {subject:'算数',topic:'旅人算',question:'AとBが600m離れて向かい合って歩く。A分速80m、B分速60m。何分後に出会う？',answer:'出会い→速さの和\n80+60=毎分140m\n600÷140=30/7≒4.3分\n出会い=和、追いかけ=差',source:'予シリ5上',difficulty:2,curriculum:'旅人算'},
     {subject:'算数',topic:'旅人算',question:'兄が分速80mで出発して5分後に弟が分速120mで追いかける。何分後に追いつく？',answer:'兄の先行:80×5=400m\n差の速さ:120-80=40m/分\n400÷40=10分後',source:'応用',difficulty:3,curriculum:'旅人算'},
-    {subject:'算数',topic:'通過算',question:'長さ150mの列車が時速90kmで400mの鉄橋を渡りきるのに何秒？',answer:'進む距離=150+400=550m\n時速90km=秒速25m\n550÷25=22秒\n💡先頭が入って最後尾が出るまで',source:'予シリ5上',difficulty:2,curriculum:'通過算'},
-    {subject:'算数',topic:'流水算',question:'静水時速12km、川の流速時速3km。24km上るのにかかる時間は？',answer:'上りの速さ=12-3=9km/h\n24÷9=8/3=2時間40分\n💡上り=静水-流速 下り=静水+流速',source:'予シリ5上',difficulty:2,curriculum:'流水算'},
-    {subject:'算数',topic:'比の基本',question:'AとBの比が3:5でBが40のとき、Aは？',answer:'5→40なので1→8\nA=3×8=24\n💡比の1あたりを求める',source:'基本',difficulty:1,curriculum:'比の基本'},
-    {subject:'算数',topic:'相似',question:'相似比2:3の三角形。面積比は？',answer:'面積比=2²:3²=4:9\n💡面積比=相似比の2乗',source:'予シリ5上',difficulty:2,curriculum:'相似'},
+    {subject:'算数',topic:'通過算',question:'長さ150mの列車が時速90kmで400mの鉄橋を渡りきるのに何秒？',answer:'進む距離=150+400=550m\n時速90km=秒速25m\n550÷25=22秒\n先頭が入って最後尾が出るまで',source:'予シリ5上',difficulty:2,curriculum:'通過算'},
+    {subject:'算数',topic:'流水算',question:'静水時速12km、川の流速時速3km。24km上るのにかかる時間は？',answer:'上りの速さ=12-3=9km/h\n24÷9=8/3=2時間40分\n上り=静水-流速 下り=静水+流速',source:'予シリ5上',difficulty:2,curriculum:'流水算'},
+    {subject:'算数',topic:'比の基本',question:'AとBの比が3:5でBが40のとき、Aは？',answer:'5→40なので1→8\nA=3×8=24\n比の1あたりを求める',source:'基本',difficulty:1,curriculum:'比の基本'},
+    {subject:'算数',topic:'相似',question:'相似比2:3の三角形。面積比は？',answer:'面積比=2²:3²=4:9\n面積比=相似比の2乗',source:'予シリ5上',difficulty:2,curriculum:'相似'},
     {subject:'算数',topic:'面積比',question:'△ABCの辺BCをBD:DC=2:3に分ける点D。△ABDと△ACDの面積比は？',answer:'高さ共通なので底辺の比=面積比\n△ABD:△ACD=2:3',source:'基本',difficulty:2,curriculum:'面積比'},
-    {subject:'算数',topic:'仕事算',question:'Aは12日、Bは18日で終わる仕事。一緒にやると何日？',answer:'A:1日1/12 B:1日1/18\n合計:1/12+1/18=5/36\n36/5=7.2日\n💡全体を1とおく',source:'予シリ5下',difficulty:2,curriculum:'仕事算'},
+    {subject:'算数',topic:'仕事算',question:'Aは12日、Bは18日で終わる仕事。一緒にやると何日？',answer:'A:1日1/12 B:1日1/18\n合計:1/12+1/18=5/36\n36/5=7.2日\n全体を1とおく',source:'予シリ5下',difficulty:2,curriculum:'仕事算'},
     {subject:'算数',topic:'仕事算',question:'水槽にA管で10分、B管で15分で満水。両方開くと？',answer:'A:1/10 B:1/15 合計:1/6\n6分で満水',source:'基本',difficulty:2,curriculum:'仕事算'},
-    {subject:'算数',topic:'数列',question:'1,4,9,16,25,... 10番目の数は？',answer:'n²の数列（平方数）\n10²=100\n💡差が3,5,7,9...と奇数列',source:'基本',difficulty:1,curriculum:'数列'},
+    {subject:'算数',topic:'数列',question:'1,4,9,16,25,... 10番目の数は？',answer:'n²の数列（平方数）\n10²=100\n差が3,5,7,9...と奇数列',source:'基本',difficulty:1,curriculum:'数列'},
     {subject:'算数',topic:'立体図形',question:'縦3cm、横4cm、高さ5cmの直方体の体積と表面積',answer:'体積:3×4×5=60cm³\n表面積:2×(3×4+4×5+3×5)=2×(12+20+15)=94cm²',source:'基本',difficulty:1,curriculum:'立体図形'},
     {subject:'算数',topic:'速さと比',question:'AとBの速さの比が3:4。同時に出発してBが16km進んだとき、Aは何km？',answer:'速さの比=距離の比（時間同じ）\nA:B=3:4 B=16\nA=16×3/4=12km',source:'予シリ5下',difficulty:2,curriculum:'速さと比'},
 
@@ -5421,21 +5718,21 @@ function generateSampleProblems() {
     {subject:'算数',topic:'文章題総合',question:'池の周りをA(分速60m)とB(分速80m)が同じ地点から逆方向に歩く。池の周りは560m。何分後に初めて出会う？',answer:'逆方向=速さの和\n60+80=140m/分\n560÷140=4分後',source:'入試',difficulty:2,curriculum:'文章題総合'},
 
     // ===== 理科 =====
-    {subject:'理科',topic:'植物のつくり',question:'植物の光合成に必要な3つは？',answer:'光・水・二酸化炭素\n→デンプン(栄養)+酸素\n💡葉緑体で行われる',source:'基本',difficulty:1,curriculum:'植物のつくり'},
-    {subject:'理科',topic:'水溶液の性質',question:'BTB液の色変化は？',answer:'酸性:黄 中性:緑 アルカリ性:青\n💡リトマス:酸性で青→赤(さんであか)',source:'基本',difficulty:1,curriculum:'水溶液の性質'},
-    {subject:'理科',topic:'水溶液の性質',question:'塩酸にアルミニウムを入れると？',answer:'水素が発生して溶ける\nAlCl₃(塩化アルミニウム)になる\n💡塩酸+金属→水素発生',source:'基本',difficulty:2,curriculum:'水溶液の性質'},
-    {subject:'理科',topic:'てこと滑車',question:'支点から30cmに100gのおもり。支点から50cmで釣り合わせるには？',answer:'30×100=50×□\n□=60g\n💡てこの原理:左回り=右回り',source:'基本',difficulty:2,curriculum:'てこと滑車'},
-    {subject:'理科',topic:'天体の動き',question:'月の満ち欠けの周期は約何日？',answer:'約29.5日(朔望月)\n💡新月→上弦→満月→下弦→新月',source:'基本',difficulty:1,curriculum:'天体の動き'},
-    {subject:'理科',topic:'電流と回路',question:'直列と並列、どちらが明るい？電池2個、豆電球1個の場合',answer:'直列の方が電圧2倍→明るい\n並列は電圧同じ→明るさ変わらず長持ち\n💡直列=電圧UP 並列=長持ち',source:'基本',difficulty:2,curriculum:'電流と回路'},
-    {subject:'理科',topic:'気体の性質',question:'酸素の集め方と性質',answer:'水上置換法で集める\n無色無臭、ものを燃やす助燃性\n💡空気の約21%が酸素',source:'基本',difficulty:1,curriculum:'気体の性質'},
+    {subject:'理科',topic:'植物のつくり',question:'植物の光合成に必要な3つは？',answer:'光・水・二酸化炭素\n→デンプン(栄養)+酸素\n葉緑体で行われる',source:'基本',difficulty:1,curriculum:'植物のつくり'},
+    {subject:'理科',topic:'水溶液の性質',question:'BTB液の色変化は？',answer:'酸性:黄 中性:緑 アルカリ性:青\nリトマス:酸性で青→赤(さんであか)',source:'基本',difficulty:1,curriculum:'水溶液の性質'},
+    {subject:'理科',topic:'水溶液の性質',question:'塩酸にアルミニウムを入れると？',answer:'水素が発生して溶ける\nAlCl₃(塩化アルミニウム)になる\n塩酸+金属→水素発生',source:'基本',difficulty:2,curriculum:'水溶液の性質'},
+    {subject:'理科',topic:'てこと滑車',question:'支点から30cmに100gのおもり。支点から50cmで釣り合わせるには？',answer:'30×100=50×□\n□=60g\nてこの原理:左回り=右回り',source:'基本',difficulty:2,curriculum:'てこと滑車'},
+    {subject:'理科',topic:'天体の動き',question:'月の満ち欠けの周期は約何日？',answer:'約29.5日(朔望月)\n新月→上弦→満月→下弦→新月',source:'基本',difficulty:1,curriculum:'天体の動き'},
+    {subject:'理科',topic:'電流と回路',question:'直列と並列、どちらが明るい？電池2個、豆電球1個の場合',answer:'直列の方が電圧2倍→明るい\n並列は電圧同じ→明るさ変わらず長持ち\n直列=電圧UP 並列=長持ち',source:'基本',difficulty:2,curriculum:'電流と回路'},
+    {subject:'理科',topic:'気体の性質',question:'酸素の集め方と性質',answer:'水上置換法で集める\n無色無臭、ものを燃やす助燃性\n空気の約21%が酸素',source:'基本',difficulty:1,curriculum:'気体の性質'},
 
     // ===== 社会 =====
-    {subject:'社会',topic:'日本の国土',question:'日本で一番長い川と、一番面積が大きい湖は？',answer:'川:信濃川(367km)\n湖:琵琶湖(670km²)\n💡利根川は流域面積最大',source:'基本',difficulty:1,curriculum:'日本の国土'},
-    {subject:'社会',topic:'日本の農業',question:'米の生産量が多い都道府県トップ3は？',answer:'1位新潟県 2位北海道 3位秋田県\n💡北陸地方は米どころ',source:'基本',difficulty:1,curriculum:'日本の農業'},
-    {subject:'社会',topic:'日本の工業',question:'太平洋ベルトとは？',answer:'東京～北九州を結ぶ帯状の工業地帯\n💡日本の工業生産の大部分が集中',source:'基本',difficulty:1,curriculum:'日本の工業'},
-    {subject:'社会',topic:'歴史（鎌倉〜室町）',question:'鎌倉幕府を開いたのは誰？何年？',answer:'源頼朝 1185年\n(いい箱つくろう鎌倉幕府)\n💡守護・地頭を全国に設置',source:'基本',difficulty:1,curriculum:'歴史（鎌倉〜室町）'},
-    {subject:'社会',topic:'歴史（戦国〜江戸）',question:'江戸幕府の鎖国で唯一貿易が許された場所と国は？',answer:'長崎の出島 オランダと中国\n💡キリスト教禁止が目的',source:'基本',difficulty:1,curriculum:'歴史（戦国〜江戸）'},
-    {subject:'社会',topic:'公民',question:'三権分立とは？',answer:'立法(国会)・行政(内閣)・司法(裁判所)\n互いに抑制と均衡(チェック&バランス)\n💡権力の集中を防ぐ仕組み',source:'基本',difficulty:1,curriculum:'公民'},
+    {subject:'社会',topic:'日本の国土',question:'日本で一番長い川と、一番面積が大きい湖は？',answer:'川:信濃川(367km)\n湖:琵琶湖(670km²)\n利根川は流域面積最大',source:'基本',difficulty:1,curriculum:'日本の国土'},
+    {subject:'社会',topic:'日本の農業',question:'米の生産量が多い都道府県トップ3は？',answer:'1位新潟県 2位北海道 3位秋田県\n北陸地方は米どころ',source:'基本',difficulty:1,curriculum:'日本の農業'},
+    {subject:'社会',topic:'日本の工業',question:'太平洋ベルトとは？',answer:'東京～北九州を結ぶ帯状の工業地帯\n日本の工業生産の大部分が集中',source:'基本',difficulty:1,curriculum:'日本の工業'},
+    {subject:'社会',topic:'歴史（鎌倉〜室町）',question:'鎌倉幕府を開いたのは誰？何年？',answer:'源頼朝 1185年\n(いい箱つくろう鎌倉幕府)\n守護・地頭を全国に設置',source:'基本',difficulty:1,curriculum:'歴史（鎌倉〜室町）'},
+    {subject:'社会',topic:'歴史（戦国〜江戸）',question:'江戸幕府の鎖国で唯一貿易が許された場所と国は？',answer:'長崎の出島 オランダと中国\nキリスト教禁止が目的',source:'基本',difficulty:1,curriculum:'歴史（戦国〜江戸）'},
+    {subject:'社会',topic:'公民',question:'三権分立とは？',answer:'立法(国会)・行政(内閣)・司法(裁判所)\n互いに抑制と均衡(チェック&バランス)\n権力の集中を防ぐ仕組み',source:'基本',difficulty:1,curriculum:'公民'},
   ];
 
     return samples.map(function(s, i) {
@@ -5477,6 +5774,7 @@ if(location.hash.startsWith("#sync="))importFromURL();
 renderExamCountdown();
 applyMode();
 renderToday();
+updateHeaderProgress();
 </script>
 </body>
 </html>
