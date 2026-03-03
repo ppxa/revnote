@@ -66,8 +66,8 @@
 .sz-bar{display:flex;height:6px;border-radius:3px;overflow:hidden;margin-top:8px;background:var(--surface2)}
 .sz-bar-seg{height:100%;transition:width .3s}
 /* TIMER BAR */
-.timer-bar{position:fixed;top:0;left:0;right:0;height:44px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:150;gap:8px}
-.timer-display{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;min-width:72px;text-align:center}
+.timer-bar{position:fixed;top:0;left:0;right:0;height:43px;background:var(--surface);border-bottom:none;display:flex;align-items:center;justify-content:space-between;padding:0 12px;z-index:150;gap:6px}
+.timer-display{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;min-width:52px;text-align:center}
 .timer-btn{padding:4px 12px;border-radius:6px;font-size:11px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit}
 .timer-btn.active{border-color:var(--accent);color:var(--accent)}
 .countdown-badge{font-size:11px;color:var(--warning);font-weight:700;white-space:nowrap}
@@ -483,7 +483,7 @@ body {
 .empty-state p { color: var(--text2); font-size: 14px; }
 
 /* scroll top padding */
-.screen { padding-top: max(env(safe-area-inset-top, 16px), 52px); }
+.screen { padding-top: max(env(safe-area-inset-top, 16px), 58px); }
 
 /* === iPad landscape 2-column layout === */
 /* --- LANDSCAPE 2-COLUMN LAYOUT --- */
@@ -493,7 +493,8 @@ body {
   nav.nav{display:none!important}
   .nav-side{display:flex!important}
   .timer-bar{left:72px}
-  .screen { max-width:none; padding:56px 16px 8px 24px; margin-left:72px; }
+  #headerProgressGauge{left:72px}
+  .screen { max-width:none; padding:58px 16px 8px 24px; margin-left:72px; }
   /* Today: 2-column, left=info+problem, right=scratchpad */
   .today-layout{display:grid;grid-template-columns:340px 1fr;gap:12px;height:calc(100vh - 64px)}
   .today-left{overflow-y:auto;max-height:calc(100vh - 64px);padding-right:8px;-webkit-overflow-scrolling:touch}
@@ -548,24 +549,21 @@ body {
 
 <!-- HEADER BAR -->
 <div class="timer-bar">
-  <div style="display:flex;align-items:center;gap:8px">
+  <div style="display:flex;align-items:center;gap:6px">
     <span style="font-size:12px;font-weight:900;color:var(--accent);letter-spacing:-.5px;font-family:'Zen Maru Gothic',sans-serif">revnote</span>
-    <div class="timer-display" id="pomodoroDisplay">25:00</div>
-    <button class="timer-btn" id="timerStartBtn" onclick="toggleTimer()">▶</button>
-    <button class="timer-btn" onclick="resetTimer()">↺</button>
-    <button class="timer-btn" id="timerModeBtn" onclick="cycleTimerMode()">25分</button>
-  </div>
-  <div id="headerProgress" style="display:flex;align-items:center;gap:6px;flex:1;max-width:200px;margin:0 8px">
-    <span id="headerQueueLabel" style="font-size:10px;color:var(--text2);white-space:nowrap;font-weight:600">0/0</span>
-    <div style="flex:1;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden">
-      <div id="headerQueueBar" style="height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width .5s"></div>
-    </div>
+    <div id="pomodoroDisplay" onclick="cycleTimerMode()" style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;min-width:52px;text-align:center;cursor:pointer;user-select:none;padding:2px 6px;border-radius:6px;background:var(--surface2)">25:00</div>
+    <button class="timer-btn" id="timerStartBtn" onclick="toggleTimer()" style="font-size:10px;padding:2px 8px">▶</button>
+    <button class="timer-btn" onclick="resetTimer()" style="font-size:10px;padding:2px 6px">↺</button>
   </div>
   <div style="display:flex;align-items:center;gap:6px">
     <div id="countdownBadge" class="countdown-badge"></div>
-    <button onclick="saveDataNow()" style="font-size:10px;padding:3px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-weight:600" id="headerSaveBtn">保存</button>
+    <button onclick="saveDataNow()" style="font-size:10px;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-weight:600" id="headerSaveBtn">保存</button>
     <button id="modeToggleBtn" onclick="toggleParentChild()" style="font-size:10px;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-weight:600;white-space:nowrap">子ども</button>
   </div>
+</div>
+<div id="headerProgressGauge" style="position:fixed;top:43px;left:0;right:0;height:6px;z-index:149;background:var(--surface2);border-bottom:1px solid var(--border)">
+  <div id="headerGaugeFill" style="height:100%;background:var(--grad1);width:0%;transition:width .5s ease"></div>
+  <span id="headerGaugeLabel" style="position:absolute;right:8px;top:-1px;font-size:9px;font-weight:700;color:var(--text2)"></span>
 </div>
 
 <!-- SIDEBAR NAV (landscape) -->
@@ -596,11 +594,6 @@ body {
   <div class="today-layout">
     <!-- LEFT PANE: today info + problem/answer -->
     <div class="today-left">
-      <!-- Progress Lamps -->
-      <div id="progressLamps" style="display:flex;align-items:center;gap:6px;padding:8px 12px;flex-wrap:wrap">
-        <span id="lampLabel" style="font-size:11px;color:var(--text2);font-weight:600;white-space:nowrap"></span>
-        <div id="lampDots" style="display:flex;gap:4px;flex-wrap:wrap;flex:1"></div>
-      </div>
       <div id="monthTopics" class="card" style="display:none;background:var(--surface);border-radius:var(--radius);padding:12px 16px;border:1px solid var(--border);margin-bottom:12px">
         <div style="font-size:11px;color:var(--text2);margin-bottom:4px">今月の学習単元</div>
         <div id="monthTopicsList" style="font-size:13px;font-weight:600"></div>
@@ -640,11 +633,7 @@ body {
       </div>
       <!-- Problem card + answer (in left pane) -->
       <div class="card-wrap" id="cardWrap">
-        <div id="cardProgress" style="font-size:12px;color:var(--text2);text-align:center"></div>
-        <!-- Problem Timer (count up) -->
-        <div id="problemTimer" style="text-align:center;margin:4px 0">
-          <span id="pTimerDisplay" style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text2)">0:00</span>
-        </div>
+        <div id="cardProgress" style="font-size:11px;color:var(--text2);text-align:center;display:flex;align-items:center;justify-content:center;gap:10px"></div>
         <div class="problem-card" id="problemCard"></div>
         <!-- Hint button (before reveal) -->
         <button class="btn-reveal" id="btnHint" onclick="toggleHint()" style="display:none;background:var(--surface2);border-color:var(--border);color:var(--text2)">メモ・ヒントを見る</button>
@@ -1217,16 +1206,16 @@ function updateHeaderProgress() {
     (p.history || []).forEach(function(h) { if (h.date === t) doneToday++; });
   });
   var cap = parseInt(DATA.settings.dailyCap || 15);
-  var label = document.getElementById('headerQueueLabel');
-  var bar = document.getElementById('headerQueueBar');
-  if (label) label.textContent = doneToday + '/' + cap;
-  if (bar) bar.style.width = Math.min(100, Math.round(doneToday / cap * 100)) + '%';
-  if (doneToday >= cap && label) {
-    label.style.color = 'var(--success)';
-    if (bar) bar.style.background = 'var(--success)';
+  var fill = document.getElementById('headerGaugeFill');
+  var lbl = document.getElementById('headerGaugeLabel');
+  var pct = Math.min(100, Math.round(doneToday / cap * 100));
+  if (fill) fill.style.width = pct + '%';
+  if (doneToday >= cap) {
+    if (fill) fill.style.background = 'var(--success)';
+    if (lbl) { lbl.textContent = doneToday + '/' + cap + ' CLEAR!'; lbl.style.color = 'var(--success)'; }
   } else {
-    if (label) label.style.color = 'var(--text2)';
-    if (bar) bar.style.background = 'var(--accent)';
+    if (fill) fill.style.background = 'var(--grad1)';
+    if (lbl) { lbl.textContent = doneToday + '/' + cap; lbl.style.color = 'var(--text2)'; }
   }
 }
 function defaultData() {
@@ -2104,48 +2093,7 @@ function renderStreak() {
 }
 
 function renderProgressLamps() {
-  var cap = parseInt(DATA.settings.dailyCap || 15);
-  // Count how many problems done today
-  var t = today();
-  var doneToday = 0;
-  DATA.problems.forEach(function(p) {
-    (p.history || []).forEach(function(h) {
-      if (h.date === t) doneToday++;
-    });
-  });
-  var lampLabel = document.getElementById('lampLabel');
-  var lampDots = document.getElementById('lampDots');
-  if (!lampLabel || !lampDots) return;
-  // Show total to show (max of cap or doneToday)
-  var total = Math.max(cap, doneToday);
-  lampDots.innerHTML = '';
-  for (var i = 0; i < total; i++) {
-    var dot = document.createElement('div');
-    dot.style.cssText = 'width:10px;height:10px;border-radius:50%;transition:all .3s;';
-    if (i < doneToday) {
-      // Done — lit up
-      if (i >= cap) {
-        // Bonus (beyond target)
-        dot.style.background = 'var(--accent)';
-        dot.style.boxShadow = '0 0 6px var(--accent)';
-      } else {
-        dot.style.background = 'var(--success)';
-        dot.style.boxShadow = '0 0 4px var(--success)';
-      }
-    } else {
-      // Not done — dim
-      dot.style.background = 'var(--surface2)';
-      dot.style.border = '1px solid var(--border)';
-    }
-    lampDots.appendChild(dot);
-  }
-  if (doneToday >= cap) {
-    lampLabel.textContent = ' ' + doneToday + '問クリア！';
-    lampLabel.style.color = 'var(--success)';
-  } else {
-    lampLabel.textContent = doneToday + '/' + cap + '問';
-    lampLabel.style.color = 'var(--text2)';
-  }
+  // Replaced by header gauge — no-op for backward compat
 }
 
 function updateStreak() {
@@ -2240,7 +2188,7 @@ function showCard() {
   }
   var p = currentQueue[currentIndex];
   var total = currentQueue.length;
-  document.getElementById('cardProgress').textContent = `${currentIndex + 1} / ${total}`;
+  document.getElementById('cardProgress').innerHTML = `<span>${currentIndex + 1} / ${total}</span><span id="pTimerDisplay" style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--text2)">0:00</span>`;
   document.getElementById('queueProgress').style.width = ((currentIndex) / total * 100) + '%';
 
   var badgeClass = {
@@ -2258,19 +2206,21 @@ function showCard() {
   // Generate nudge based on priority reason
   var nudge = getPriorityNudge(p);
   document.getElementById('problemCard').innerHTML = `
-    <span class="card-badge ${badgeClass}">${p.subject}</span>
-    <div class="card-source">${p.source || ''}</div>
-    <div class="card-topic">${p.topic}</div>
-    ${nudge ? `<div style="font-size:11px;color:var(--accent);margin-bottom:4px;padding:4px 8px;background:rgba(224,122,58,.06);border-radius:6px">${nudge}</div>` : ''}
-    <div class="card-content" id="cardContentArea">
-      ${hasImage ? '<div style="font-size:11px;color:var(--accent)"> 図つき問題 — 計算スペースに表示（2本指で移動・拡縮）</div>' : (p.content || '')}
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span class="card-badge ${badgeClass}">${p.subject}</span>
+      <span style="font-size:12px;font-weight:600;color:var(--text)">${p.topic}</span>
+      <span style="font-size:10px;color:var(--text2);margin-left:auto">${p.source || ''}</span>
     </div>
-    <div class="card-meta">
+    ${nudge ? `<div style="font-size:11px;color:var(--accent);margin-bottom:6px;padding:3px 8px;background:rgba(224,122,58,.06);border-radius:6px">${nudge}</div>` : ''}
+    <div class="card-content" id="cardContentArea" style="font-size:15px;color:var(--text);line-height:1.8;padding:12px 0;min-height:60px">
+      ${hasImage ? '<div style="font-size:11px;color:var(--accent)"> 図つき問題 — 計算スペースに表示</div>' : (p.content || '')}
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:10px;color:var(--text2)">
       ${getStageBadge(p)} ${getTypeBadge(p)}
-      <span class="meta-tag ${p.frequency === 'high' ? 'meta-freq-high' : ''}">${freqLabel}</span>
-      <span class="meta-tag ${p.difficulty === 'hard' ? 'meta-diff-hard' : ''}">${diffLabel}</span>
-      ${p.correctRate != null ? `<span class="meta-tag" style="color:${p.correctRate >= 70 ? 'var(--success)' : p.correctRate >= 40 ? 'var(--warning)' : 'var(--danger)'}">正答率${p.correctRate}%</span>` : ''}
-      ${(p.tags||[]).length ? `<span class="meta-tag">${p.tags.map(t=>'#'+t).join(' ')}</span>` : ''}
+      ${p.difficulty === 'hard' ? '<span class="meta-tag meta-diff-hard">応用</span>' : ''}
+      ${p.frequency === 'high' ? '<span class="meta-tag meta-freq-high">高頻出</span>' : ''}
+      ${p.correctRate != null ? `<span style="color:${p.correctRate >= 70 ? 'var(--success)' : p.correctRate >= 40 ? 'var(--warning)' : 'var(--danger)'}">正答率${p.correctRate}%</span>` : ''}
+      ${(p.tags||[]).length ? p.tags.map(t=>'<span class="meta-tag">#'+t+'</span>').join('') : ''}
     </div>
   `;
 
@@ -4327,7 +4277,7 @@ var timerModeIdx=0;
 function updateTimerDisplay(){var m=Math.floor(timerSec/60),s=timerSec%60;document.getElementById('pomodoroDisplay').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')}
 function toggleTimer(){if(timerRunning){clearInterval(timerInterval);timerRunning=false;document.getElementById('timerStartBtn').textContent='▶'}else{timerRunning=true;document.getElementById('timerStartBtn').textContent='⏸';timerInterval=setInterval(function(){timerSec--;if(timerSec<=0){clearInterval(timerInterval);timerRunning=false;document.getElementById('timerStartBtn').textContent='▶';alert(' タイマー終了！')}updateTimerDisplay()},1000)}}
 function resetTimer(){clearInterval(timerInterval);timerRunning=false;timerSec=timerModes[timerModeIdx].sec;updateTimerDisplay();document.getElementById('timerStartBtn').textContent='▶'}
-function cycleTimerMode(){timerModeIdx=(timerModeIdx+1)%timerModes.length;timerSec=timerModes[timerModeIdx].sec;document.getElementById('timerModeBtn').textContent=timerModes[timerModeIdx].label;updateTimerDisplay();if(timerRunning){clearInterval(timerInterval);timerRunning=false;document.getElementById('timerStartBtn').textContent='▶'}}
+function cycleTimerMode(){timerModeIdx=(timerModeIdx+1)%timerModes.length;timerSec=timerModes[timerModeIdx].sec;updateTimerDisplay();if(timerRunning){clearInterval(timerInterval);timerRunning=false;document.getElementById('timerStartBtn').textContent='▶'}}
 
 // ================================================================
 // CALENDAR
