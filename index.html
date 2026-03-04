@@ -5153,6 +5153,10 @@ function calPageNav(dir) {
 }
 
 function renderCalendarPage() {
+  // Auto-select today if no date selected
+  if (!calSelectedDate) {
+    calSelectedDate = today();
+  }
   // Summary stats
   var allDays = {};
   var totalProblems = 0;
@@ -5219,15 +5223,18 @@ function renderCalDayDetail(dateStr) {
   // Collect entries for this day
   var entries = [];
   DATA.problems.forEach(function(p) {
-    (p.history || []).forEach(function(h) {
+    (p.history || []).forEach(function(h, hi) {
       if (h.date === dateStr) {
         entries.push({
           id: p.id,
+          histIndex: hi,
           subject: p.subject,
           topic: p.topic,
           content: p.content || '',
           answer: p.answer || '',
           contentImage: p.contentImage,
+          answerImage: p.answerImage,
+          lastDrawingImage: p.lastDrawingImage,
           result: h.result,
           quality: h.quality,
           memo: h.memo || '',
@@ -5235,19 +5242,25 @@ function renderCalDayDetail(dateStr) {
           timeSpent: h.timeSpent || 0,
           timestamp: h.timestamp || '',
           type: getProblemType(p),
-          stage: getStage(p)
+          stage: getStage(p),
+          source: p.source || ''
         });
       }
     });
   });
 
   if (entries.length === 0) {
-    detail.style.display = 'none';
+    detail.style.display = '';
+    document.getElementById('calDayTitle').textContent = dateStr.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$1年$2月$3日') + ' の学習記録';
+    document.getElementById('calDaySummary').innerHTML = '<span style="color:var(--text2)">この日の記録はありません</span>';
+    document.getElementById('calDayList').innerHTML = '';
     return;
   }
-  // Sort by timestamp (newest first within same day)
   entries.sort(function(a,b) { return (a.timestamp||'').localeCompare(b.timestamp||''); });
   detail.style.display = '';
+
+  // Store for detail view
+  window._calEntries = entries;
 
   var correct = entries.filter(e => e.result === 'correct').length;
   var hard = entries.filter(e => e.result === 'hard').length;
@@ -5261,9 +5274,8 @@ function renderCalDayDetail(dateStr) {
     '<span style="color:var(--danger);font-weight:700">× ' + wrong + '</span>' +
     '<span style="color:var(--text2)">計 ' + entries.length + '問</span>';
 
-  // Table layout - unified with list view style
   var listHtml = '';
-  entries.forEach(function(e) {
+  entries.forEach(function(e, idx) {
     var icon = e.result === 'correct' ? '◎' : e.result === 'hard' ? '△' : '×';
     var iconColor = e.result === 'correct' ? 'var(--success)' : e.result === 'hard' ? 'var(--warning)' : 'var(--danger)';
     var timeStr = e.timestamp ? new Date(e.timestamp).toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'}) : '--:--';
@@ -5272,7 +5284,6 @@ function renderCalDayDetail(dateStr) {
       var m = Math.floor(e.timeSpent / 60), s = e.timeSpent % 60;
       elapsed = m + ':' + String(s).padStart(2,'0');
     }
-    var reason = e.mistakeReason || '';
     var preview = '';
     if (e.contentImage) {
       preview = '<img src="' + e.contentImage + '" style="max-height:30px;border-radius:3px;opacity:.8">';
@@ -5280,20 +5291,107 @@ function renderCalDayDetail(dateStr) {
       var txt = e.content.length > 50 ? e.content.substring(0, 50) + '…' : e.content;
       preview = '<span style="color:var(--text2)">' + txt + '</span>';
     }
-    listHtml += '<div style="padding:8px 4px;border-bottom:1px solid var(--border)">'
+    listHtml += '<div onclick="showHistoryDetail(' + idx + ')" style="padding:8px 6px;border-bottom:1px solid var(--border);cursor:pointer;border-radius:6px;transition:background .15s" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'none\'">'
       + '<div style="display:flex;align-items:center;gap:6px">'
       + '<span style="font-weight:700;font-size:14px;color:' + iconColor + ';min-width:20px">' + icon + '</span>'
       + '<span style="font-size:11px;font-weight:600">' + e.subject + '</span>'
       + '<span style="font-size:11px;color:var(--text2)">/ ' + e.topic + '</span>'
       + '<span style="margin-left:auto;font-size:10px;color:var(--text2)">' + timeStr + (elapsed ? ' (' + elapsed + ')' : '') + '</span>'
+      + '<span style="font-size:10px;color:var(--text2);margin-left:4px">▸</span>'
       + '</div>'
       + (preview ? '<div style="font-size:11px;margin:3px 0 0 26px;line-height:1.5">' + preview + '</div>' : '')
-      + (reason ? '<div style="font-size:10px;color:var(--danger);margin:2px 0 0 26px">' + reason + '</div>' : '')
-      + (e.memo ? '<div style="font-size:10px;color:var(--accent);margin:2px 0 0 26px">' + e.memo + '</div>' : '')
+      + (e.mistakeReason ? '<div style="font-size:10px;color:var(--danger);margin:2px 0 0 26px">' + e.mistakeReason + '</div>' : '')
       + '</div>';
   });
 
   document.getElementById('calDayList').innerHTML = listHtml;
+}
+
+function showHistoryDetail(idx) {
+  var e = window._calEntries && window._calEntries[idx];
+  if (!e) return;
+  var icon = e.result === 'correct' ? '◎' : e.result === 'hard' ? '△' : '×';
+  var iconColor = e.result === 'correct' ? 'var(--success)' : e.result === 'hard' ? 'var(--warning)' : 'var(--danger)';
+  var resultLabel = e.result === 'correct' ? 'できた' : e.result === 'hard' ? 'あやしい' : 'できなかった';
+  var timeStr = e.timestamp ? new Date(e.timestamp).toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'}) : '';
+  var elapsed = '';
+  if (e.timeSpent > 0) {
+    var m = Math.floor(e.timeSpent / 60), s = e.timeSpent % 60;
+    elapsed = m + '分' + (s > 0 ? s + '秒' : '');
+  }
+
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.onclick = function(ev) { if (ev.target === overlay) overlay.remove(); };
+
+  var html = '<div style="background:var(--surface);border-radius:16px;padding:20px;max-width:440px;width:100%;max-height:85vh;overflow-y:auto">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
+    + '<div style="display:flex;align-items:center;gap:8px">'
+    + '<span style="font-size:24px;font-weight:900;color:' + iconColor + '">' + icon + '</span>'
+    + '<span style="font-size:15px;font-weight:700">' + resultLabel + '</span>'
+    + '</div>'
+    + '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text2)">✕</button>'
+    + '</div>';
+
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
+    + '<span style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(240,137,108,.15);color:var(--accent)">' + e.subject + '</span>'
+    + '<span style="font-size:13px;font-weight:600">' + e.topic + '</span>'
+    + (e.source ? '<span style="font-size:10px;color:var(--text2);margin-left:auto">' + e.source + '</span>' : '')
+    + '</div>';
+
+  if (timeStr || elapsed) {
+    html += '<div style="font-size:11px;color:var(--text2);margin-bottom:10px">'
+      + (timeStr ? '時刻: ' + timeStr : '') + (elapsed ? '　所要: ' + elapsed : '')
+      + '</div>';
+  }
+
+  // Problem content
+  html += '<div style="margin-bottom:12px">'
+    + '<div style="font-size:10px;color:var(--text2);margin-bottom:4px;font-weight:600">問題</div>';
+  if (e.contentImage) {
+    html += '<img src="' + e.contentImage + '" style="max-width:100%;border-radius:8px">';
+  } else if (e.content) {
+    html += '<div style="font-size:14px;line-height:1.7;padding:10px 12px;background:var(--surface2);border-radius:8px">' + e.content + '</div>';
+  } else {
+    html += '<div style="font-size:12px;color:var(--text2)">（問題文なし）</div>';
+  }
+  html += '</div>';
+
+  // Answer
+  html += '<div style="margin-bottom:12px">'
+    + '<div style="font-size:10px;color:var(--text2);margin-bottom:4px;font-weight:600">答え</div>';
+  if (e.answerImage) {
+    html += '<img src="' + e.answerImage + '" style="max-width:100%;border-radius:8px">';
+  } else if (e.answer) {
+    html += '<div style="font-size:14px;line-height:1.7;padding:10px 12px;background:rgba(126,205,176,.08);border:1px solid rgba(126,205,176,.2);border-radius:8px;color:var(--text)">' + e.answer + '</div>';
+  } else {
+    html += '<div style="font-size:12px;color:var(--text2)">（答え未登録）</div>';
+  }
+  html += '</div>';
+
+  // Drawing
+  if (e.lastDrawingImage) {
+    html += '<div style="margin-bottom:12px">'
+      + '<div style="font-size:10px;color:var(--text2);margin-bottom:4px;font-weight:600">書き込み</div>'
+      + '<img src="' + e.lastDrawingImage + '" style="max-width:100%;border-radius:8px;border:1px solid var(--border)">'
+      + '</div>';
+  }
+
+  // Mistake reason
+  if (e.mistakeReason) {
+    html += '<div style="margin-bottom:8px;font-size:12px;padding:6px 10px;background:rgba(240,100,100,.08);border:1px solid rgba(240,100,100,.15);border-radius:8px;color:var(--danger)">'
+      + '間違いの理由: ' + e.mistakeReason + '</div>';
+  }
+
+  // Memo
+  if (e.memo) {
+    html += '<div style="margin-bottom:8px;font-size:12px;padding:6px 10px;background:rgba(240,137,108,.06);border:1px solid rgba(240,137,108,.15);border-radius:8px;color:var(--accent)">'
+      + 'メモ: ' + e.memo + '</div>';
+  }
+
+  html += '</div>';
+  overlay.innerHTML = html;
+  document.body.appendChild(overlay);
 }
 
 // ================================================================
