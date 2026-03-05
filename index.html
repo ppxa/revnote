@@ -2882,6 +2882,328 @@ function finishSession() {
   // Check milestones
   checkStreakMilestone();
   checkMasteredMilestone();
+  // Check if daily cap reached → show reward game
+  if (!isSingleProblemMode) {
+    var t = today();
+    var doneToday = 0;
+    DATA.problems.forEach(function(p) {
+      (p.history || []).forEach(function(h) { if (h.date === t) doneToday++; });
+    });
+    var cap = parseInt(DATA.settings.dailyCap || 15);
+    if (doneToday >= cap) {
+      setTimeout(function() { showRewardGameSelector(); }, 800);
+    }
+  }
+}
+
+// ================================================================
+// REWARD MINI-GAMES (dailyCap達成後のご褒美)
+// ================================================================
+function showRewardGameSelector() {
+  var overlay = document.createElement('div');
+  overlay.id = 'rewardGameOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.innerHTML = '<div style="background:var(--surface);border-radius:20px;padding:24px;max-width:340px;width:100%;text-align:center">'
+    + '<div style="font-size:28px;font-weight:900;color:var(--accent);margin-bottom:4px">🎉 目標達成！</div>'
+    + '<div style="font-size:13px;color:var(--text2);margin-bottom:20px">ご褒美ゲームで遊ぼう！</div>'
+    + '<div style="display:flex;gap:12px;justify-content:center">'
+    + '<div onclick="closeRewardSelector();startSlotGame()" style="flex:1;padding:20px 12px;background:linear-gradient(135deg,#f0896c,#f07070);border-radius:16px;cursor:pointer;color:#fff;transition:transform .15s" onmousedown="this.style.transform=\'scale(0.95)\'" onmouseup="this.style.transform=\'\'">'
+    + '<div style="font-size:32px;margin-bottom:8px">🎰</div>'
+    + '<div style="font-size:14px;font-weight:800">スロット</div>'
+    + '<div style="font-size:10px;opacity:.8;margin-top:4px">揃えてXPゲット！</div>'
+    + '</div>'
+    + '<div onclick="closeRewardSelector();startCoinGame()" style="flex:1;padding:20px 12px;background:linear-gradient(135deg,#f0c040,#e8a030);border-radius:16px;cursor:pointer;color:#fff;transition:transform .15s" onmousedown="this.style.transform=\'scale(0.95)\'" onmouseup="this.style.transform=\'\'">'
+    + '<div style="font-size:32px;margin-bottom:8px">🪙</div>'
+    + '<div style="font-size:14px;font-weight:800">コイン落とし</div>'
+    + '<div style="font-size:10px;opacity:.8;margin-top:4px">タップでコインを落とそう</div>'
+    + '</div>'
+    + '</div>'
+    + '<button onclick="closeRewardSelector()" style="margin-top:16px;padding:8px 24px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:12px;cursor:pointer;font-family:inherit">あとで遊ぶ</button>'
+    + '</div>';
+  document.body.appendChild(overlay);
+}
+function closeRewardSelector() {
+  var el = document.getElementById('rewardGameOverlay');
+  if (el) el.remove();
+}
+
+// === SLOT GAME ===
+function startSlotGame() {
+  var overlay = document.createElement('div');
+  overlay.id = 'slotGameOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  var symbols = ['🍎','🍊','🍇','⭐','💎','🔔','7️⃣'];
+  var html = '<div style="background:linear-gradient(180deg,#1a1a2e,#16213e);border-radius:20px;padding:24px;max-width:340px;width:100%;text-align:center;color:#fff">'
+    + '<div style="font-size:20px;font-weight:900;margin-bottom:16px">🎰 スロットマシン</div>'
+    + '<div style="background:#0f0f23;border-radius:14px;padding:16px;margin-bottom:16px;border:2px solid #333">'
+    + '<div id="slotReels" style="display:flex;justify-content:center;gap:8px;font-size:48px;height:64px;align-items:center;overflow:hidden">'
+    + '<div id="reel0" style="min-width:56px">❓</div>'
+    + '<div id="reel1" style="min-width:56px">❓</div>'
+    + '<div id="reel2" style="min-width:56px">❓</div>'
+    + '</div>'
+    + '</div>'
+    + '<div id="slotResult" style="font-size:16px;font-weight:700;min-height:28px;margin-bottom:12px"></div>'
+    + '<div id="slotXP" style="font-size:14px;color:#f0c040;min-height:24px;margin-bottom:12px"></div>'
+    + '<button id="slotSpinBtn" onclick="spinSlot()" style="padding:14px 40px;border-radius:12px;background:linear-gradient(135deg,#f0896c,#e05050);color:#fff;font-size:16px;font-weight:800;border:none;cursor:pointer;font-family:inherit;transition:transform .1s" onmousedown="this.style.transform=\'scale(0.95)\'" onmouseup="this.style.transform=\'\'">SPIN!</button>'
+    + '<div style="margin-top:12px"><button onclick="document.getElementById(\'slotGameOverlay\').remove()" style="padding:6px 20px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:none;color:rgba(255,255,255,.6);font-size:11px;cursor:pointer;font-family:inherit">閉じる</button></div>'
+    + '</div>';
+  overlay.innerHTML = html;
+  document.body.appendChild(overlay);
+  window._slotSymbols = symbols;
+  window._slotSpins = 3;
+}
+
+function spinSlot() {
+  var btn = document.getElementById('slotSpinBtn');
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = '...';
+  var symbols = window._slotSymbols;
+  var reels = [0,1,2];
+  var results = [];
+  var spinCount = 0;
+  
+  reels.forEach(function(r, i) {
+    var el = document.getElementById('reel' + r);
+    var count = 0;
+    var maxCount = 10 + i * 5;
+    var interval = setInterval(function() {
+      el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+      el.style.transform = 'scale(1.1)';
+      setTimeout(function() { el.style.transform = ''; }, 50);
+      count++;
+      if (count >= maxCount) {
+        clearInterval(interval);
+        var final = symbols[Math.floor(Math.random() * symbols.length)];
+        el.textContent = final;
+        results.push(final);
+        spinCount++;
+        if (spinCount === 3) {
+          setTimeout(function() { resolveSlot(results); }, 200);
+        }
+      }
+    }, 80);
+  });
+}
+
+function resolveSlot(results) {
+  var btn = document.getElementById('slotSpinBtn');
+  var resultEl = document.getElementById('slotResult');
+  var xpEl = document.getElementById('slotXP');
+  var xp = 0;
+  
+  if (results[0] === results[1] && results[1] === results[2]) {
+    // 3 match!
+    if (results[0] === '7️⃣') {
+      xp = 100;
+      resultEl.innerHTML = '<span style="color:#f0c040;font-size:22px">🌟 JACKPOT!!! 🌟</span>';
+      fireConfetti(); fireConfetti();
+    } else if (results[0] === '💎') {
+      xp = 75;
+      resultEl.innerHTML = '<span style="color:#8be0ff">💎 BIG WIN! 💎</span>';
+      fireConfetti();
+    } else {
+      xp = 50;
+      resultEl.innerHTML = '<span style="color:#7ecdb0">✨ 3つ揃った！ ✨</span>';
+      fireConfetti();
+    }
+  } else if (results[0] === results[1] || results[1] === results[2] || results[0] === results[2]) {
+    xp = 15;
+    resultEl.innerHTML = '<span style="color:#f0c040">👍 2つ揃い！</span>';
+  } else {
+    xp = 5;
+    resultEl.textContent = 'ハズレ… でも参加賞！';
+    resultEl.style.color = 'rgba(255,255,255,.5)';
+  }
+  
+  xpEl.textContent = '+' + xp + ' XP!';
+  addXP(xp);
+  
+  window._slotSpins--;
+  if (window._slotSpins > 0) {
+    btn.disabled = false;
+    btn.textContent = 'SPIN! (あと' + window._slotSpins + '回)';
+  } else {
+    btn.textContent = 'おしまい！';
+    btn.style.opacity = '.5';
+  }
+}
+
+// === COIN DROP GAME ===
+function startCoinGame() {
+  var overlay = document.createElement('div');
+  overlay.id = 'coinGameOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.innerHTML = '<div style="background:var(--surface);border-radius:20px;padding:16px;max-width:340px;width:100%;text-align:center">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+    + '<div style="font-size:16px;font-weight:900;color:var(--accent)">🪙 コイン落とし</div>'
+    + '<div id="coinCount" style="font-size:13px;font-weight:700;color:var(--text2)">残り5枚</div>'
+    + '</div>'
+    + '<div id="coinScore" style="font-size:12px;color:var(--accent);margin-bottom:6px;min-height:18px"></div>'
+    + '<canvas id="coinCanvas" width="300" height="400" style="background:#1a1a2e;border-radius:12px;cursor:pointer;width:100%;touch-action:none"></canvas>'
+    + '<div style="margin-top:10px"><button onclick="document.getElementById(\'coinGameOverlay\').remove()" style="padding:6px 20px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:11px;cursor:pointer;font-family:inherit">閉じる</button></div>'
+    + '</div>';
+  document.body.appendChild(overlay);
+  
+  setTimeout(initCoinGame, 100);
+}
+
+function initCoinGame() {
+  var canvas = document.getElementById('coinCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = 300, H = 400;
+  
+  var pegs = [];
+  var coins = [];
+  var slots = [];
+  var coinsLeft = 5;
+  var totalXP = 0;
+  var gravity = 0.15;
+  
+  // Create pegs
+  for (var row = 0; row < 7; row++) {
+    var cols = row % 2 === 0 ? 5 : 6;
+    var offsetX = row % 2 === 0 ? 30 : 5;
+    for (var col = 0; col < cols; col++) {
+      pegs.push({ x: offsetX + col * 55 + 27, y: 60 + row * 42 });
+    }
+  }
+  
+  // Create prize slots at bottom
+  var slotLabels = ['+5', '+10', '+25', '+50', '+25', '+10', '+5'];
+  var slotColors = ['#666','#7ecdb0','#f0c040','#f0896c','#f0c040','#7ecdb0','#666'];
+  for (var s = 0; s < 7; s++) {
+    slots.push({ x: s * (W/7), w: W/7, label: slotLabels[s], color: slotColors[s], xp: parseInt(slotLabels[s].replace('+','')) });
+  }
+  
+  function dropCoin(x) {
+    if (coinsLeft <= 0) return;
+    coinsLeft--;
+    document.getElementById('coinCount').textContent = '残り' + coinsLeft + '枚';
+    coins.push({ x: x, y: 10, vx: (Math.random() - 0.5) * 2, vy: 0, r: 8, landed: false });
+  }
+  
+  canvas.addEventListener('click', function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var x = (e.clientX - rect.left) / rect.width * W;
+    dropCoin(x);
+  });
+  canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    var rect = canvas.getBoundingClientRect();
+    var touch = e.touches[0];
+    var x = (touch.clientX - rect.left) / rect.width * W;
+    dropCoin(x);
+  }, { passive: false });
+  
+  function update() {
+    coins.forEach(function(c) {
+      if (c.landed) return;
+      c.vy += gravity;
+      c.x += c.vx;
+      c.y += c.vy;
+      
+      // Bounce off walls
+      if (c.x < c.r) { c.x = c.r; c.vx = Math.abs(c.vx) * 0.7; }
+      if (c.x > W - c.r) { c.x = W - c.r; c.vx = -Math.abs(c.vx) * 0.7; }
+      
+      // Peg collisions
+      pegs.forEach(function(p) {
+        var dx = c.x - p.x, dy = c.y - p.y;
+        var dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < c.r + 6) {
+          var angle = Math.atan2(dy, dx);
+          c.x = p.x + Math.cos(angle) * (c.r + 7);
+          c.y = p.y + Math.sin(angle) * (c.r + 7);
+          var speed = Math.sqrt(c.vx*c.vx + c.vy*c.vy);
+          c.vx = Math.cos(angle) * speed * 0.5 + (Math.random() - 0.5) * 1.5;
+          c.vy = Math.sin(angle) * speed * 0.3;
+          if (c.vy < 0.5) c.vy = 0.5;
+        }
+      });
+      
+      // Bottom - land in slot
+      if (c.y > H - 30) {
+        c.landed = true;
+        c.y = H - 20;
+        var slot = slots.find(function(s) { return c.x >= s.x && c.x < s.x + s.w; });
+        if (slot) {
+          totalXP += slot.xp;
+          document.getElementById('coinScore').textContent = '合計 +' + totalXP + ' XP!';
+          if (slot.xp >= 50) fireConfetti();
+        }
+        if (coinsLeft <= 0 && coins.every(function(co) { return co.landed; })) {
+          // Game over
+          setTimeout(function() {
+            addXP(totalXP, 'コイン落とし');
+            document.getElementById('coinCount').textContent = 'おしまい！';
+          }, 500);
+        }
+      }
+    });
+  }
+  
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    
+    // Slots
+    slots.forEach(function(s) {
+      ctx.fillStyle = s.color + '33';
+      ctx.fillRect(s.x, H - 40, s.w, 40);
+      ctx.strokeStyle = s.color;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(s.x, H - 40, s.w, 40);
+      ctx.fillStyle = s.color;
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(s.label, s.x + s.w/2, H - 16);
+    });
+    
+    // Pegs
+    pegs.forEach(function(p) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#555';
+      ctx.fill();
+      ctx.strokeStyle = '#777';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+    
+    // Coins
+    coins.forEach(function(c) {
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+      var grad = ctx.createRadialGradient(c.x - 2, c.y - 2, 1, c.x, c.y, c.r);
+      grad.addColorStop(0, '#ffe066');
+      grad.addColorStop(1, '#e8a030');
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.strokeStyle = '#c88020';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    });
+    
+    // Drop zone indicator
+    if (coinsLeft > 0) {
+      ctx.fillStyle = 'rgba(255,255,255,.06)';
+      ctx.fillRect(0, 0, W, 30);
+      ctx.fillStyle = 'rgba(255,255,255,.3)';
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('▼ ここをタップしてコインを落とす ▼', W/2, 22);
+    }
+  }
+  
+  function gameLoop() {
+    update();
+    draw();
+    if (document.getElementById('coinGameOverlay')) {
+      requestAnimationFrame(gameLoop);
+    }
+  }
+  gameLoop();
 }
 
 // ================================================================
