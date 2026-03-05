@@ -550,6 +550,7 @@ body {
 <!-- HEADER BAR -->
 <div class="timer-bar">
   <div style="display:flex;align-items:center;gap:6px">
+    <svg id="headerAvatar" onclick="openAvatarEditor()" width="28" height="28" viewBox="0 0 60 60" style="cursor:pointer;border-radius:50%;border:2px solid var(--accent);flex-shrink:0"></svg>
     <span style="font-size:12px;font-weight:900;color:var(--accent);letter-spacing:-.5px;font-family:'Zen Maru Gothic',sans-serif">revnote</span>
     <div id="pomodoroDisplay" onclick="cycleTimerMode()" style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;min-width:52px;text-align:center;cursor:pointer;user-select:none;padding:2px 6px;border-radius:6px;background:var(--surface2)">25:00</div>
     <button class="timer-btn" id="timerStartBtn" onclick="toggleTimer()" style="font-size:10px;padding:2px 8px">▶</button>
@@ -3207,6 +3208,187 @@ function initCoinGame() {
 }
 
 // ================================================================
+// AVATAR SYSTEM
+// ================================================================
+var AVATAR_PARTS = {
+  face: [
+    {id:'f1',color:'#FFD5B8',label:'ナチュラル'},
+    {id:'f2',color:'#FFECD2',label:'うすめ'},
+    {id:'f3',color:'#D4A574',label:'ダーク'},
+    {id:'f4',color:'#FFE0E0',label:'ピンク'}
+  ],
+  hair: [
+    {id:'h0',label:'なし',svg:''},
+    {id:'h1',label:'ショート',svg:'<path d="M12 8C12 8 15 4 30 4C45 4 48 8 48 8V18C48 18 45 14 30 14C15 14 12 18 12 18V8Z" fill="HAIR_COLOR"/>'},
+    {id:'h2',label:'ふわふわ',svg:'<path d="M10 12C8 6 16 2 30 2C44 2 52 6 50 12C52 10 50 18 48 18V14C48 14 44 8 30 8C16 8 12 14 12 14V18C10 18 8 10 10 12Z" fill="HAIR_COLOR"/>'},
+    {id:'h3',label:'ロング',svg:'<path d="M10 12C8 6 16 2 30 2C44 2 52 6 50 12V40C50 40 48 36 46 38C44 40 46 18 46 14C46 14 42 8 30 8C18 8 14 14 14 14C14 18 16 40 14 38C12 36 10 40 10 40V12Z" fill="HAIR_COLOR"/>'},
+    {id:'h4',label:'ツインテ',svg:'<path d="M12 10C10 5 18 2 30 2C42 2 50 5 48 10V16H12V10Z" fill="HAIR_COLOR"/><ellipse cx="8" cy="26" rx="6" ry="10" fill="HAIR_COLOR"/><ellipse cx="52" cy="26" rx="6" ry="10" fill="HAIR_COLOR"/>'},
+    {id:'h5',label:'もじゃ',svg:'<path d="M8 16C6 4 18 0 30 0C42 0 54 4 52 16C54 14 56 8 52 4C48 0 42 -2 30 -2C18 -2 12 0 8 4C4 8 6 14 8 16Z" fill="HAIR_COLOR"/><circle cx="10" cy="12" r="4" fill="HAIR_COLOR"/><circle cx="50" cy="12" r="4" fill="HAIR_COLOR"/><circle cx="20" cy="5" r="3" fill="HAIR_COLOR"/><circle cx="40" cy="5" r="3" fill="HAIR_COLOR"/><circle cx="30" cy="3" r="3" fill="HAIR_COLOR"/>'}
+  ],
+  hairColor: [
+    {id:'hc1',color:'#3D2B1F',label:'黒'},
+    {id:'hc2',color:'#8B4513',label:'茶'},
+    {id:'hc3',color:'#DAA520',label:'金'},
+    {id:'hc4',color:'#E05050',label:'赤'},
+    {id:'hc5',color:'#6060DD',label:'青'}
+  ],
+  eyes: [
+    {id:'e1',label:'まる',svg:'<circle cx="22" cy="28" r="3" fill="EYE_COLOR"/><circle cx="38" cy="28" r="3" fill="EYE_COLOR"/><circle cx="23" cy="27" r="1" fill="#fff"/><circle cx="39" cy="27" r="1" fill="#fff"/>'},
+    {id:'e2',label:'きらきら',svg:'<ellipse cx="22" cy="28" rx="3.5" ry="4" fill="EYE_COLOR"/><ellipse cx="38" cy="28" rx="3.5" ry="4" fill="EYE_COLOR"/><circle cx="23.5" cy="26.5" r="1.5" fill="#fff"/><circle cx="39.5" cy="26.5" r="1.5" fill="#fff"/><circle cx="21" cy="29" r="0.8" fill="#fff"/><circle cx="37" cy="29" r="0.8" fill="#fff"/>'},
+    {id:'e3',label:'ジト目',svg:'<ellipse cx="22" cy="28" rx="4" ry="2" fill="EYE_COLOR"/><ellipse cx="38" cy="28" rx="4" ry="2" fill="EYE_COLOR"/><circle cx="23" cy="27.5" r="0.8" fill="#fff"/><circle cx="39" cy="27.5" r="0.8" fill="#fff"/>'}
+  ],
+  eyeColor: [
+    {id:'ec1',color:'#2C1810',label:'黒'},
+    {id:'ec2',color:'#4A90D9',label:'青'},
+    {id:'ec3',color:'#2ECC71',label:'緑'},
+    {id:'ec4',color:'#E67E22',label:'茶'}
+  ],
+  mouth: [
+    {id:'m1',label:'にこ',svg:'<path d="M25 36Q30 40 35 36" stroke="#C0755A" stroke-width="1.5" fill="none" stroke-linecap="round"/>'},
+    {id:'m2',label:'にっこり',svg:'<path d="M24 35Q30 42 36 35" stroke="#C0755A" stroke-width="1.5" fill="none" stroke-linecap="round"/>'},
+    {id:'m3',label:'むすっ',svg:'<line x1="26" y1="37" x2="34" y2="37" stroke="#C0755A" stroke-width="1.5" stroke-linecap="round"/>'}
+  ],
+  accessory: [
+    {id:'a0',label:'なし',svg:'',cost:0},
+    {id:'a1',label:'メガネ',svg:'<circle cx="22" cy="28" r="6" fill="none" stroke="#555" stroke-width="1.5"/><circle cx="38" cy="28" r="6" fill="none" stroke="#555" stroke-width="1.5"/><line x1="28" y1="28" x2="32" y2="28" stroke="#555" stroke-width="1.5"/>',cost:0},
+    {id:'a2',label:'リボン',svg:'<path d="M26 6L30 10L34 6L30 8Z" fill="#E05050"/><circle cx="30" cy="8" r="2" fill="#C04040"/>',cost:200},
+    {id:'a3',label:'王冠',svg:'<path d="M20 8L22 2L26 6L30 1L34 6L38 2L40 8Z" fill="#F0C040" stroke="#DAA520" stroke-width="0.5"/><rect x="20" y="8" width="20" height="3" rx="1" fill="#F0C040" stroke="#DAA520" stroke-width="0.5"/><circle cx="30" cy="4" r="1.5" fill="#E05050"/>',cost:500},
+    {id:'a4',label:'ヘッドホン',svg:'<path d="M14 26Q14 14 30 14Q46 14 46 26" fill="none" stroke="#555" stroke-width="2.5"/><rect x="11" y="24" width="6" height="9" rx="3" fill="#555"/><rect x="43" y="24" width="6" height="9" rx="3" fill="#555"/>',cost:300},
+    {id:'a5',label:'ネコ耳',svg:'<path d="M14 16L18 4L24 14Z" fill="#FFB6C1" stroke="#FF8FAF" stroke-width="0.5"/><path d="M36 14L42 4L46 16Z" fill="#FFB6C1" stroke="#FF8FAF" stroke-width="0.5"/>',cost:400},
+    {id:'a6',label:'サングラス',svg:'<rect x="16" y="24" width="12" height="8" rx="2" fill="#222"/><rect x="32" y="24" width="12" height="8" rx="2" fill="#222"/><line x1="28" y1="28" x2="32" y2="28" stroke="#222" stroke-width="1.5"/><line x1="16" y1="27" x2="12" y2="25" stroke="#222" stroke-width="1.5"/><line x1="44" y1="27" x2="48" y2="25" stroke="#222" stroke-width="1.5"/>',cost:350},
+    {id:'a7',label:'はちまき',svg:'<rect x="10" y="14" width="40" height="4" rx="1" fill="#E05050"/><circle cx="22" cy="16" r="1" fill="#fff"/><path d="M44 10L50 6L48 14Z" fill="#E05050"/>',cost:250}
+  ]
+};
+
+function getDefaultAvatar() {
+  return { face:'f1', hair:'h1', hairColor:'hc1', eyes:'e1', eyeColor:'ec1', mouth:'m1', accessory:'a0', unlockedAccessories:['a0','a1'] };
+}
+
+function getAvatar() {
+  if (!DATA.avatar) DATA.avatar = getDefaultAvatar();
+  return DATA.avatar;
+}
+
+function renderAvatarSVG(targetId, size) {
+  var el = document.getElementById(targetId);
+  if (!el) return;
+  var av = getAvatar();
+  var face = AVATAR_PARTS.face.find(f => f.id === av.face) || AVATAR_PARTS.face[0];
+  var hair = AVATAR_PARTS.hair.find(h => h.id === av.hair) || AVATAR_PARTS.hair[1];
+  var hc = AVATAR_PARTS.hairColor.find(c => c.id === av.hairColor) || AVATAR_PARTS.hairColor[0];
+  var eyes = AVATAR_PARTS.eyes.find(e => e.id === av.eyes) || AVATAR_PARTS.eyes[0];
+  var ec = AVATAR_PARTS.eyeColor.find(c => c.id === av.eyeColor) || AVATAR_PARTS.eyeColor[0];
+  var mouth = AVATAR_PARTS.mouth.find(m => m.id === av.mouth) || AVATAR_PARTS.mouth[0];
+  var acc = AVATAR_PARTS.accessory.find(a => a.id === av.accessory) || AVATAR_PARTS.accessory[0];
+
+  var svg = '<circle cx="30" cy="30" r="28" fill="' + face.color + '"/>';
+  // hair behind
+  if (hair.svg) svg += hair.svg.replace(/HAIR_COLOR/g, hc.color);
+  // face circle (on top of hair)
+  svg += '<circle cx="30" cy="30" r="18" fill="' + face.color + '"/>';
+  // eyes
+  svg += eyes.svg.replace(/EYE_COLOR/g, ec.color);
+  // mouth
+  svg += mouth.svg;
+  // eyebrows
+  svg += '<line x1="19" y1="23" x2="25" y2="23" stroke="#8B7355" stroke-width="1.2" stroke-linecap="round"/>';
+  svg += '<line x1="35" y1="23" x2="41" y2="23" stroke="#8B7355" stroke-width="1.2" stroke-linecap="round"/>';
+  // cheeks
+  svg += '<circle cx="17" cy="32" r="3" fill="rgba(240,137,108,.2)"/><circle cx="43" cy="32" r="3" fill="rgba(240,137,108,.2)"/>';
+  // accessory
+  if (acc.svg) svg += acc.svg;
+
+  if (size) {
+    el.setAttribute('width', size);
+    el.setAttribute('height', size);
+  }
+  el.innerHTML = svg;
+}
+
+function openAvatarEditor() {
+  var av = getAvatar();
+  var xp = getXP();
+  var overlay = document.createElement('div');
+  overlay.id = 'avatarEditorOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:12px;overflow-y:auto';
+  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+
+  var html = '<div style="background:var(--surface);border-radius:16px;padding:20px;max-width:380px;width:100%;max-height:90vh;overflow-y:auto">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
+    + '<div style="font-size:16px;font-weight:800">アバター編集</div>'
+    + '<button onclick="document.getElementById(\'avatarEditorOverlay\').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text2)">✕</button>'
+    + '</div>'
+    + '<div style="text-align:center;margin-bottom:14px"><svg id="avatarPreviewLarge" width="100" height="100" viewBox="0 0 60 60" style="border-radius:50%;border:3px solid var(--accent)"></svg>'
+    + '<div style="font-size:12px;color:var(--accent);margin-top:4px;font-weight:700">Lv.' + getLevel() + ' ' + getTitle() + '</div>'
+    + '<div style="font-size:11px;color:var(--text2)">' + xp + ' XP</div>'
+    + '</div>';
+
+  // Part selectors
+  function partRow(label, partKey, items, currentId, colorKey) {
+    var r = '<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:4px">' + label + '</div><div style="display:flex;gap:4px;flex-wrap:wrap">';
+    items.forEach(function(item) {
+      var isActive = item.id === currentId;
+      var locked = item.cost && item.cost > 0 && !(av.unlockedAccessories || []).includes(item.id);
+      var style = 'padding:4px 10px;border-radius:8px;font-size:11px;cursor:pointer;border:1.5px solid ' + (isActive ? 'var(--accent)' : 'var(--border)') + ';background:' + (isActive ? 'rgba(240,137,108,.1)' : 'var(--surface2)') + ';color:' + (locked ? 'var(--text2)' : 'var(--text)') + ';font-family:inherit;font-weight:' + (isActive ? '700' : '400');
+      if (colorKey && item.color) {
+        r += '<div onclick="setAvatarPart(\'' + partKey + '\',\'' + item.id + '\')" style="' + style + ';display:flex;align-items:center;gap:4px"><div style="width:14px;height:14px;border-radius:50%;background:' + item.color + ';border:1px solid rgba(0,0,0,.1)"></div>' + item.label + '</div>';
+      } else if (locked) {
+        r += '<button onclick="unlockAccessory(\'' + item.id + '\',' + item.cost + ')" style="' + style + '">' + item.label + ' 🔒' + item.cost + '</button>';
+      } else {
+        r += '<button onclick="setAvatarPart(\'' + partKey + '\',\'' + item.id + '\')" style="' + style + '">' + item.label + '</button>';
+      }
+    });
+    r += '</div></div>';
+    return r;
+  }
+
+  html += partRow('肌', 'face', AVATAR_PARTS.face, av.face, true);
+  html += partRow('髪型', 'hair', AVATAR_PARTS.hair, av.hair);
+  html += partRow('髪色', 'hairColor', AVATAR_PARTS.hairColor, av.hairColor, true);
+  html += partRow('目', 'eyes', AVATAR_PARTS.eyes, av.eyes);
+  html += partRow('目の色', 'eyeColor', AVATAR_PARTS.eyeColor, av.eyeColor, true);
+  html += partRow('口', 'mouth', AVATAR_PARTS.mouth, av.mouth);
+  html += partRow('アクセサリー', 'accessory', AVATAR_PARTS.accessory, av.accessory);
+
+  html += '</div>';
+  overlay.innerHTML = html;
+  document.body.appendChild(overlay);
+  renderAvatarSVG('avatarPreviewLarge', 100);
+}
+
+function setAvatarPart(key, val) {
+  var av = getAvatar();
+  av[key] = val;
+  DATA.avatar = av;
+  saveData(DATA);
+  renderAvatarSVG('headerAvatar', 28);
+  renderAvatarSVG('avatarPreviewLarge', 100);
+  // Refresh editor to update active states
+  var overlay = document.getElementById('avatarEditorOverlay');
+  if (overlay) { overlay.remove(); openAvatarEditor(); }
+}
+
+function unlockAccessory(id, cost) {
+  var xp = getXP();
+  if (xp < cost) {
+    alert('XPが足りません！（必要: ' + cost + ' XP、現在: ' + xp + ' XP）');
+    return;
+  }
+  if (!confirm(cost + ' XPを使って「' + (AVATAR_PARTS.accessory.find(a => a.id === id) || {}).label + '」をアンロックしますか？')) return;
+  DATA.xp = (DATA.xp || 0) - cost;
+  var av = getAvatar();
+  if (!av.unlockedAccessories) av.unlockedAccessories = ['a0', 'a1'];
+  av.unlockedAccessories.push(id);
+  av.accessory = id;
+  DATA.avatar = av;
+  saveData(DATA);
+  renderAvatarSVG('headerAvatar', 28);
+  renderPlayerStats();
+  var overlay = document.getElementById('avatarEditorOverlay');
+  if (overlay) { overlay.remove(); openAvatarEditor(); }
+}
+
+// ================================================================
 // TOPIC PRESETS (中学受験カリキュラム準拠)
 // ================================================================
 var TOPIC_PRESETS = {
@@ -5718,28 +5900,48 @@ var _headerBadgeState = 0;
 function renderExamCountdown(){
   var badge=document.getElementById('countdownBadge');
   if(!badge) return;
-  // Start alternating display
   clearInterval(_headerBadgeTimer);
   _headerBadgeState = 0;
   updateHeaderBadge();
-  _headerBadgeTimer = setInterval(updateHeaderBadge, 4000);
+  _headerBadgeTimer = setInterval(updateHeaderBadge, 3000);
+}
+function getTitle() {
+  var xp = getXP();
+  var titles = [
+    {xp:0, title:'見習い'},
+    {xp:100, title:'がんばり屋'},
+    {xp:300, title:'努力家'},
+    {xp:600, title:'チャレンジャー'},
+    {xp:1000, title:'実力者'},
+    {xp:2000, title:'達人'},
+    {xp:3500, title:'マスター'},
+    {xp:5000, title:'博士'},
+    {xp:8000, title:'レジェンド'},
+    {xp:12000, title:'神'}
+  ];
+  var t = titles[0];
+  for (var i = 0; i < titles.length; i++) {
+    if (xp >= titles[i].xp) t = titles[i];
+  }
+  return t.title;
 }
 function updateHeaderBadge() {
   var badge = document.getElementById('countdownBadge');
   if (!badge) return;
   var lv = getLevel();
+  var xp = getXP();
+  var title = getTitle();
   var hasExam = DATA.settings.examDate;
   var diff = hasExam ? Math.ceil((new Date(DATA.settings.examDate) - new Date()) / 864e5) : 0;
-  if (_headerBadgeState === 0 && hasExam && diff > 0) {
-    badge.textContent = (DATA.settings.examName || '入試') + ' あと' + diff + '日';
-    badge.style.color = 'var(--warning)';
-    badge.style.display = '';
-  } else {
-    badge.textContent = 'Lv.' + lv;
-    badge.style.color = 'var(--accent)';
-    badge.style.display = '';
-  }
-  _headerBadgeState = (_headerBadgeState + 1) % 2;
+  var states = [];
+  if (hasExam && diff > 0) states.push({text:(DATA.settings.examName||'入試')+' あと'+diff+'日', color:'var(--warning)'});
+  states.push({text:'Lv.'+lv+' '+title, color:'var(--accent)'});
+  states.push({text:xp+' XP', color:'var(--accent2)'});
+  var idx = _headerBadgeState % states.length;
+  badge.textContent = states[idx].text;
+  badge.style.color = states[idx].color;
+  badge.style.display = '';
+  _headerBadgeState++;
 }
 
 function saveBirthJuku(){
@@ -6155,6 +6357,7 @@ initTheme();
 initAuth();
 if(location.hash.startsWith("#sync="))importFromURL();
 renderExamCountdown();
+renderAvatarSVG('headerAvatar', 28);
 applyMode();
 renderToday();
 updateHeaderProgress();
