@@ -5,6 +5,8 @@
 - インポート時に defaultData とマージしてから problems を適用
 - README.md 追加、revnote-roadmap.md を v5.5 反映版に更新、CLAUDE.md のファイル一覧を revnote-prd.md に統一
 - StudyFlow 系 PRD 削除、.gitignore に .config / .local / .npm 等を追加
+- revnote-prd.md をルートに追加、エクスポートファイル名を `revnote-*.json` に統一
+- docs/SUPABASE-RLS.md に RLS 確認手順を追加、.config/.local/.npm/.npm-global を git 追跡から除外、RELEASE-CHECKLIST に明日分の実施メモを追記
 
 ## v5.5 (2026-03-07)
 - アバターシステム（SVGパーツ組み合わせ、XPでアクセサリー購入）

@@ -4241,7 +4241,7 @@ function exportData() {
   var blob = new Blob([JSON.stringify(DATA, null, 2)], { type: 'application/json' });
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
-  a.href = url; a.download = `revenge-note-${today()}.json`;
+  a.href = url; a.download = `revnote-${today()}.json`;
   a.click(); URL.revokeObjectURL(url);
 }
 function importData(e) {
