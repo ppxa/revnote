@@ -33,9 +33,11 @@ git push origin master:main
 ```
 revenge-note.html   # メインアプリ（全コード）= index.html と同一
 index.html          # GitHub Pages 用コピー
-.gitignore          # .cache/ を除外
-StudyFlow-PRD.md    # 初期PRD（名称はrevnoteに変更済み）
+.gitignore          # .cache/ 等を除外
+revnote-prd.md      # プロダクト要件定義（現行仕様）
 revnote-roadmap.md  # ロードマップ
+CLAUDE.md           # 本ファイル（開発ガイド）
+CHANGELOG.md        # バージョン履歴
 curriculum_v2.js    # カリキュラムデータ（塾別）
 gen_curriculum_v2.py # カリキュラム生成スクリプト
 generate_samples.py  # サンプル問題生成スクリプト

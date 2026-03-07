@@ -1193,9 +1193,20 @@ function defaultData() {
   return {
     version: '1.0',
     problems: [],
-    settings: { dailyCap: 15, freezeThreshold: 5 },
+    settings: {
+      dailyCap: 15,
+      freezeThreshold: 5,
+      birthDate: '',
+      jukuType: 'none',
+      examDate: '',
+      examName: '',
+      schoolLevel: 'elementary',
+      mode: 'child'
+    },
     streak: { count: 0, lastDate: null, history: [] },
-    sessionLog: []
+    sessionLog: [],
+    xp: 0,
+    avatar: { face: 'f1', hair: 'h1', hairColor: 'hc1', eyes: 'e1', eyeColor: 'ec1', mouth: 'm1', accessory: 'a0', unlockedAccessories: ['a0', 'a1'] }
   };
 }
 
@@ -4240,13 +4251,26 @@ function importData(e) {
   reader.onload = () => {
     try {
       var imported = JSON.parse(reader.result);
-      if (imported.problems) {
-        DATA = imported;
-        saveData(DATA);
-        alert('インポート完了');
-        switchScreen('Today');
+      if (!imported || typeof imported !== 'object') {
+        alert('ファイルを読み込めませんでした');
+        return;
       }
-    } catch { alert('ファイルを読み込めませんでした'); }
+      var base = defaultData();
+      DATA = {
+        version: imported.version || base.version,
+        problems: Array.isArray(imported.problems) ? imported.problems : base.problems,
+        settings: Object.assign({}, base.settings, imported.settings || {}),
+        streak: imported.streak && typeof imported.streak === 'object' ? imported.streak : base.streak,
+        sessionLog: Array.isArray(imported.sessionLog) ? imported.sessionLog : base.sessionLog,
+        xp: typeof imported.xp === 'number' ? imported.xp : base.xp,
+        avatar: imported.avatar && typeof imported.avatar === 'object' ? imported.avatar : base.avatar
+      };
+      saveData(DATA);
+      alert('インポート完了');
+      switchScreen('Today');
+    } catch (err) {
+      alert('ファイルを読み込めませんでした');
+    }
   };
   reader.readAsText(file);
 }

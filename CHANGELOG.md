@@ -1,5 +1,11 @@
 # Revnote Changelog
 
+## v5.5.1 (2026-03-07) — リリース準備
+- defaultData に xp / avatar / settings の不足フィールドを追加（初回・インポート時の安定化）
+- インポート時に defaultData とマージしてから problems を適用
+- README.md 追加、revnote-roadmap.md を v5.5 反映版に更新、CLAUDE.md のファイル一覧を revnote-prd.md に統一
+- StudyFlow 系 PRD 削除、.gitignore に .config / .local / .npm 等を追加
+
 ## v5.5 (2026-03-07)
 - アバターシステム（SVGパーツ組み合わせ、XPでアクセサリー購入）
 - 称号システム（見習い〜神、累計XP自動昇格）

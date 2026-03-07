@@ -1,1 +1,7 @@
 .cache/
+backup-before-clone/
+.config/
+.local/
+.npm/
+.npm-global/
+.wget-hsts
